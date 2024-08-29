@@ -1,0 +1,217 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Center {
+  id         String       @id @default(uuid())
+  centerName String
+  mode       CenterMode   @default(VIRTUAL)
+  user       User         @relation(fields: [createdBy], references: [id])
+  createdBy  String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  userCenter userCenter[]
+  Inventory  Inventory[]
+  Voucher    Voucher[]
+}
+
+model User {
+  id          String       @id @default(uuid())
+  name        String
+  nic         String?      @unique
+  phoneNumber String?      @unique
+  address     String?
+  dateofbirth DateTime?
+  username    String       @unique
+  password    String
+  role        Role         @default(SALESMEN)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  Voucher     Voucher[]
+  Party       Party[]
+  Product     Product[]
+  userCenter  userCenter[]
+  Center      Center[]
+  Brand       Brand[]
+  Type        Type[]
+}
+
+model userCenter {
+  center   Center @relation(fields: [centerId], references: [id])
+  centerId String
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+
+  @@id([centerId, userId])
+}
+
+model PartyGroup {
+  id             String   @id @default(uuid())
+  partyGroupName String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  party          Party[]
+}
+
+model Party {
+  id           String     @id @default(uuid())
+  name         String
+  nic          String?
+  phoneNumber  String?    @unique
+  address      String?
+  email        String?
+  user         User       @relation(fields: [createdBy], references: [id])
+  createdBy    String
+  PartyGroup   PartyGroup @relation(fields: [partyGroupId], references: [id])
+  partyGroupId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  Voucher      Voucher[]
+}
+
+model VoucherGroup {
+  id            String        @id @default(uuid())
+  voucherName   String
+  inventoryMode InventoryMode
+  isAccount     Boolean
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  voucher       Voucher[]
+}
+
+model Voucher {
+  id             String           @id @default(uuid())
+  voucherNumber  String           @unique
+  date           DateTime?
+  amount         Decimal?
+  location       String?
+  party          Party            @relation(fields: [partyId], references: [id])
+  partyId        String
+  voucherGroup   VoucherGroup     @relation(fields: [voucherGroupId], references: [id])
+  voucherGroupId String
+  center         Center           @relation(fields: [centerId], references: [id])
+  centerId       String
+  user           User             @relation(fields: [createdBy], references: [id])
+  createdBy      String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  PaymentVoucher PaymentVoucher[]
+  voucherProduct voucherProduct[]
+}
+
+model Payment {
+  id             String           @id @default(uuid())
+  type           String?
+  PaymentVoucher PaymentVoucher[]
+}
+
+model PaymentVoucher {
+  id        String  @id @default(uuid())
+  amount    Decimal
+  payment   Payment @relation(fields: [paymentId], references: [id])
+  paymentId String
+  voucher   Voucher @relation(fields: [voucherId], references: [id])
+  voucherId String
+}
+
+model Brand {
+  id        String    @id @default(uuid())
+  brandName String    @unique
+  user      User      @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Product   Product[]
+}
+
+model Type {
+  id        String    @id @default(uuid())
+  typeName  String    @unique
+  user      User      @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Product   Product[]
+}
+
+model Product {
+  id             String           @id @default(uuid())
+  unit           Unit             @default(PCS)
+  itemCode       String?          @unique()
+  barcode        String?          @unique()
+  productName    String
+  printName      String?
+  image          String?
+  type           Type             @relation(fields: [typeId], references: [id])
+  typeId         String
+  brand          Brand            @relation(fields: [brandId], references: [id])
+  brandId        String
+  user           User             @relation(fields: [createdBy], references: [id])
+  createdBy      String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  Inventory      Inventory[]
+  voucherProduct voucherProduct[]
+}
+
+model voucherProduct {
+  id        String   @id @default(uuid())
+  cost      Decimal
+  quantity  Decimal
+  discount  Decimal
+  MRP       Decimal
+  price     Decimal
+  voucher   Voucher  @relation(fields: [voucherId], references: [id])
+  voucherId String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Inventory {
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  center    Center   @relation(fields: [centerId], references: [id])
+  centerId  String
+  quantity  Decimal?
+  cost      Decimal?
+  minPrice  Decimal?
+  MRP       Decimal?
+  salePrice Decimal?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([productId, centerId])
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  SALESMEN
+}
+
+enum CenterMode {
+  VIRTUAL
+  PHYSICAL
+}
+
+enum Unit {
+  PCS
+}
+
+enum InventoryMode {
+  PLUS
+  MINUS
+}

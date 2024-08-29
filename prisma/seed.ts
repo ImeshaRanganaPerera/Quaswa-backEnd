@@ -1,0 +1,43 @@
+import { Role, InventoryMode } from "@prisma/client";
+import { db } from "../src/utils/db.server"
+import { format, toZonedTime } from 'date-fns-tz';
+import { hash } from "bcrypt";
+
+
+async function seed() {
+    const currentDateTime = new Date();
+    const timezone = 'Asia/Colombo';
+
+    const utcDateTime = format(toZonedTime(currentDateTime, timezone), 'yyyy-MM-dd HH:mm:ss.SSSXXX', { timeZone: 'UTC' });
+    const hashedPassword = await hash("1234", 10);
+    await db.user.create({
+        data: {
+            name: "Admin",
+            phoneNumber: "0000000000",  // Example phone number
+            username: "admin",
+            password: hashedPassword,
+            role: Role.ADMIN,  // Using the Role enum
+        }
+    });
+
+    await db.partyGroup.createMany({
+        data: [
+            { partyGroupName: "CUSTOMER" },
+            { partyGroupName: "SUPPLIER" }
+        ]
+    });
+
+    await db.voucherGroup.createMany({
+        data: [
+            { voucherName: "SALES", inventoryMode: InventoryMode.MINUS, isAccount: true },
+            { voucherName: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true }
+        ]
+    });
+
+}
+
+seed().catch((error) => {
+    console.error("Error seeding data:", error);
+}).finally(async () => {
+    await db.$disconnect();
+});

@@ -90,7 +90,7 @@ centerRouter.post("/", authenticate, async (request: ExpressRequest, response: R
                 return response.status(500).json({ message: error.message });
             }
 
-            return response.status(201).json({ data: data, message: "Center Created Successfully" });
+            return response.status(201).json({ message: "Center Created Successfully", data: newCenter });
         }
     } catch (error: any) {
         return response.status(500).json(error.message);
@@ -102,9 +102,9 @@ centerRouter.put("/:id", async (request: Request, response: Response) => {
     const id: any = request.params;
     const data: any = request.body;
     try {
-        const updateparty = await centerService.update(data, id)
-        if (updateparty) {
-            return response.status(201).json({ message: "Customer Updated Successfully" });
+        const updateCenter = await centerService.update(data, id)
+        if (updateCenter) {
+            return response.status(201).json({ message: "Center Updated Successfully", data: updateCenter });
         }
     } catch (error: any) {
         return response.status(500).json(error.message);

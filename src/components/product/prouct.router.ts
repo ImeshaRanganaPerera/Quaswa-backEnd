@@ -93,7 +93,7 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
         const updateProduct = await productService.update(data, id)
 
         if (updateProduct) {
-            return response.status(201).json({ message: "Brand Updated Successfully" });
+            return response.status(201).json({ message: "Brand Updated Successfully", data: updateProduct });
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });

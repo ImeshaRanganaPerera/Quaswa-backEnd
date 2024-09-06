@@ -75,7 +75,7 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 return response.status(500).json({ message: error.message });
             }
 
-            return response.status(201).json({ message: "Product Created Successfully" });
+            return response.status(201).json({ message: "Product Created Successfully", data: newProduct });
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });

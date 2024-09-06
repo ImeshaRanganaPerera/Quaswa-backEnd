@@ -69,7 +69,10 @@ model Party {
   name         String
   nic          String?
   phoneNumber  String?    @unique
-  address      String?
+  address1     String?
+  address2     String?
+  creditPeriod String?
+  creditValue  String?
   email        String?
   user         User       @relation(fields: [createdBy], references: [id])
   createdBy    String
@@ -96,6 +99,7 @@ model Voucher {
   date           DateTime?
   amount         Decimal?
   location       String?
+  paidValue      Decimal?
   party          Party            @relation(fields: [partyId], references: [id])
   partyId        String
   voucherGroup   VoucherGroup     @relation(fields: [voucherGroupId], references: [id])
@@ -153,6 +157,8 @@ model Product {
   productName    String
   printName      String?
   image          String?
+  criticalLevel  Int?
+  status         Boolean          @default(true)
   type           Type             @relation(fields: [typeId], references: [id])
   typeId         String
   brand          Brand            @relation(fields: [brandId], references: [id])
@@ -166,32 +172,33 @@ model Product {
 }
 
 model voucherProduct {
-  id        String   @id @default(uuid())
-  cost      Decimal
-  quantity  Decimal
-  discount  Decimal
-  MRP       Decimal
-  price     Decimal
-  voucher   Voucher  @relation(fields: [voucherId], references: [id])
-  voucherId String
-  product   Product  @relation(fields: [productId], references: [id])
-  productId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  cost         Decimal
+  quantity     Decimal
+  discount     String
+  MRP          Decimal
+  sellingPrice Decimal
+  amount       Decimal
+  voucher      Voucher  @relation(fields: [voucherId], references: [id])
+  voucherId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Inventory {
-  product   Product  @relation(fields: [productId], references: [id])
-  productId String
-  center    Center   @relation(fields: [centerId], references: [id])
-  centerId  String
-  quantity  Decimal?
-  cost      Decimal?
-  minPrice  Decimal?
-  MRP       Decimal?
-  salePrice Decimal?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    String
+  center       Center   @relation(fields: [centerId], references: [id])
+  centerId     String
+  quantity     Decimal?
+  cost         Decimal?
+  minPrice     Decimal?
+  MRP          Decimal?
+  sellingPrice Decimal?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@id([productId, centerId])
 }
@@ -214,4 +221,6 @@ enum Unit {
 enum InventoryMode {
   PLUS
   MINUS
+  DOUBLE
+  NONE
 }

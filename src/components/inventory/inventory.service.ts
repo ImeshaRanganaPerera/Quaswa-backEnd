@@ -4,15 +4,34 @@ export const getlist = async () => {
     return db.inventory.findMany();
 }
 
-export const get = async (id: any) => {
-    return db.inventory.findFirst({
+export const getbyCenter = async (id: any) => {
+    return db.inventory.findMany({
         where: {
             centerId: id,
+        },
+        include: {
+            product: true,
         }
+
+
     });
 }
 
 export const upsert = async (data: any) => {
+    const existingInventory = await db.inventory.findUnique({
+        where: {
+            productId_centerId: {
+                productId: data.productId,
+                centerId: data.centerId
+            }
+        },
+    });
+
+    // Calculate the new quantity
+    const newQuantity = existingInventory
+        ? existingInventory.quantity + data.quantity
+        : data.quantity;
+
     return db.inventory.upsert({
         where: {
             productId_centerId: {
@@ -21,23 +40,23 @@ export const upsert = async (data: any) => {
             }
         },
         update: {
-            quantity: data.quantity,
+            quantity: newQuantity, // Update with the calculated new quantity
             cost: data.cost,
             minPrice: data.minPrice,
             MRP: data.MRP,
-            salePrice: data.salePrice
+            sellingPrice: data.sellingPrice
         },
         create: {
             productId: data.productId,
             centerId: data.centerId,
-            quantity: data.quantity,
+            quantity: data.quantity, // Insert the original quantity on creation
             cost: data.cost,
             minPrice: data.minPrice,
             MRP: data.MRP,
-            salePrice: data.salePrice
+            sellingPrice: data.sellingPrice
         },
     });
-}
+};
 
 
 export const create = async (data: any) => {

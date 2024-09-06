@@ -9,6 +9,8 @@ import { brandRouter } from "./components/brand/brand.router";
 import { typeRouter } from "./components/type/type.router";
 import { productRouter } from "./components/product/prouct.router";
 import { voucherRouter } from "./components/voucher/voucher.router";
+import { userCenterRoute } from "./components/userCenter/userCenter.router";
+import { inventoryRouter } from "./components/inventory/inventory.router";
 // import { itemRouter } from "./components/items/item.router";
 // import { cusDetailRouter } from "./components/customerDetails/customerDetails.route";
 
@@ -31,7 +33,8 @@ app.use("/api/brand", brandRouter)
 app.use("/api/type", typeRouter)
 app.use("/api/product", productRouter)
 app.use("/api/voucher", voucherRouter)
-// app.use("/api/items", itemRouter)
+app.use("/api/userCenter", userCenterRoute)
+app.use("/api/inventory", inventoryRouter)
 // app.use("/api/cusDetail", cusDetailRouter)
 
 app.listen(PORT, () => {

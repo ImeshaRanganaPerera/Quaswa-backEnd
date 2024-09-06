@@ -4,6 +4,9 @@ import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as productService from './product.service'
+import * as inventoryService from '../inventory/inventory.service'
+import * as centerService from '../center/center.service'
+
 
 export const productRouter = express.Router();
 
@@ -49,6 +52,29 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         const newProduct = await productService.create(data)
 
         if (newProduct) {
+            const centerList = await centerService.getlist()
+
+            const centerPromises = centerList.map(async (center: { id: string }) => {
+                const inventory = await inventoryService.upsert({
+                    productId: newProduct.id,
+                    centerId: center.id,
+                    quantity: 0,
+                    cost: 0,
+                    minPrice: 0,
+                    MRP: 0,
+                    salePrice: 0
+                });
+                if (!inventory) {
+                    throw new Error("Failed to update inventory association");
+                }
+            });
+
+            try {
+                await Promise.all(centerPromises);
+            } catch (error: any) {
+                return response.status(500).json({ message: error.message });
+            }
+
             return response.status(201).json({ message: "Product Created Successfully" });
         }
     } catch (error: any) {

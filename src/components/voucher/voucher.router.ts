@@ -6,6 +6,7 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 import * as vocuherService from './voucher.service'
 import * as voucherGrpService from '../voucherGroup/vouchergrp.service'
 import * as productVoucherService from '../voucherProduct/voucherProduct.service'
+import * as inventoryService from '../inventory/inventory.service'
 
 export const voucherRouter = express.Router();
 
@@ -47,20 +48,20 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
         const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
         const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpdetails?.id)
-
-        const newVoucher = await vocuherService.create({ voucherNumber: newVoucherNumber, date: data.date, amount: data.amount, location: data.location, centerId: data.centerId, partyId: data.partyId, voucherGroupId: voucherGrpdetails?.id, createdBy: userId })
+        const newVoucher = await vocuherService.create({ voucherNumber: newVoucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, centerId: data.centerId, partyId: data.partyId, voucherGroupId: voucherGrpdetails?.id, createdBy: userId })
 
         const centerPromises = data.productList.map(async (product: any) => {
-            const userCenter = await productVoucherService.create({
+            const voucherProduct = await productVoucherService.create({
                 cost: product.cost,
                 quantity: product.quantity,
                 discount: product.discount,
                 MRP: product.MRP,
-                price: product.price,
+                sellingPrice: product.sellingPrice,
+                amount: product.amount,
                 voucherId: newVoucher.id,
-                productId: product.productid
+                productId: product.productId
             });
-            if (!userCenter) {
+            if (!voucherProduct) {
                 throw new Error("Failed to update product to list association");
             }
         });
@@ -71,9 +72,26 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             return response.status(500).json({ message: error.message });
         }
 
-        if (data.voucherGroupname === "GRN") {
-            if (voucherGrpdetails?.inventoryMode === "PLUS") {
+        if (voucherGrpdetails?.inventoryMode === "PLUS") {
+            const inventoryPromise = data.productList.map(async (product: any) => {
+                const inventory = await inventoryService.upsert({
+                    productId: product.productId,
+                    centerId: data.centerId,
+                    quantity: product.quantity,
+                    cost: product.cost,
+                    minPrice: product.minPrice,
+                    MRP: product.MRP,
+                    sellingPrice: product.sellingPrice
+                });
+                if (!inventory) {
+                    throw new Error("Failed to update product to list association");
+                }
+            });
 
+            try {
+                await Promise.all(inventoryPromise);
+            } catch (error: any) {
+                return response.status(500).json({ message: error.message });
             }
         }
 
@@ -85,6 +103,21 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         return response.status(500).json({ message: error.message });
     }
 })
+
+voucherRouter.get("/voucherNumber/:vouchname", async (request: Request, response: Response) => {
+    const vouchname: any = request.params.vouchname;
+    try {
+        const voucherGrpId = await voucherGrpService.getbyname(vouchname)
+        const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpId?.id)
+        if (newVoucherNumber) {
+            return response.status(200).json({ data: newVoucherNumber });
+        }
+        return response.status(404).json({ message: "Voucher Number could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
+
 
 //PUT
 voucherRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {

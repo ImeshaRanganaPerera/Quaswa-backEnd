@@ -3,7 +3,6 @@ import { User } from '@prisma/client';
 import { verify } from "jsonwebtoken";
 import { db } from "../utils/db.server";
 
-
 export interface ExpressRequest extends Request {
     user?: User;
 }

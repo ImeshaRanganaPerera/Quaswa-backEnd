@@ -1,8 +1,15 @@
 import { db } from "../../utils/db.server";
 
-export const getlist = async () => {
-    return db.userCenter.findMany();
-}
+export const getCentersByUserId = async (userId: string) => {
+    return db.userCenter.findMany({
+      where: {
+        userId: userId
+      },
+      include: {
+        center: true  // This will include the Center details associated with each userCenter record
+      }
+    });
+  };
 
 // export const get = async (id: any) => {
 //     return db.userCenter.findUnique({

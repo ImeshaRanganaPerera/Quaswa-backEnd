@@ -12,6 +12,14 @@ export const get = async (id: any) => {
     });
 }
 
+export const getbyGroup = async (id: any) => {
+    return db.party.findMany({
+        where: {
+            partyGroupId: id,
+        },
+    });
+}
+
 export const create = async (data: any) => {
     return db.party.create({
         data: data

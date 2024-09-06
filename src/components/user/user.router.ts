@@ -136,7 +136,6 @@ userRouter.post("/", authenticate, async (request: ExpressRequest, response: Res
     }
 });
 
-
 //LOGIN
 userRouter.post("/login", async (request: Request, response: Response) => {
     const userData: any = request.body;
@@ -150,7 +149,11 @@ userRouter.post("/login", async (request: Request, response: Response) => {
         if (!isPasswordCorrect) {
             return response.status(404).json({ message: "Username or Password Incorrect!" })
         }
-        return response.status(201).json({ message: 'Login Successfully', token: genarateJwt(user) });
+        const data = {
+            token: genarateJwt(user),
+            name: user.name
+        }
+        return response.status(201).json({ message: 'Login Successfully', data: data });
     } catch (error: any) {
         return response.status(500).json(error.message);
     }

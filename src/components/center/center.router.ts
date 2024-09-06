@@ -6,6 +6,8 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 import * as centerService from './center.service'
 import * as userService from '../user/user.service'
 import * as userCenterService from '../userCenter/userCenter.service'
+import * as productService from '../product/product.service'
+import * as inventoryService from '../inventory/inventory.service'
 
 export const centerRouter = express.Router();
 
@@ -65,6 +67,29 @@ centerRouter.post("/", authenticate, async (request: ExpressRequest, response: R
         }
 
         if (newCenter) {
+            const productList = await productService.list()
+
+            const centerPromises = productList.map(async (product: { id: string }) => {
+                const inventory = await inventoryService.upsert({
+                    productId: product.id,
+                    centerId: newCenter.id,
+                    quantity: 0,
+                    cost: 0,
+                    minPrice: 0,
+                    MRP: 0,
+                    salePrice: 0
+                });
+                if (!inventory) {
+                    throw new Error("Failed to update inventory association");
+                }
+            });
+
+            try {
+                await Promise.all(centerPromises);
+            } catch (error: any) {
+                return response.status(500).json({ message: error.message });
+            }
+
             return response.status(201).json({ data: data, message: "Center Created Successfully" });
         }
     } catch (error: any) {

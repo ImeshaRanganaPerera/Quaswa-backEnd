@@ -12,6 +12,17 @@ export const get = async (id: any) => {
     });
 }
 
+export const getVoucherbyGrp = async (id: any) => {
+    return db.voucher.findMany({
+        where: {
+            voucherGroupId: id,
+        },
+        include: {
+            party: true,
+        }
+    });
+}
+
 export const create = async (data: any) => {
     return db.voucher.create({
         data: data

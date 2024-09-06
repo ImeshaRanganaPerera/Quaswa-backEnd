@@ -20,7 +20,7 @@ model Center {
   user       User         @relation(fields: [createdBy], references: [id])
   createdBy  String
   createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  updatedAt  DateTime     @updatedAt()
   userCenter userCenter[]
   Inventory  Inventory[]
   Voucher    Voucher[]

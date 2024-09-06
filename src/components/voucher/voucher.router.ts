@@ -37,6 +37,35 @@ voucherRouter.get("/:id", async (request: Request, response: Response) => {
     }
 })
 
+voucherRouter.get("/voucherNumber/:vouchname", async (request: Request, response: Response) => {
+    const vouchname: any = request.params.vouchname;
+    try {
+        const voucherGrpId = await voucherGrpService.getbyname(vouchname)
+        const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpId?.id)
+        if (newVoucherNumber) {
+            return response.status(200).json({ data: newVoucherNumber });
+        }
+        return response.status(404).json({ message: "Voucher Number could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
+
+voucherRouter.get("/group/:vouchname", async (request: Request, response: Response) => {
+    const vouchname: any = request.params.vouchname;
+    try {
+        const voucherGrpId = await voucherGrpService.getbyname(vouchname)
+        const vouchersbyGrp = await vocuherService.getVoucherbyGrp(voucherGrpId?.id)
+        if (vouchersbyGrp) {
+            return response.status(200).json({ data: vouchersbyGrp });
+        }
+        return response.status(404).json({ message: "Voucher Group could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
+
+
 //POST
 voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     var data: any = request.body;
@@ -45,11 +74,9 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             return response.status(401).json({ message: "User not authorized" });
         }
         const userId = request.user.id;
-
         const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
         const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpdetails?.id)
         const newVoucher = await vocuherService.create({ voucherNumber: newVoucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, centerId: data.centerId, partyId: data.partyId, voucherGroupId: voucherGrpdetails?.id, createdBy: userId })
-
         const centerPromises = data.productList.map(async (product: any) => {
             const voucherProduct = await productVoucherService.create({
                 cost: product.cost,
@@ -65,13 +92,11 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 throw new Error("Failed to update product to list association");
             }
         });
-
         try {
             await Promise.all(centerPromises);
         } catch (error: any) {
             return response.status(500).json({ message: error.message });
         }
-
         if (voucherGrpdetails?.inventoryMode === "PLUS") {
             const inventoryPromise = data.productList.map(async (product: any) => {
                 const inventory = await inventoryService.upsert({
@@ -87,14 +112,12 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     throw new Error("Failed to update product to list association");
                 }
             });
-
             try {
                 await Promise.all(inventoryPromise);
             } catch (error: any) {
                 return response.status(500).json({ message: error.message });
             }
         }
-
 
         if (newVoucher) {
             return response.status(201).json({ message: "Voucher Created Successfully" });
@@ -103,21 +126,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         return response.status(500).json({ message: error.message });
     }
 })
-
-voucherRouter.get("/voucherNumber/:vouchname", async (request: Request, response: Response) => {
-    const vouchname: any = request.params.vouchname;
-    try {
-        const voucherGrpId = await voucherGrpService.getbyname(vouchname)
-        const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpId?.id)
-        if (newVoucherNumber) {
-            return response.status(200).json({ data: newVoucherNumber });
-        }
-        return response.status(404).json({ message: "Voucher Number could not be found" });
-    } catch (error: any) {
-        return response.status(500).json(error.message);
-    }
-})
-
 
 //PUT
 voucherRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {

@@ -69,7 +69,7 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
         const newParty = await partyService.create({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, partyGroupId: partyGroup?.id, createdBy: userId })
 
         if (newParty) {
-            return response.status(201).json({ message: data.partyGroup + " Created Successfully" });
+            return response.status(201).json({ message: data.partyGroup + " Created Successfully", data: newParty });
         }
     } catch (error: any) {
         return response.status(500).json(error.message);
@@ -88,7 +88,7 @@ partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
         const partyGroup = await partyGroupService.getbyid(updateparty.partyGroupId)
 
         if (updateparty) {
-            return response.status(201).json({ message: partyGroup?.partyGroupName + " Updated Successfully" });
+            return response.status(201).json({ message: partyGroup?.partyGroupName + " Updated Successfully", data: updateparty });
         }
     } catch (error: any) {
         return response.status(500).json(error.message);

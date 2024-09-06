@@ -49,7 +49,7 @@ brandRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
         const newbrand = await brandService.create(data)
 
         if (newbrand) {
-            return response.status(201).json({ message: "Brand Created Successfully" });
+            return response.status(201).json({ message: "Brand Created Successfully", data: newbrand });
         }
     } catch (error: any) {
         return response.status(500).json(error.message);
@@ -67,7 +67,7 @@ brandRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
         const updateBrand = await brandService.update(data, id)
 
         if (updateBrand) {
-            return response.status(201).json({ message: "Brand Updated Successfully" });
+            return response.status(201).json({ message: "Brand Updated Successfully", data: updateBrand });
         }
     } catch (error: any) {
         return response.status(500).json(error.message);

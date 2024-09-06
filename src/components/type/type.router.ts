@@ -46,7 +46,7 @@ typeRouter.post("/", authenticate, async (request: ExpressRequest, response: Res
         const newType = await typeService.create(data)
 
         if (newType) {
-            return response.status(201).json({ message: "Type Created Successfully" });
+            return response.status(201).json({ message: "Type Created Successfully", data: newType });
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
@@ -64,7 +64,7 @@ typeRouter.put("/:id", authenticate, async (request: ExpressRequest, response: R
         const updateType = await typeService.update(data, id)
 
         if (updateType) {
-            return response.status(201).json({ message: "Type Updated Successfully" });
+            return response.status(201).json({ message: "Type Updated Successfully", data: updateType });
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });

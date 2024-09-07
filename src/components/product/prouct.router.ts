@@ -47,6 +47,10 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         const userId = request.user.id;
         data = {
             ...data,
+            cost: 0,
+            minPrice: 0,
+            MRP: 0,
+            sellingPrice: 0,
             createdBy: userId
         }
         const newProduct = await productService.create(data)
@@ -59,10 +63,6 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     productId: newProduct.id,
                     centerId: center.id,
                     quantity: 0,
-                    cost: 0,
-                    minPrice: 0,
-                    MRP: 0,
-                    salePrice: 0
                 });
                 if (!inventory) {
                     throw new Error("Failed to update inventory association");

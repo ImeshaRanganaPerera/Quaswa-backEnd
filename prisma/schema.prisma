@@ -158,6 +158,10 @@ model Product {
   printName      String?
   image          String?
   criticalLevel  Int?
+  cost           Decimal?
+  minPrice       Decimal?
+  MRP            Decimal?
+  sellingPrice   Decimal?
   status         Boolean          @default(true)
   type           Type             @relation(fields: [typeId], references: [id])
   typeId         String
@@ -188,17 +192,13 @@ model voucherProduct {
 }
 
 model Inventory {
-  product      Product  @relation(fields: [productId], references: [id])
-  productId    String
-  center       Center   @relation(fields: [centerId], references: [id])
-  centerId     String
-  quantity     Decimal?
-  cost         Decimal?
-  minPrice     Decimal?
-  MRP          Decimal?
-  sellingPrice Decimal?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  center    Center   @relation(fields: [centerId], references: [id])
+  centerId  String
+  quantity  Decimal?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@id([productId, centerId])
 }

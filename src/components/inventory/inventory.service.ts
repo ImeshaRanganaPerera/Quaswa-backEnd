@@ -41,19 +41,11 @@ export const upsert = async (data: any) => {
         },
         update: {
             quantity: newQuantity, // Update with the calculated new quantity
-            cost: data.cost,
-            minPrice: data.minPrice,
-            MRP: data.MRP,
-            sellingPrice: data.sellingPrice
         },
         create: {
             productId: data.productId,
             centerId: data.centerId,
             quantity: data.quantity, // Insert the original quantity on creation
-            cost: data.cost,
-            minPrice: data.minPrice,
-            MRP: data.MRP,
-            sellingPrice: data.sellingPrice
         },
     });
 };

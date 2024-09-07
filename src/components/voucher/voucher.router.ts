@@ -7,6 +7,7 @@ import * as vocuherService from './voucher.service'
 import * as voucherGrpService from '../voucherGroup/vouchergrp.service'
 import * as productVoucherService from '../voucherProduct/voucherProduct.service'
 import * as inventoryService from '../inventory/inventory.service'
+import * as productService from '../product/product.service'
 
 export const voucherRouter = express.Router();
 
@@ -88,6 +89,17 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 voucherId: newVoucher.id,
                 productId: product.productId
             });
+            const updateProduct = await productService.updatePrices({
+                cost: product.cost,
+                minPrice: product.minPrice,
+                MRP: product.MRP,
+                sellingPrice: product.sellingPrice
+            }, product.productId)
+
+            if (!updateProduct) {
+                throw new Error("Failed to update product prices association");
+            }
+
             if (!voucherProduct) {
                 throw new Error("Failed to update product to list association");
             }
@@ -97,16 +109,13 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         } catch (error: any) {
             return response.status(500).json({ message: error.message });
         }
+
         if (voucherGrpdetails?.inventoryMode === "PLUS") {
             const inventoryPromise = data.productList.map(async (product: any) => {
                 const inventory = await inventoryService.upsert({
                     productId: product.productId,
                     centerId: data.centerId,
-                    quantity: product.quantity,
-                    cost: product.cost,
-                    minPrice: product.minPrice,
-                    MRP: product.MRP,
-                    sellingPrice: product.sellingPrice
+                    quantity: product.quantity
                 });
                 if (!inventory) {
                     throw new Error("Failed to update product to list association");

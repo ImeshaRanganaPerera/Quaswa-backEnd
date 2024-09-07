@@ -10,7 +10,7 @@ async function seed() {
 
     const utcDateTime = format(toZonedTime(currentDateTime, timezone), 'yyyy-MM-dd HH:mm:ss.SSSXXX', { timeZone: 'UTC' });
     const hashedPassword = await hash("1234", 10);
-    await db.user.create({
+    const user = await db.user.create({
         data: {
             name: "Admin",
             phoneNumber: "0000000000",  // Example phone number
@@ -36,6 +36,23 @@ async function seed() {
             { voucherName: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true },
             { voucherName: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true },
             { voucherName: "CREDIT-NOTE", inventoryMode: InventoryMode.DOUBLE, isAccount: true },
+        ]
+    });
+    const userid = user.id;
+
+    await db.brand.createMany({
+        data: [
+            { brandName: "BMW", createdBy: userid },
+            { brandName: "TATA", createdBy: userid },
+            { brandName: "TOYOTA", createdBy: userid },
+        ]
+    });
+
+    await db.type.createMany({
+        data: [
+            { typeName: "OIL FILTER", createdBy: userid },
+            { typeName: "RIM", createdBy: userid },
+            { typeName: "BUFFER", createdBy: userid },
         ]
     });
 

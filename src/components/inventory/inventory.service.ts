@@ -1,3 +1,4 @@
+import { Decimal } from "@prisma/client/runtime/library";
 import { db } from "../../utils/db.server";
 
 export const getlist = async () => {
@@ -27,10 +28,12 @@ export const upsert = async (data: any) => {
         },
     });
 
-    // Calculate the new quantity
-    const newQuantity = existingInventory
-        ? existingInventory.quantity + data.quantity
-        : data.quantity;
+    let newQuantity: Decimal;
+    if (existingInventory && existingInventory.quantity !== null) {
+        newQuantity = new Decimal(existingInventory.quantity).plus(new Decimal(data.quantity));
+    } else {
+        newQuantity = new Decimal(data.quantity);
+    }
 
     return db.inventory.upsert({
         where: {
@@ -45,7 +48,7 @@ export const upsert = async (data: any) => {
         create: {
             productId: data.productId,
             centerId: data.centerId,
-            quantity: data.quantity, // Insert the original quantity on creation
+            quantity: newQuantity, // Insert the original quantity on creation
         },
     });
 };

@@ -36,6 +36,7 @@ async function seed() {
             { voucherName: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true },
             { voucherName: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true },
             { voucherName: "CREDIT-NOTE", inventoryMode: InventoryMode.DOUBLE, isAccount: true },
+            { voucherName: "CREDIT-NOTE", inventoryMode: InventoryMode.DOUBLE, isAccount: true },
         ]
     });
     const userid = user.id;
@@ -53,6 +54,15 @@ async function seed() {
             { typeName: "OIL FILTER", createdBy: userid },
             { typeName: "RIM", createdBy: userid },
             { typeName: "BUFFER", createdBy: userid },
+        ]
+    });
+
+    await db.payment.createMany({
+        data: [
+            { type: "Cash" },
+            { type: "Online Tranfer" },
+            { type: "Cheque" },
+            { type: "Credit" },
         ]
     });
 

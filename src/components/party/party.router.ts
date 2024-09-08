@@ -53,6 +53,7 @@ partyRouter.get("/partygroup/:name", async (request: Request, response: Response
 //POST
 partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     const data: any = request.body;
+    console.log(data)
     try {
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });

@@ -31,7 +31,7 @@ async function seed() {
         data: [
             { voucherName: "SALES", inventoryMode: InventoryMode.MINUS, isAccount: true },
             { voucherName: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true },
-            { voucherName: "STOCK-TRANFER", inventoryMode: InventoryMode.DOUBLE, isAccount: false },
+            { voucherName: "STOCK-TRANSFER", inventoryMode: InventoryMode.DOUBLE, isAccount: false },
             { voucherName: "PURCHASE-ORDER", inventoryMode: InventoryMode.NONE, isAccount: false },
             { voucherName: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true },
             { voucherName: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true },

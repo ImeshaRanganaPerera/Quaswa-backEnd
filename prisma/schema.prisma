@@ -14,16 +14,16 @@ datasource db {
 }
 
 model Center {
-  id         String       @id @default(uuid())
-  centerName String
-  mode       CenterMode   @default(VIRTUAL)
-  user       User         @relation(fields: [createdBy], references: [id])
-  createdBy  String
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt()
-  userCenter userCenter[]
-  Inventory  Inventory[]
-  Voucher    Voucher[]
+  id            String          @id @default(uuid())
+  centerName    String
+  mode          CenterMode      @default(VIRTUAL)
+  user          User            @relation(fields: [createdBy], references: [id])
+  createdBy     String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt()
+  userCenter    userCenter[]
+  Inventory     Inventory[]
+  VoucherCenter VoucherCenter[]
 }
 
 model User {
@@ -94,24 +94,35 @@ model VoucherGroup {
 }
 
 model Voucher {
-  id             String           @id @default(uuid())
-  voucherNumber  String           @unique
-  date           DateTime?
-  amount         Decimal?
-  location       String?
-  paidValue      Decimal?
-  party          Party            @relation(fields: [partyId], references: [id])
-  partyId        String
-  voucherGroup   VoucherGroup     @relation(fields: [voucherGroupId], references: [id])
-  voucherGroupId String
-  center         Center           @relation(fields: [centerId], references: [id])
-  centerId       String
-  user           User             @relation(fields: [createdBy], references: [id])
-  createdBy      String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  PaymentVoucher PaymentVoucher[]
-  voucherProduct voucherProduct[]
+  id               String           @id @default(uuid())
+  voucherNumber    String           @unique
+  date             DateTime?
+  amount           Decimal?
+  location         String?
+  paidValue        Decimal?
+  refVoucherNumber String?
+  note             String?
+  party            Party?           @relation(fields: [partyId], references: [id])
+  partyId          String?
+  voucherGroup     VoucherGroup     @relation(fields: [voucherGroupId], references: [id])
+  voucherGroupId   String
+  user             User             @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  PaymentVoucher   PaymentVoucher[]
+  voucherProduct   voucherProduct[]
+  VoucherCenter    VoucherCenter[]
+}
+
+model VoucherCenter {
+  center       Center       @relation(fields: [centerId], references: [id])
+  centerId     String
+  voucher      Voucher      @relation(fields: [voucherId], references: [id])
+  voucherId    String
+  centerStatus centerStatus
+
+  @@id([centerId, voucherId])
 }
 
 model Payment {
@@ -121,12 +132,14 @@ model Payment {
 }
 
 model PaymentVoucher {
-  id        String  @id @default(uuid())
-  amount    Decimal
-  payment   Payment @relation(fields: [paymentId], references: [id])
-  paymentId String
-  voucher   Voucher @relation(fields: [voucherId], references: [id])
-  voucherId String
+  amount       Decimal
+  payment      Payment      @relation(fields: [paymentId], references: [id])
+  paymentId    String
+  voucher      Voucher      @relation(fields: [voucherId], references: [id])
+  voucherId    String
+  centerStatus centerStatus
+
+  @@id([paymentId, voucherId])
 }
 
 model Brand {
@@ -223,4 +236,9 @@ enum InventoryMode {
   MINUS
   DOUBLE
   NONE
+}
+
+enum centerStatus {
+  IN
+  OUT
 }

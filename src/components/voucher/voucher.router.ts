@@ -5,6 +5,7 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as vocuherService from './voucher.service'
 import * as voucherGrpService from '../voucherGroup/vouchergrp.service'
+import * as voucherCenter from '../centerVoucher/centerVoucher.service'
 import * as productVoucherService from '../voucherProduct/voucherProduct.service'
 import * as inventoryService from '../inventory/inventory.service'
 import * as productService from '../product/product.service'
@@ -66,7 +67,6 @@ voucherRouter.get("/group/:vouchname", async (request: Request, response: Respon
     }
 })
 
-
 //POST
 voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     var data: any = request.body;
@@ -77,96 +77,178 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         const userId = request.user.id;
         const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
         const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpdetails?.id)
-        const newVoucher = await vocuherService.create({ voucherNumber: newVoucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, centerId: data.centerId, partyId: data.partyId, voucherGroupId: voucherGrpdetails?.id, createdBy: userId })
-        const centerPromises = data.productList.map(async (product: any) => {
-            const voucherProduct = await productVoucherService.create({
-                cost: product.cost,
-                quantity: product.quantity,
-                discount: product.discount,
-                MRP: product.MRP,
-                sellingPrice: product.sellingPrice,
-                amount: product.amount,
-                voucherId: newVoucher.id,
-                productId: product.productId
-            });
-            if (data.voucherGroupname === 'GRN') {
-                const updateProductPrices = await productService.updatePrices({
+
+        if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
+            const newVoucher = await vocuherService.create({ voucherNumber: newVoucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, voucherGroupId: voucherGrpdetails?.id, createdBy: userId })
+            const centerPromises = data.productList.map(async (product: any) => {
+                const voucherProduct = await productVoucherService.create({
                     cost: product.cost,
-                    minPrice: product.minPrice,
+                    quantity: product.quantity,
+                    discount: product.discount,
                     MRP: product.MRP,
-                    sellingPrice: product.sellingPrice
-                }, product.productId)
-                if (!updateProductPrices) {
-                    throw new Error("Failed to update product prices association");
+                    sellingPrice: product.sellingPrice,
+                    amount: product.amount,
+                    voucherId: newVoucher.id,
+                    productId: product.productId
+                });
+                if (!voucherProduct) {
+                    throw new Error("Failed to update product to list association");
+                }
+                try {
+                    await Promise.all(centerPromises);
+                } catch (error: any) {
+                    return response.status(500).json({ message: error.message });
+                }
+            });
+            if (data.fromCenterId) {
+                const newVoucherCenter = await voucherCenter.create({
+                    centerId: data.fromCenterId,
+                    voucherId: newVoucher.id,
+                    centerStatus: "OUT"
+                })
+                if (!newVoucherCenter) {
+                    throw new Error("Failed to update Voucher Center to list association");
+                }
+                const inventoryPromise = data.productList.map(async (product: any) => {
+                    const inventory = await inventoryService.upsert({
+                        productId: product.productId,
+                        centerId: data.fromCenterId,
+                        quantity: -(product.quantity)
+                    });
+                    if (!inventory) {
+                        throw new Error("Failed to update product to list association");
+                    }
+                });
+                try {
+                    await Promise.all(inventoryPromise);
+                } catch (error: any) {
+                    return response.status(500).json({ message: error.message });
                 }
             }
-            if (!voucherProduct) {
-                throw new Error("Failed to update product to list association");
+            if (data.toCenterId) {
+                const newVoucherCenter = await voucherCenter.create({
+                    centerId: data.toCenterId,
+                    voucherId: newVoucher.id,
+                    centerStatus: "IN"
+                })
+                if (!newVoucherCenter) {
+                    throw new Error("Failed to update Voucher Center to list association");
+                }
+                const inventoryPromise = data.productList.map(async (product: any) => {
+                    const inventory = await inventoryService.upsert({
+                        productId: product.productId,
+                        centerId: data.toCenterId,
+                        quantity: product.quantity
+                    });
+                    if (!inventory) {
+                        throw new Error("Failed to update product to list association");
+                    }
+                });
+                try {
+                    await Promise.all(inventoryPromise);
+                } catch (error: any) {
+                    return response.status(500).json({ message: error.message });
+                }
             }
-        });
-        try {
-            await Promise.all(centerPromises);
-        } catch (error: any) {
-            return response.status(500).json({ message: error.message });
+            if (newVoucher) {
+                return response.status(201).json({ message: "Voucher Created Successfully" });
+            }
         }
 
-        if (voucherGrpdetails?.inventoryMode === "PLUS") {
-            const inventoryPromise = data.productList.map(async (product: any) => {
-                const inventory = await inventoryService.upsert({
-                    productId: product.productId,
-                    centerId: data.centerId,
-                    quantity: product.quantity
+        else {
+            
+            const newVoucher = await vocuherService.create({ voucherNumber: newVoucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data.partyId, voucherGroupId: voucherGrpdetails?.id, createdBy: userId })
+            const centerPromises = data.productList.map(async (product: any) => {
+                const voucherProduct = await productVoucherService.create({
+                    cost: product.cost,
+                    quantity: product.quantity,
+                    discount: product.discount,
+                    MRP: product.MRP,
+                    sellingPrice: product.sellingPrice,
+                    amount: product.amount,
+                    voucherId: newVoucher.id,
+                    productId: product.productId
                 });
-                if (!inventory) {
+
+                if (data.voucherGroupname === 'GRN') {
+                    const updateProductPrices = await productService.updatePrices({
+                        cost: product.cost,
+                        minPrice: product.minPrice,
+                        MRP: product.MRP,
+                        sellingPrice: product.sellingPrice
+                    }, product.productId)
+                    if (!updateProductPrices) {
+                        throw new Error("Failed to update product prices association");
+                    }
+                }
+                if (!voucherProduct) {
                     throw new Error("Failed to update product to list association");
                 }
             });
             try {
-                await Promise.all(inventoryPromise);
+                await Promise.all(centerPromises);
             } catch (error: any) {
                 return response.status(500).json({ message: error.message });
             }
-        }
 
-        if (voucherGrpdetails?.inventoryMode === "MINUS") {
-            const inventoryPromise = data.productList.map(async (product: any) => {
-                const inventory = await inventoryService.upsert({
-                    productId: product.productId,
+            if (voucherGrpdetails?.inventoryMode === "PLUS") {
+                const newVoucherCenter = await voucherCenter.create({
                     centerId: data.centerId,
-                    quantity: -(product.quantity)
-                });
-                if (!inventory) {
-                    throw new Error("Failed to update product to list association");
+                    voucherId: newVoucher.id,
+                    centerStatus: "IN"
+                })
+                if (!newVoucherCenter) {
+                    throw new Error("Failed to update Voucher Center to list association");
                 }
-            });
-            try {
-                await Promise.all(inventoryPromise);
-            } catch (error: any) {
-                return response.status(500).json({ message: error.message });
+                const inventoryPromise = data.productList.map(async (product: any) => {
+                    const inventory = await inventoryService.upsert({
+                        productId: product.productId,
+                        centerId: data.centerId,
+                        quantity: product.quantity
+                    });
+                    if (!inventory) {
+                        throw new Error("Failed to update product to list association");
+                    }
+                });
+                try {
+                    await Promise.all(inventoryPromise);
+                } catch (error: any) {
+                    return response.status(500).json({ message: error.message });
+                }
             }
-        }
 
-        if (voucherGrpdetails?.inventoryMode === "PLUS") {
-            const inventoryPromise = data.productList.map(async (product: any) => {
-                const inventory = await inventoryService.upsert({
-                    productId: product.productId,
+            if (voucherGrpdetails?.inventoryMode === "MINUS") {
+                const newVoucherCenter = await voucherCenter.create({
                     centerId: data.centerId,
-                    quantity: product.quantity
-                });
-                if (!inventory) {
-                    throw new Error("Failed to update product to list association");
+                    voucherId: newVoucher.id,
+                    centerStatus: "OUT"
+                })
+                if (!newVoucherCenter) {
+                    throw new Error("Failed to update Voucher Center to list association");
                 }
-            });
-            try {
-                await Promise.all(inventoryPromise);
-            } catch (error: any) {
-                return response.status(500).json({ message: error.message });
+
+                const inventoryPromise = data.productList.map(async (product: any) => {
+                    const inventory = await inventoryService.upsert({
+                        productId: product.productId,
+                        centerId: data.centerId,
+                        quantity: -(product.quantity)
+                    });
+                    if (!inventory) {
+                        throw new Error("Failed to update product to list association");
+                    }
+                });
+                try {
+                    await Promise.all(inventoryPromise);
+                } catch (error: any) {
+                    return response.status(500).json({ message: error.message });
+                }
+            }
+
+            if (newVoucher) {
+                return response.status(201).json({ message: "Voucher Created Successfully" });
             }
         }
 
-        if (newVoucher) {
-            return response.status(201).json({ message: "Voucher Created Successfully" });
-        }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
     }

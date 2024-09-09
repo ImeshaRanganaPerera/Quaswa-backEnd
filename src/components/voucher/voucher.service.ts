@@ -8,6 +8,9 @@ export const get = async (id: any) => {
     return db.voucher.findFirst({
         where: {
             id,
+        }, include: {
+            party: true,
+            voucherProduct: true
         }
     });
 }

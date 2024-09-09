@@ -13,8 +13,6 @@ export const getbyCenter = async (id: any) => {
         include: {
             product: true,
         }
-
-
     });
 }
 

@@ -19,9 +19,9 @@ export const userRouter = express.Router();
 userRouter.get("/", async (request: Request, res, next) => {
     try {
         const users = await UserService.getlist()
-        return res.status(200).json(users);
+        return res.status(200).json({ data: users });
     } catch (error: any) {
-        return res.status(500).json(error.message);
+        return res.status(500).json({ message: error.message });
     }
 })
 
@@ -39,7 +39,7 @@ userRouter.get("/:id", authenticate, async (request: ExpressRequest, response: R
         }
         return response.status(404).json("User could not be found");
     } catch (error: any) {
-        return response.status(500).json(error.message);
+        return response.status(500).json({ message: error.message });
     }
 })
 
@@ -54,16 +54,16 @@ userRouter.post("/", authenticate, async (request: ExpressRequest, response: Res
         const createdBy = request.user.id;
 
         if (data.centers) {
+
+            var newUser = await UserService.create(data);
+
+            if (!newUser) {
+                return response.status(500).json({ message: "Failed to create user" });
+            }
+
             if (data.centers && data.role === "MANAGER") {
                 let centers = data.centers
                 delete data.centers
-                console.log(data.centers)
-
-                var newUser = await UserService.create(data);
-
-                if (!newUser) {
-                    return response.status(500).json({ message: "Failed to create user" });
-                }
 
                 const centerPromises = centers.map(async (center: { centerId: string }) => {
                     const userCenter = await userCenterService.create({
@@ -81,10 +81,9 @@ userRouter.post("/", authenticate, async (request: ExpressRequest, response: Res
                     return response.status(500).json({ message: error.message });
                 }
             }
+            return response.status(201).json({ message: "User created successfully", data: newUser });
 
-            return response.status(201).json({ message: "User created successfully" });
         }
-
 
         // Handle user creation
         var newUser = await UserService.create(data);
@@ -115,7 +114,7 @@ userRouter.post("/", authenticate, async (request: ExpressRequest, response: Res
 
 
         // If role is "SALESMEN", create a new center and associate it with the user
-        if (!data.role) {
+        if (data.role === "SALESMEN") {
             const newCenter = await centerService.create({ centerName: data.name, createdBy });
 
             if (!newCenter) {
@@ -128,8 +127,8 @@ userRouter.post("/", authenticate, async (request: ExpressRequest, response: Res
                 return response.status(500).json({ message: "Failed to update center association" });
             }
         }
+        return response.status(201).json({ message: "User created successfully", data: newUser });
 
-        return response.status(201).json({ message: "User created successfully" });
     } catch (error: any) {
         console.error("Error creating user:", error);
         return response.status(500).json({ message: error.message });

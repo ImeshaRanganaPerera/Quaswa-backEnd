@@ -4,13 +4,6 @@ import { hash } from "bcrypt"
 
 export const getlist = async () => {
     return db.user.findMany({
-        select: {
-            id: true,
-            name: true,
-            phoneNumber: true,
-            username: true,
-            role: true
-        }
     });
 }
 

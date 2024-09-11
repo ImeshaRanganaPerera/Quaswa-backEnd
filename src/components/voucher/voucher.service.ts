@@ -26,9 +26,9 @@ export const getVoucherbyGrp = async (id: any) => {
     });
 }
 
-export const create = async (data: any) => {
+export const create = async (data?: any) => {
     return db.voucher.create({
-        data: data
+        data: { voucherNumber: data.voucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data.partyId, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
     });
 }
 

@@ -79,7 +79,12 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpdetails?.id)
 
         if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
-            const newVoucher = await vocuherService.create({ voucherNumber: newVoucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, voucherGroupId: voucherGrpdetails?.id, createdBy: userId })
+            const newVoucher = await vocuherService.create({
+                ...data,
+                voucherNumber: newVoucherNumber,
+                voucherGroupId: voucherGrpdetails?.id,
+                createdBy: userId
+            })
             const centerPromises = data.productList.map(async (product: any) => {
                 const voucherProduct = await productVoucherService.create({
                     cost: product.cost,
@@ -156,8 +161,12 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         }
 
         else {
-            
-            const newVoucher = await vocuherService.create({ voucherNumber: newVoucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data.partyId, voucherGroupId: voucherGrpdetails?.id, createdBy: userId })
+            const newVoucher = await vocuherService.create({
+                ...data,
+                voucherNumber: newVoucherNumber,
+                voucherGroupId: voucherGrpdetails?.id,
+                createdBy: userId
+            })
             const centerPromises = data.productList.map(async (product: any) => {
                 const voucherProduct = await productVoucherService.create({
                     cost: product.cost,

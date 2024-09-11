@@ -27,24 +27,27 @@ model Center {
 }
 
 model User {
-  id          String       @id @default(uuid())
-  name        String
-  nic         String?      @unique
-  phoneNumber String?      @unique
-  address     String?
-  dateofbirth DateTime?
-  username    String       @unique
-  password    String
-  role        Role         @default(SALESMEN)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  Voucher     Voucher[]
-  Party       Party[]
-  Product     Product[]
-  userCenter  userCenter[]
-  Center      Center[]
-  Brand       Brand[]
-  Type        Type[]
+  id              String            @id @default(uuid())
+  name            String
+  nic             String?           @unique
+  phoneNumber     String?           @unique
+  address         String?
+  dateofbirth     DateTime?
+  username        String            @unique
+  password        String
+  role            Role              @default(SALESMEN)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  Voucher         Voucher[]
+  Party           Party[]
+  Product         Product[]
+  userCenter      userCenter[]
+  Center          Center[]
+  Brand           Brand[]
+  Type            Type[]
+  AccountSubGroup AccountSubGroup[]
+  ChartofAccount  ChartofAccount[]
+  journalLine     journalLine[]
 }
 
 model userCenter {
@@ -97,6 +100,8 @@ model Voucher {
   id               String           @id @default(uuid())
   voucherNumber    String           @unique
   date             DateTime?
+  totalDebit       Decimal?
+  totalCredit      Decimal?
   amount           Decimal?
   location         String?
   paidValue        Decimal?
@@ -113,6 +118,7 @@ model Voucher {
   PaymentVoucher   PaymentVoucher[]
   voucherProduct   voucherProduct[]
   VoucherCenter    VoucherCenter[]
+  journalLine      journalLine[]
 }
 
 model VoucherCenter {
@@ -214,6 +220,51 @@ model Inventory {
   updatedAt DateTime @updatedAt
 
   @@id([productId, centerId])
+}
+
+model AccountGroup {
+  id              String            @id @default(uuid())
+  accTypes        String
+  AccountSubGroup AccountSubGroup[]
+}
+
+model AccountSubGroup {
+  id             String           @id @default(uuid())
+  accountSubName String
+  AccountGroup   AccountGroup     @relation(fields: [accountGroupId], references: [id])
+  accountGroupId String
+  user           User             @relation(fields: [createdBy], references: [id])
+  createdBy      String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  ChartofAccount ChartofAccount[]
+}
+
+model ChartofAccount {
+  id                String          @id @default(uuid())
+  accountName       String
+  accountsubGrp     AccountSubGroup @relation(fields: [accountSubGroupId], references: [id])
+  accountSubGroupId String
+  Opening_Balance   Decimal
+  user              User            @relation(fields: [createdBy], references: [id])
+  createdBy         String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  journalLine       journalLine[]
+}
+
+model journalLine {
+  id               String         @id @default(uuid())
+  journal          Voucher        @relation(fields: [voucherId], references: [id])
+  voucherId        String
+  account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])
+  chartofAccountId String
+  debitAmount      Decimal?
+  creditAmount     Decimal?
+  user             User           @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 enum Role {

@@ -100,4 +100,22 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
     }
 })
 
+productRouter.put("/productPriceUpdate/:id", authenticate, async (request: ExpressRequest, response: Response) => {
+    const id: any = request.params;
+    const data: any = request.body;
+
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+        const updateProduct = await productService.update(data, id)
+
+        if (updateProduct) {
+            return response.status(201).json({ message: "Product Price Updated Successfully", data: updateProduct });
+        }
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+
 

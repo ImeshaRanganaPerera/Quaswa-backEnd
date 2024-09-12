@@ -216,6 +216,7 @@ model Inventory {
   center    Center   @relation(fields: [centerId], references: [id])
   centerId  String
   quantity  Decimal?
+  status    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

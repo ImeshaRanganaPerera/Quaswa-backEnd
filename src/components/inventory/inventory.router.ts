@@ -17,6 +17,6 @@ inventoryRouter.get("/:id", async (request: Request, response: Response) => {
         }
         return response.status(404).json({ message: "Inventory could not be found" });
     } catch (error: any) {
-        return response.status(500).json(error.message);
+        return response.status(500).json({ message: error.message });
     }
 })

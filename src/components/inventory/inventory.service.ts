@@ -9,10 +9,11 @@ export const getbyCenter = async (id: any) => {
     return db.inventory.findMany({
         where: {
             centerId: id,
+            status: true,
         },
         include: {
-            product: true,
-        }
+            product: true, 
+        },
     });
 }
 

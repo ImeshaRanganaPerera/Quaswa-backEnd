@@ -11,6 +11,7 @@ import { productRouter } from "./components/product/prouct.router";
 import { voucherRouter } from "./components/voucher/voucher.router";
 import { userCenterRoute } from "./components/userCenter/userCenter.router";
 import { inventoryRouter } from "./components/inventory/inventory.router";
+import { VoucherProductListRouter } from "./components/voucherProduct/voucherProduct.router";
 // import { itemRouter } from "./components/items/item.router";
 // import { cusDetailRouter } from "./components/customerDetails/customerDetails.route";
 
@@ -35,6 +36,7 @@ app.use("/api/product", productRouter)
 app.use("/api/voucher", voucherRouter)
 app.use("/api/userCenter", userCenterRoute)
 app.use("/api/inventory", inventoryRouter)
+app.use("/api/voucherProduct", VoucherProductListRouter)
 // app.use("/api/cusDetail", cusDetailRouter)
 
 app.listen(PORT, () => {

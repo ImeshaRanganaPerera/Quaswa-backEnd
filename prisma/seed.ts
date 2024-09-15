@@ -32,13 +32,12 @@ async function seed() {
             { voucherName: "SALES", inventoryMode: InventoryMode.MINUS, isAccount: true },
             { voucherName: "SALES-RETURN", inventoryMode: InventoryMode.PLUS, isAccount: true },
             { voucherName: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true },
-            { voucherName: "GRN-RETURN", inventoryMode: InventoryMode.MINUS, isAccount: true },
+            { voucherName: "PURCHASE-RETURN", inventoryMode: InventoryMode.MINUS, isAccount: true },
 
             { voucherName: "STOCK-TRANSFER", inventoryMode: InventoryMode.DOUBLE, isAccount: false },
             { voucherName: "PURCHASE-ORDER", inventoryMode: InventoryMode.NONE, isAccount: false },
             { voucherName: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true },
             { voucherName: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true },
-            { voucherName: "CREDIT-NOTE", inventoryMode: InventoryMode.DOUBLE, isAccount: true },
         ]
     });
     const userid = user.id;
@@ -67,6 +66,52 @@ async function seed() {
             { type: "Credit" },
         ]
     });
+
+    const assets = await db.accountGroup.create({
+        data:
+            { accTypes: "ASSETS" },
+    });
+
+    const liabilities = await db.accountGroup.create({
+        data:
+            { accTypes: "LIABILITIES" },
+    });
+
+    const equity = await db.accountGroup.create({
+        data:
+            { accTypes: "EQUITY" },
+    });
+
+    const income = await db.accountGroup.create({
+        data:
+            { accTypes: "INCOME" },
+    });
+
+    const expencess = await db.accountGroup.create({
+        data:
+            { accTypes: "EXPENCESS" },
+    });
+
+    await db.accountSubGroup.createMany({
+        data: [
+            { accountSubName: "FIX ASSETS", accountGroupId: assets.id, createdBy: userid },
+            { accountSubName: "CURRENT ASSETS", accountGroupId: assets.id, createdBy: userid },
+            { accountSubName: "FIX LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
+            { accountSubName: "CURRENT LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
+            { accountSubName: "SALES", accountGroupId: income.id, createdBy: userid },
+        ]
+    });
+
+    // await db.chartofAccount.createMany({
+    //     data: [
+    //         { accountName: "FIX ASSETS", accountGroupId: assets.id, createdBy: userid },
+    //         { accountName: "CURRENT ASSETS", accountGroupId: assets.id, createdBy: userid },
+    //         { accountName: "FIX LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
+    //         { accountName: "CURRENT LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
+    //         { accountName: "SALES", accountGroupId: income.id, createdBy: userid },
+    //     ]
+    // });
+
 
 }
 

@@ -1,28 +1,25 @@
 import { db } from "../../utils/db.server";
 
 export const list = async () => {
-    return db.voucherProduct.findMany();
+    return db.chartofAccount.findMany();
 }
 
-export const getbyVoucherId = async (id: any) => {
-    return db.voucherProduct.findMany({
+export const get = async (id: any) => {
+    return db.chartofAccount.findUnique({
         where: {
-            voucherId: id,
+            id,
         },
-        include: {
-            product: true
-        }
     });
 }
 
 export const create = async (data: any) => {
-    return db.voucherProduct.create({
+    return db.chartofAccount.create({
         data: data
     });
 }
 
 export const update = async (data: any, id: any) => {
-    return db.voucherProduct.update({
+    return db.chartofAccount.update({
         where: id,
         data: data
     });

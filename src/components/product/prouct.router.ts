@@ -168,13 +168,13 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
 
             // Return the response including the combined data
             return response.status(201).json({
-                message: "Product Created Successfully",
+                message: "Product Updated Successfully",
                 data: combinedData
             });
         } catch (error: any) {
             return response.status(500).json({ message: error.message });
         }
-      
+
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
     }

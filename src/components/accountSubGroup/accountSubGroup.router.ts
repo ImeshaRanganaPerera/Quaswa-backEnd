@@ -5,37 +5,37 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as accountSubGroup from './accountSubGroup.service'
 
-export const brandRouter = express.Router();
+export const accSubGrpRoute = express.Router();
 
 //GET LIST
-brandRouter.get("/", async (request: Request, response: Response) => {
+accSubGrpRoute.get("/", async (request: Request, response: Response) => {
     try {
         const data = await accountSubGroup.list()
         if (data) {
             return response.status(200).json({ data: data });
         }
-        return response.status(404).json({ message: "Brand could not be found" });
+        return response.status(404).json({ message: "Sub Account Group could not be found" });
     } catch (error: any) {
         return response.status(500).json(error.message);
     }
 })
 
 //GET 
-brandRouter.get("/:id", async (request: Request, response: Response) => {
+accSubGrpRoute.get("/:id", async (request: Request, response: Response) => {
     const id: any = request.params.id;
     try {
         const data = await accountSubGroup.get(id)
         if (data) {
             return response.status(200).json({ data: data });
         }
-        return response.status(404).json({ message: "Brand could not be found" });
+        return response.status(404).json({ message: "Sub Account Group could not be found" });
     } catch (error: any) {
         return response.status(500).json(error.message);
     }
 })
 
 //POST
-brandRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
+accSubGrpRoute.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     var data: any = request.body;
     try {
         if (!request.user) {
@@ -46,17 +46,17 @@ brandRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
             ...data,
             createdBy: userId
         }
-        const newbrand = await accountSubGroup.create(data)
+        const newSubAccGrp = await accountSubGroup.create(data)
 
-        if (newbrand) {
-            return response.status(201).json({ message: "Brand Created Successfully", data: newbrand });
+        if (newSubAccGrp) {
+            return response.status(201).json({ message: "Sub Account Group Created Successfully", data: newSubAccGrp });
         }
     } catch (error: any) {
         return response.status(500).json(error.message);
     }
 })
 
-brandRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
+accSubGrpRoute.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;
     const data: any = request.body;
 
@@ -64,10 +64,10 @@ brandRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-        const updateBrand = await accountSubGroup.update(data, id)
+        const updateSubAccGrp = await accountSubGroup.update(data, id)
 
-        if (updateBrand) {
-            return response.status(201).json({ message: "Brand Updated Successfully", data: updateBrand });
+        if (updateSubAccGrp) {
+            return response.status(201).json({ message: "Sub Account Group Updated Successfully", data: updateSubAccGrp });
         }
     } catch (error: any) {
         return response.status(500).json(error.message);

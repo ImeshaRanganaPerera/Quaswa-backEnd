@@ -219,6 +219,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         throw new Error("Failed to update product to list association");
                     }
                 });
+
                 try {
                     await Promise.all(inventoryPromise);
                 } catch (error: any) {
@@ -246,6 +247,10 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         throw new Error("Failed to update product to list association");
                     }
                 });
+
+                if (voucherGrpdetails?.isAccount) {
+                    
+                }
                 try {
                     await Promise.all(inventoryPromise);
                 } catch (error: any) {

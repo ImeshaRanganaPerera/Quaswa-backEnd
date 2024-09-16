@@ -6,6 +6,8 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 import * as productService from './product.service'
 import * as inventoryService from '../inventory/inventory.service'
 import * as centerService from '../center/center.service'
+import * as OENumberService from '../OEMNumber/oemnumber.service'
+import { create } from '../ChartofAccount/chartofaccount.service';
 
 
 export const productRouter = express.Router();
@@ -45,19 +47,26 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             return response.status(401).json({ message: "User not authorized" });
         }
         const userId = request.user.id;
-        data = {
-            ...data,
+        var productData = {
+            barcode: data.barcode,
+            brandId: data.brandId,
+            criticalLevel: data.criticalLevel,
+            image: data.image,
+            itemCode: data.itemCode,
+            printName: data.printName,
+            productName: data.productName,
+            typeId: data.typeId,
             cost: 0,
             minPrice: 0,
             MRP: 0,
             sellingPrice: 0,
             createdBy: userId
         }
-        const newProduct = await productService.create(data)
+        const newProduct = await productService.create(productData)
 
         if (newProduct) {
-            const centerList = await centerService.getlist()
-
+            // Handle inventory
+            const centerList = await centerService.getlist();
             const centerPromises = centerList.map(async (center: { id: string }) => {
                 const inventory = await inventoryService.upsert({
                     productId: newProduct.id,
@@ -69,13 +78,39 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 }
             });
 
+            // Handle OEM Numbers
+            const OEMnumberPromises = data.OEMnumberList.map(async (oem: any) => {
+                const oenum = await OENumberService.create({
+                    productId: newProduct.id,
+                    OEMnumber: oem.OEMnumber
+                });
+                if (!oenum) {
+                    throw new Error("Failed to update OEM Numbers");
+                }
+                return oenum; // Return the created OEM number
+            });
+
             try {
-                await Promise.all(centerPromises);
+                // Wait for all promises
+                const [inventoryResults, oemNumbers] = await Promise.all([
+                    Promise.all(centerPromises), // Wait for all inventory updates
+                    Promise.all(OEMnumberPromises) // Wait for all OEM numbers to be created
+                ]);
+
+                // Combine product and OEM numbers into a single data object
+                const combinedData = {
+                    ...newProduct,
+                    OEMNumber: oemNumbers
+                };
+
+                // Return the response including the combined data
+                return response.status(201).json({
+                    message: "Product Created Successfully",
+                    data: combinedData
+                });
             } catch (error: any) {
                 return response.status(500).json({ message: error.message });
             }
-
-            return response.status(201).json({ message: "Product Created Successfully", data: newProduct });
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
@@ -83,22 +118,67 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 })
 
 productRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
-    const id: any = request.params;
+    const id: string = request.params.id; // Ensure this is a string
     const data: any = request.body;
-
     try {
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-        const updateProduct = await productService.update(data, id)
 
-        if (updateProduct) {
-            return response.status(201).json({ message: "Product Updated Successfully", data: updateProduct });
+        const productData = {
+            barcode: data.barcode,
+            brandId: data.brandId,
+            criticalLevel: data.criticalLevel,
+            image: data.image,
+            itemCode: data.itemCode,
+            printName: data.printName,
+            productName: data.productName,
+            typeId: data.typeId,
+        };
+
+        // Delete existing OEM numbers
+        await OENumberService.deleteOEMNumbers(id);
+
+        // Update product
+        const updateProduct = await productService.update(productData, id);
+
+        // Handle new OEM numbers
+        const OEMnumberPromises = data.OEMnumberList.map(async (oem: any) => {
+            const oenum = await OENumberService.create({
+                productId: id,
+                OEMnumber: oem.OEMnumber
+            });
+            if (!oenum) {
+                throw new Error("Failed to update OEM Numbers");
+            }
+            return oenum;
+        });
+
+        try {
+            // Wait for all promises
+            const [oemNumbers] = await Promise.all([
+                Promise.all(OEMnumberPromises)
+            ]);
+
+            // Combine product and OEM numbers into a single data object
+            const combinedData = {
+                ...updateProduct,
+                OEMNumber: oemNumbers
+            };
+
+            // Return the response including the combined data
+            return response.status(201).json({
+                message: "Product Created Successfully",
+                data: combinedData
+            });
+        } catch (error: any) {
+            return response.status(500).json({ message: error.message });
         }
+      
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
     }
-})
+});
 
 productRouter.put("/productPriceUpdate/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;

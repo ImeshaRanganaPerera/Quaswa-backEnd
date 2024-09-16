@@ -5,7 +5,8 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as partyService from './party.service'
 import * as partyGroupService from '../partyGroup/partyGroup.service'
-import { getbyGroup } from './party.service';
+import * as chartOfAccService from '../ChartofAccount/chartofaccount.service'
+import * as accSubGrpService from '../accountSubGroup/accountSubGroup.service'
 
 export const partyRouter = express.Router();
 
@@ -53,7 +54,6 @@ partyRouter.get("/partygroup/:name", async (request: Request, response: Response
 //POST
 partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     const data: any = request.body;
-    console.log(data)
     try {
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
@@ -63,17 +63,32 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
             return response.status(401).json({ message: "Party Group Undefined" });
         }
 
+        var subAcc;
+        var isverified = false
+        if (data.partyGroup === "SUPPLIER") {
+            isverified = true
+            subAcc = await accSubGrpService.getbyname("CURRENT LIABILITIES")
+        }
+        else {
+            subAcc = await accSubGrpService.getbyname("CURRENT ASSETS")
+        }
+
         const partyGroup = await partyGroupService.getbyname(data.partyGroup)
         if (!partyGroup) {
             return response.status(401).json({ message: "Party Group Invalid" });
         }
-        const newParty = await partyService.create({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, partyGroupId: partyGroup?.id, createdBy: userId })
+
+
+
+        const chartofacc = await chartOfAccService.create({ accountName: data.name, accountSubGroupId: subAcc?.id, Opening_Balance: data.Opening_Balance, createdBy: userId })
+
+        const newParty = await partyService.create({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, chartofAccountId: chartofacc.id, isVerified: isverified, partyGroupId: partyGroup?.id, createdBy: userId })
 
         if (newParty) {
             return response.status(201).json({ message: data.partyGroup + " Created Successfully", data: newParty });
         }
     } catch (error: any) {
-        return response.status(500).json(error.message);
+        return response.status(500).json({ message: error.message });
     }
 })
 
@@ -88,11 +103,15 @@ partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
         const updateparty = await partyService.update({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email }, id)
         const partyGroup = await partyGroupService.getbyid(updateparty.partyGroupId)
 
-        if (updateparty) {
+        const updatechartofAcc = await chartOfAccService.update({ accountName: data.name }, updateparty.chartofAccountId)
+
+        console.log(updatechartofAcc)
+
+        if (updateparty && updatechartofAcc) {
             return response.status(201).json({ message: partyGroup?.partyGroupName + " Updated Successfully", data: updateparty });
         }
     } catch (error: any) {
-        return response.status(500).json(error.message);
+        return response.status(500).json({ message: error.message });
     }
 })
 

@@ -20,7 +20,7 @@ export const create = async (data: any) => {
 
 export const update = async (data: any, id: any) => {
     return db.chartofAccount.update({
-        where: id,
+        where: { id },
         data: data
     });
 }

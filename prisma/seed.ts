@@ -92,26 +92,27 @@ async function seed() {
             { accTypes: "EXPENCESS" },
     });
 
-    await db.accountSubGroup.createMany({
+    const fixassets = await db.accountSubGroup.create({
+        data: { accountSubName: "FIX ASSETS", accountGroupId: assets.id, createdBy: userid },
+    })
+
+    const currentassets = await db.accountSubGroup.create({
+        data: { accountSubName: "CURRENT ASSETS", accountGroupId: assets.id, createdBy: userid }
+    })
+
+    const fixliabilities = await db.accountSubGroup.create({
+        data: { accountSubName: "FIX LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
+    })
+    const currentLiabilites = await db.accountSubGroup.create({
+        data: { accountSubName: "CURRENT LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
+    })
+
+    await db.chartofAccount.createMany({
         data: [
-            { accountSubName: "FIX ASSETS", accountGroupId: assets.id, createdBy: userid },
-            { accountSubName: "CURRENT ASSETS", accountGroupId: assets.id, createdBy: userid },
-            { accountSubName: "FIX LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
-            { accountSubName: "CURRENT LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
-            { accountSubName: "SALES", accountGroupId: income.id, createdBy: userid },
+            { accountName: "INVENTORY ACCOUNT", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "PURCHASING ACCOUNT", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid }
         ]
-    });
-
-    // await db.chartofAccount.createMany({
-    //     data: [
-    //         { accountName: "FIX ASSETS", accountGroupId: assets.id, createdBy: userid },
-    //         { accountName: "CURRENT ASSETS", accountGroupId: assets.id, createdBy: userid },
-    //         { accountName: "FIX LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
-    //         { accountName: "CURRENT LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
-    //         { accountName: "SALES", accountGroupId: income.id, createdBy: userid },
-    //     ]
-    // });
-
+    })
 
 }
 

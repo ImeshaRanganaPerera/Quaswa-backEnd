@@ -68,22 +68,42 @@ model PartyGroup {
 }
 
 model Party {
-  id           String     @id @default(uuid())
-  name         String
-  nic          String?
-  phoneNumber  String?    @unique
-  address1     String?
-  address2     String?
-  creditPeriod String?
-  creditValue  String?
-  email        String?
-  user         User       @relation(fields: [createdBy], references: [id])
-  createdBy    String
-  PartyGroup   PartyGroup @relation(fields: [partyGroupId], references: [id])
-  partyGroupId String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  Voucher      Voucher[]
+  id               String            @id @default(uuid())
+  name             String
+  nic              String?
+  phoneNumber      String?           @unique
+  address1         String?
+  address2         String?
+  creditPeriod     String?
+  creditValue      String?
+  email            String?
+  isVerified       Boolean?
+  chartofacc       ChartofAccount?   @relation(fields: [chartofAccountId], references: [id])
+  chartofAccountId String?
+  user             User              @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  PartyGroup       PartyGroup        @relation(fields: [partyGroupId], references: [id])
+  partyGroupId     String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  Voucher          Voucher[]
+  partyproofimage  partyproofimage[]
+}
+
+model proofimage {
+  id              String            @id @default(uuid())
+  name            String
+  partyproofimage partyproofimage[]
+}
+
+model partyproofimage {
+  party        Party      @relation(fields: [partyId], references: [id])
+  partyId      String
+  proofimage   proofimage @relation(fields: [proofimageId], references: [id])
+  proofimageId String
+  imageName    String
+
+  @@id([partyId, proofimageId])
 }
 
 model VoucherGroup {
@@ -192,6 +212,15 @@ model Product {
   updatedAt      DateTime         @updatedAt
   Inventory      Inventory[]
   voucherProduct voucherProduct[]
+  OEMNumber      OEMNumber[]
+}
+
+model OEMNumber {
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  OEMnumber String
+
+  @@id([OEMnumber, productId])
 }
 
 model voucherProduct {
@@ -242,22 +271,23 @@ model AccountSubGroup {
 }
 
 model ChartofAccount {
-  id                String          @id @default(uuid())
+  id                String           @id @default(uuid())
   accountName       String
-  accountsubGrp     AccountSubGroup @relation(fields: [accountSubGroupId], references: [id])
-  accountSubGroupId String
-  Opening_Balance   Decimal
-  user              User            @relation(fields: [createdBy], references: [id])
+  accountsubGrp     AccountSubGroup? @relation(fields: [accountSubGroupId], references: [id])
+  accountSubGroupId String?
+  Opening_Balance   Decimal?
+  user              User             @relation(fields: [createdBy], references: [id])
   createdBy         String
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
   journalLine       journalLine[]
+  Party             Party[]
 }
 
 model journalLine {
   id               String         @id @default(uuid())
-  journal          Voucher        @relation(fields: [voucherId], references: [id])
-  voucherId        String
+  journal          Voucher?       @relation(fields: [voucherId], references: [id])
+  voucherId        String?
   account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String
   debitAmount      Decimal?

@@ -1,7 +1,11 @@
 import { db } from "../../utils/db.server";
 
 export const list = async () => {
-    return db.product.findMany();
+    return db.product.findMany({
+        include: {
+            OEMNumber: true
+        },
+    });
 }
 
 export const get = async (id: any) => {
@@ -21,7 +25,7 @@ export const create = async (data: any) => {
 
 export const update = async (data: any, id: any) => {
     return db.product.update({
-        where: id,
+        where: {id},
         data: data
     });
 }

@@ -2,6 +2,7 @@ import { Role, InventoryMode } from "@prisma/client";
 import { db } from "../src/utils/db.server"
 import { format, toZonedTime } from 'date-fns-tz';
 import { hash } from "bcrypt";
+import { create } from '../src/components/voucherPayment/voucherPayment.service';
 
 
 async function seed() {
@@ -108,12 +109,32 @@ async function seed() {
         data: { accountSubName: "CURRENT LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
     })
 
+    const cash = await db.accountCategory.create({
+        data: { accCategoryName: 'Cash & Cash Equivalents', createdBy: userid }
+    })
+
+    const bank = await db.accountCategory.create({
+        data: { accCategoryName: 'Bank', createdBy: userid }
+    })
+
+    const debtor = await db.accountCategory.create({
+        data: { accCategoryName: 'Debtor', createdBy: userid }
+    })
+
+    const vendor = await db.accountCategory.create({
+        data: { accCategoryName: 'Vendor', createdBy: userid }
+    })
+
+    const acexpencess = await db.accountCategory.create({
+        data: { accCategoryName: 'Expencess', createdBy: userid }
+    })
+
     await db.chartofAccount.createMany({
         data: [
             { accountName: "INVENTORY ACCOUNT", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "REVENUE ACCOUNT", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "CASH", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "BANK", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "CASH", accountSubGroupId: currentassets.id, accountCategoryId: cash.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "BANK", accountSubGroupId: currentassets.id, accountCategoryId: bank.id, Opening_Balance: 0, createdBy: userid },
         ]
     })
 

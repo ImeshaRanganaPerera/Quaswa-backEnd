@@ -48,6 +48,7 @@ model User {
   AccountSubGroup AccountSubGroup[]
   ChartofAccount  ChartofAccount[]
   journalLine     journalLine[]
+  AccountCategory AccountCategory[]
 }
 
 model userCenter {
@@ -295,11 +296,23 @@ model AccountSubGroup {
   ChartofAccount ChartofAccount[]
 }
 
+model AccountCategory {
+  id              String           @id @default(uuid())
+  accCategoryName String
+  user            User             @relation(fields: [createdBy], references: [id])
+  createdBy       String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  ChartofAccount  ChartofAccount[]
+}
+
 model ChartofAccount {
   id                String           @id @default(uuid())
   accountName       String
   accountsubGrp     AccountSubGroup? @relation(fields: [accountSubGroupId], references: [id])
   accountSubGroupId String?
+  accCategory       AccountCategory? @relation(fields: [accountCategoryId], references: [id])
+  accountCategoryId String?
   Opening_Balance   Decimal?
   user              User             @relation(fields: [createdBy], references: [id])
   createdBy         String

@@ -12,6 +12,14 @@ export const get = async (id: any) => {
     });
 }
 
+export const getbyname = async (name: string) => {
+    return db.chartofAccount.findFirst({
+        where: {
+            accountName: name
+        }
+    })
+}
+
 export const create = async (data: any) => {
     return db.chartofAccount.create({
         data: data

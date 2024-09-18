@@ -26,9 +26,17 @@ export const getVoucherbyGrp = async (id: any) => {
     });
 }
 
+export const getVoucherbyParty = async (id: any) => {
+    return db.voucher.findMany({
+        where: {
+            partyId: id,
+        }
+    });
+}
+
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data.partyId, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
+        data: { voucherNumber: data.voucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data.partyId, note:data.note, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
     });
 }
 
@@ -49,7 +57,7 @@ export const generateVoucherNumber = async (voucherGroupId: any) => {
         throw new Error("Voucher Group not found");
     }
 
-    const groupName = voucherGroup.voucherName; // e.g., 'BILLING', 'RECEIPT'
+    const shortname = voucherGroup.shortname; // e.g., 'BILLING', 'RECEIPT'
 
     // Get the latest voucher for the specified group
     const lastVoucher = await db.voucher.findFirst({
@@ -64,10 +72,10 @@ export const generateVoucherNumber = async (voucherGroupId: any) => {
         const lastVoucherNumber = lastVoucher.voucherNumber.split('-').pop();
         const lastNumber = parseInt(lastVoucherNumber || '0', 10);
         // Increment the number for the new voucher
-        newVoucherNumber = `${groupName}-${String(lastNumber + 1).padStart(4, '0')}`;
+        newVoucherNumber = `${shortname}-${String(lastNumber + 1).padStart(4, '0')}`;
     } else {
         // If no voucher exists for this group, start with '0001'
-        newVoucherNumber = `${groupName}-0001`;
+        newVoucherNumber = `${shortname}-0001`;
     }
 
     return newVoucherNumber;

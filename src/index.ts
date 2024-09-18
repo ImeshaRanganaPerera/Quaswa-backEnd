@@ -25,6 +25,11 @@ const PORT: number = parseInt(process.env.PORT as string, 10);
 
 const app = express();
 
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+});
+
 app.use(cors());
 app.use(express.json());
 app.use("/api/users", userRouter)
@@ -37,7 +42,6 @@ app.use("/api/voucher", voucherRouter)
 app.use("/api/userCenter", userCenterRoute)
 app.use("/api/inventory", inventoryRouter)
 app.use("/api/voucherProduct", VoucherProductListRouter)
-// app.use("/api/cusDetail", cusDetailRouter)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

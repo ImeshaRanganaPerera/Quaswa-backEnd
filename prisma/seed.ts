@@ -29,15 +29,16 @@ async function seed() {
 
     await db.voucherGroup.createMany({
         data: [
-            { voucherName: "SALES", inventoryMode: InventoryMode.MINUS, isAccount: true },
-            { voucherName: "SALES-RETURN", inventoryMode: InventoryMode.PLUS, isAccount: true },
-            { voucherName: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true },
-            { voucherName: "PURCHASE-RETURN", inventoryMode: InventoryMode.MINUS, isAccount: true },
-
-            { voucherName: "STOCK-TRANSFER", inventoryMode: InventoryMode.DOUBLE, isAccount: false },
-            { voucherName: "PURCHASE-ORDER", inventoryMode: InventoryMode.NONE, isAccount: false },
-            { voucherName: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true },
-            { voucherName: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "SALES", shortname: "INV", inventoryMode: InventoryMode.MINUS, isAccount: true },
+            { voucherName: "SALES-RETURN", shortname: "SALES-R", inventoryMode: InventoryMode.PLUS, isAccount: true },
+            { voucherName: "GRN", shortname: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true },
+            { voucherName: "PURCHASE-RETURN", shortname: "PURCHASE-R", inventoryMode: InventoryMode.MINUS, isAccount: true },
+            { voucherName: "STOCK-TRANSFER", shortname: "ST", inventoryMode: InventoryMode.DOUBLE, isAccount: false },
+            { voucherName: "PURCHASE-ORDER", shortname: "PO", inventoryMode: InventoryMode.NONE, isAccount: false },
+            { voucherName: "PAYMENT", shortname: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "RECEIPT", shortname: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "UTILITY-BILL-CREATE", shortname: "UTILITY-BC", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "UTILITY-BILL-PAYMENT", shortname: "UTILITY-BPAY", inventoryMode: InventoryMode.NONE, isAccount: true },
         ]
     });
     const userid = user.id;
@@ -61,7 +62,7 @@ async function seed() {
     await db.payment.createMany({
         data: [
             { type: "Cash" },
-            { type: "Online Tranfer" },
+            { type: "Online Transfer" },
             { type: "Cheque" },
             { type: "Credit" },
         ]
@@ -110,7 +111,9 @@ async function seed() {
     await db.chartofAccount.createMany({
         data: [
             { accountName: "INVENTORY ACCOUNT", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "PURCHASING ACCOUNT", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid }
+            { accountName: "REVENUE ACCOUNT", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "CASH", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "BANK", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
         ]
     })
 

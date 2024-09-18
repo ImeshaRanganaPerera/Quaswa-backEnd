@@ -7,7 +7,6 @@ import * as productService from './product.service'
 import * as inventoryService from '../inventory/inventory.service'
 import * as centerService from '../center/center.service'
 import * as OENumberService from '../OEMNumber/oemnumber.service'
-import { create } from '../ChartofAccount/chartofaccount.service';
 
 
 export const productRouter = express.Router();

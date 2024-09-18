@@ -78,6 +78,8 @@ model Party {
   creditValue      String?
   email            String?
   isVerified       Boolean?
+  partyCategory    partyCategory?    @relation(fields: [partyCategoryId], references: [id])
+  partyCategoryId  String?
   chartofacc       ChartofAccount?   @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String?
   user             User              @relation(fields: [createdBy], references: [id])
@@ -88,6 +90,12 @@ model Party {
   updatedAt        DateTime          @updatedAt
   Voucher          Voucher[]
   partyproofimage  partyproofimage[]
+}
+
+model partyCategory {
+  id       String  @id @default(uuid())
+  category String
+  Party    Party[]
 }
 
 model proofimage {
@@ -109,6 +117,7 @@ model partyproofimage {
 model VoucherGroup {
   id            String        @id @default(uuid())
   voucherName   String
+  shortname     String
   inventoryMode InventoryMode
   isAccount     Boolean
   createdAt     DateTime      @default(now())
@@ -158,12 +167,11 @@ model Payment {
 }
 
 model PaymentVoucher {
-  amount       Decimal
-  payment      Payment      @relation(fields: [paymentId], references: [id])
-  paymentId    String
-  voucher      Voucher      @relation(fields: [voucherId], references: [id])
-  voucherId    String
-  centerStatus centerStatus
+  amount    Decimal
+  payment   Payment @relation(fields: [paymentId], references: [id])
+  paymentId String
+  voucher   Voucher @relation(fields: [voucherId], references: [id])
+  voucherId String
 
   @@id([paymentId, voucherId])
 }
@@ -189,30 +197,31 @@ model Type {
 }
 
 model Product {
-  id             String           @id @default(uuid())
-  unit           Unit             @default(PCS)
-  itemCode       String?          @unique()
-  barcode        String?          @unique()
-  productName    String
-  printName      String?
-  image          String?
-  criticalLevel  Int?
-  cost           Decimal?
-  minPrice       Decimal?
-  MRP            Decimal?
-  sellingPrice   Decimal?
-  status         Boolean          @default(true)
-  type           Type             @relation(fields: [typeId], references: [id])
-  typeId         String
-  brand          Brand            @relation(fields: [brandId], references: [id])
-  brandId        String
-  user           User             @relation(fields: [createdBy], references: [id])
-  createdBy      String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  Inventory      Inventory[]
-  voucherProduct voucherProduct[]
-  OEMNumber      OEMNumber[]
+  id                   String                 @id @default(uuid())
+  unit                 Unit                   @default(PCS)
+  itemCode             String?                @unique()
+  barcode              String?                @unique()
+  productName          String
+  printName            String?
+  image                String?
+  criticalLevel        Int?
+  cost                 Decimal?
+  minPrice             Decimal?
+  MRP                  Decimal?
+  sellingPrice         Decimal?
+  status               Boolean                @default(true)
+  type                 Type                   @relation(fields: [typeId], references: [id])
+  typeId               String
+  brand                Brand                  @relation(fields: [brandId], references: [id])
+  brandId              String
+  user                 User                   @relation(fields: [createdBy], references: [id])
+  createdBy            String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  Inventory            Inventory[]
+  voucherProduct       voucherProduct[]
+  OEMNumber            OEMNumber[]
+  productDiscountLevel productDiscountLevel[]
 }
 
 model OEMNumber {
@@ -221,6 +230,22 @@ model OEMNumber {
   OEMnumber String
 
   @@id([OEMnumber, productId])
+}
+
+model discountLevel {
+  id                   String                 @id @default(uuid())
+  level                String
+  productDiscountLevel productDiscountLevel[]
+}
+
+model productDiscountLevel {
+  product         Product       @relation(fields: [productId], references: [id])
+  productId       String
+  discountLevel   discountLevel @relation(fields: [discountLevelId], references: [id])
+  discountLevelId String
+  discountRate    String
+
+  @@id([productId, discountLevelId])
 }
 
 model voucherProduct {

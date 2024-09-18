@@ -78,8 +78,6 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
             return response.status(401).json({ message: "Party Group Invalid" });
         }
 
-
-
         const chartofacc = await chartOfAccService.create({ accountName: data.name, accountSubGroupId: subAcc?.id, Opening_Balance: data.Opening_Balance, createdBy: userId })
 
         const newParty = await partyService.create({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, chartofAccountId: chartofacc.id, isVerified: isverified, partyGroupId: partyGroup?.id, createdBy: userId })

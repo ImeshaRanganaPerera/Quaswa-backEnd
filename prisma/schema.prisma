@@ -49,6 +49,7 @@ model User {
   journalLine        journalLine[]
   AccountSubCategory AccountSubCategory[]
   AccountGroup       AccountGroup[]
+  partyCategory      partyCategory[]
 }
 
 model userCenter {
@@ -61,11 +62,12 @@ model userCenter {
 }
 
 model PartyGroup {
-  id             String   @id @default(uuid())
+  id             String          @id @default(uuid())
   partyGroupName String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   party          Party[]
+  partyCategory  partyCategory[]
 }
 
 model Party {
@@ -83,10 +85,10 @@ model Party {
   partyCategoryId  String?
   chartofacc       ChartofAccount?   @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String?
-  user             User              @relation(fields: [createdBy], references: [id])
-  createdBy        String
   PartyGroup       PartyGroup        @relation(fields: [partyGroupId], references: [id])
   partyGroupId     String
+  user             User              @relation(fields: [createdBy], references: [id])
+  createdBy        String
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   Voucher          Voucher[]
@@ -94,9 +96,14 @@ model Party {
 }
 
 model partyCategory {
-  id       String  @id @default(uuid())
-  category String
-  Party    Party[]
+  id           String     @id @default(uuid())
+  category     String
+  PartyGroup   PartyGroup @relation(fields: [partyGroupId], references: [id])
+  partyGroupId String
+  user         User       @relation(fields: [createdBy], references: [id])
+  createdBy    String
+  createdAt    DateTime   @default(now())
+  Party        Party[]
 }
 
 model proofimage {
@@ -330,6 +337,7 @@ model journalLine {
   chartofAccountId String
   debitAmount      Decimal?
   creditAmount     Decimal?
+  ref              String?
   user             User           @relation(fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime       @default(now())

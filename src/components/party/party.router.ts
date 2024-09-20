@@ -8,6 +8,7 @@ import * as partyGroupService from '../partyGroup/partyGroup.service'
 import * as chartOfAccService from '../ChartofAccount/chartofaccount.service'
 import * as accSubCategory from '../accountSubCategory/accountSubCategory.service'
 import * as accGrp from '../accountGroup/accountGroup.service'
+import * as partyCategoryService from '../partyCategory/partyCategory.service'
 
 export const partyRouter = express.Router();
 
@@ -67,14 +68,19 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
         var subAcc;
         var accGroup
         var isverified = false
+        var partycategory;
+        var partyCateId;
         if (data.partyGroup === "SUPPLIER") {
             isverified = true
             subAcc = await accSubCategory.getbyname("CURRENT LIABILITIES")
-            accGroup = await accGrp.getbyname("Vendor")
+            accGroup = await accGrp.getbyname("Payable")
+            partycategory = await partyCategoryService.getbyname('COMMON SUPPLIER')
+            partyCateId = partycategory?.id;
         }
         else {
             subAcc = await accSubCategory.getbyname("CURRENT ASSETS")
-            accGroup = await accGrp.getbyname("Debtor")
+            accGroup = await accGrp.getbyname("Receivable")
+            partyCateId = data.partyCategoryId
         }
 
         const partyGroup = await partyGroupService.getbyname(data.partyGroup)
@@ -84,7 +90,7 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
 
         const chartofacc = await chartOfAccService.create({ accountName: data.name, accountSubCategoryId: subAcc?.id, accountGroupId: accGroup?.id, Opening_Balance: data.Opening_Balance, createdBy: userId })
 
-        const newParty = await partyService.create({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, chartofAccountId: chartofacc.id, isVerified: isverified, partyGroupId: partyGroup?.id, createdBy: userId })
+        const newParty = await partyService.create({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, chartofAccountId: chartofacc.id, isVerified: isverified, partyCategoryId: partyCateId, partyGroupId: partyGroup?.id, createdBy: userId })
 
         if (newParty) {
             return response.status(201).json({ message: data.partyGroup + " Created Successfully", data: newParty });
@@ -102,7 +108,17 @@ partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-        const updateparty = await partyService.update({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email }, id)
+        var partyCateId;
+        var partycategory;
+        if (data.partyGroup === "SUPPLIER") {
+            partycategory = await partyCategoryService.getbyname('COMMON SUPPLIER')
+            partyCateId = partycategory?.id;
+        }
+        else {
+            partyCateId = data.partyCategoryId
+        }
+
+        const updateparty = await partyService.update({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, partyCategoryId: partyCateId }, id)
         const partyGroup = await partyGroupService.getbyid(updateparty.partyGroupId)
 
         const updatechartofAcc = await chartOfAccService.updates({ accountName: data.name }, updateparty.chartofAccountId)

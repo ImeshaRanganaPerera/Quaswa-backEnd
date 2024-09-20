@@ -16,6 +16,7 @@ import { chartofAccRouter } from "./components/ChartofAccount/chartofaccount.rou
 import { accCategoryRouter } from "./components/accountCategory/accountCategory.router";
 import { accSubCategoryRouter } from "./components/accountSubCategory/accountSubCategory.router";
 import { accGroupRouter } from "./components/accountGroup/accountGroup.router";
+import { partyCategoryRouter } from "./components/partyCategory/partyCategory.route";
 
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.use(express.json());
 app.use("/api/users", userRouter)
 app.use("/api/center", centerRouter)
 app.use("/api/party", partyRouter)
+app.use("/api/partyCategory", partyCategoryRouter)
 app.use("/api/brand", brandRouter)
 app.use("/api/type", typeRouter)
 app.use("/api/product", productRouter)

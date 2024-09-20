@@ -23,7 +23,8 @@ export const getbyGroup = async (id: any) => {
 export const create = async (data: any) => {
     return db.party.create({
         data: data
-    });
+    },
+    );
 }
 
 export const update = async (data: any, id: any) => {

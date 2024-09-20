@@ -85,6 +85,8 @@ voucherRouter.get("/party/:partyId", async (request: Request, response: Response
     }
 })
 
+
+
 //POST
 voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     var data: any = request.body;
@@ -544,6 +546,44 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                                     jounallineService.create({
                                         voucherId,
                                         chartofAccountId: partyAccountId,
+                                        debitAmount: 0,
+                                        creditAmount: amount,
+                                        createdBy: userId
+                                    })
+                                ]);
+                            } else {
+                                console.error("Invalid account details: Inventory or party account is missing.");
+                            }
+                        } catch (error) {
+                            console.error("Error creating journal lines:", error);
+                        }
+                    }
+
+                    if (data.voucherGroupname === 'PETTY-CASH') {
+                        try {
+                            // Fetch necessary accounts concurrently
+                            const [paymode, chartOfAcc] = await Promise.all([
+                                chartofaccService.getbyname("PETTY-CASH"),
+                                chartofaccService.getbyname("Tea")
+                            ]);
+
+                            // Ensure both accounts exist
+                            if (paymode?.id && chartOfAcc) {
+                                const { id: voucherId } = newVoucher;
+                                const { amount } = data;
+
+                                // Create journal lines concurrently
+                                await Promise.all([
+                                    jounallineService.create({
+                                        voucherId,
+                                        chartofAccountId: chartOfAcc.id,
+                                        debitAmount: amount,
+                                        creditAmount: 0,
+                                        createdBy: userId
+                                    }),
+                                    jounallineService.create({
+                                        voucherId,
+                                        chartofAccountId: paymode.id,
                                         debitAmount: 0,
                                         creditAmount: amount,
                                         createdBy: userId

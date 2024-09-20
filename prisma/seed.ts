@@ -20,13 +20,22 @@ async function seed() {
             role: Role.ADMIN,  // Using the Role enum
         }
     });
+    const userid = user.id;
 
-    await db.partyGroup.createMany({
+    const customer = await db.partyGroup.create({
+        data: { partyGroupName: "CUSTOMER" }
+    })
+
+    const supplier = await db.partyGroup.create({
+        data: { partyGroupName: "SUPPLIER" }
+    })
+
+    await db.partyCategory.createMany({
         data: [
-            { partyGroupName: "CUSTOMER" },
-            { partyGroupName: "SUPPLIER" }
+            { category: "RUNNING CUSTOMER", partyGroupId: customer.id, createdBy: userid },
+            { category: "COMMON SUPPLIER", partyGroupId: supplier.id, createdBy: userid }
         ]
-    });
+    })
 
     await db.voucherGroup.createMany({
         data: [
@@ -40,9 +49,11 @@ async function seed() {
             { voucherName: "RECEIPT", shortname: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true },
             { voucherName: "UTILITY-BILL-CREATE", shortname: "UTILITY-BC", inventoryMode: InventoryMode.NONE, isAccount: true },
             { voucherName: "UTILITY-BILL-PAYMENT", shortname: "UTILITY-BPAY", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "PETTY-CASH", shortname: "PETTY-CASH", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "SUPPLIER-BILL", shortname: "SUPPLIER-BC", inventoryMode: InventoryMode.NONE, isAccount: true },
         ]
     });
-    const userid = user.id;
+
 
     await db.brand.createMany({
         data: [
@@ -118,12 +129,12 @@ async function seed() {
         data: { accountGroupName: 'Bank', createdBy: userid }
     })
 
-    const debtor = await db.accountGroup.create({
-        data: { accountGroupName: 'Debtor', createdBy: userid }
+    const receivable = await db.accountGroup.create({
+        data: { accountGroupName: 'Receivable', createdBy: userid }
     })
 
-    const vendor = await db.accountGroup.create({
-        data: { accountGroupName: 'Vendor', createdBy: userid }
+    const payable = await db.accountGroup.create({
+        data: { accountGroupName: 'Payable', createdBy: userid }
     })
 
     const acexpencess = await db.accountGroup.create({
@@ -142,7 +153,7 @@ async function seed() {
         data: [
             { accountName: "INVENTORY ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: inventory.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "REVENUE ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: incomes.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "LIGHT BILL", accountSubCategoryId: currentassets.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "LIGHT BILL", accountSubCategoryId: currentLiabilites.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "CASH", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "BANK", accountSubCategoryId: currentassets.id, accountGroupId: bank.id, Opening_Balance: 0, createdBy: userid },
         ]

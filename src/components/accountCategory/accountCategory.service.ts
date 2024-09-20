@@ -12,17 +12,10 @@ export const get = async (id: any) => {
     });
 }
 
-export const getbyname = async (name: any) => {
-    return db.accountCategory.findFirst({
-        where: {
-            accCategoryName: name,
-        },
-    });
-}
-
 export const create = async (data: any) => {
     return db.accountCategory.create({
-        data: data
+        data: data,
+       
     });
 }
 

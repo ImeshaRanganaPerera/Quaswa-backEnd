@@ -12,6 +12,14 @@ export const get = async (id: any) => {
     });
 }
 
+export const getbyname = async (name: any) => {
+    return db.accountGroup.findFirst({
+        where: {
+            accountGroupName: name,
+        },
+    });
+}
+
 export const create = async (data: any) => {
     return db.accountGroup.create({
         data: data

@@ -6,8 +6,8 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 import * as partyService from './party.service'
 import * as partyGroupService from '../partyGroup/partyGroup.service'
 import * as chartOfAccService from '../ChartofAccount/chartofaccount.service'
-import * as accSubGrpService from '../accountSubGroup/accountSubGroup.service'
-import * as accCategoryService from '../accountCategory/accountCategory.service'
+import * as accSubCategory from '../accountSubCategory/accountSubCategory.service'
+import * as accGrp from '../accountGroup/accountGroup.service'
 
 export const partyRouter = express.Router();
 
@@ -65,16 +65,16 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
         }
 
         var subAcc;
-        var accCat
+        var accGroup
         var isverified = false
         if (data.partyGroup === "SUPPLIER") {
             isverified = true
-            subAcc = await accSubGrpService.getbyname("CURRENT LIABILITIES")
-            accCat = await accCategoryService.getbyname("Vendor")
+            subAcc = await accSubCategory.getbyname("CURRENT LIABILITIES")
+            accGroup = await accGrp.getbyname("Vendor")
         }
         else {
-            subAcc = await accSubGrpService.getbyname("CURRENT ASSETS")
-            accCat = await accCategoryService.getbyname("Debtor")
+            subAcc = await accSubCategory.getbyname("CURRENT ASSETS")
+            accGroup = await accGrp.getbyname("Debtor")
         }
 
         const partyGroup = await partyGroupService.getbyname(data.partyGroup)
@@ -82,7 +82,7 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
             return response.status(401).json({ message: "Party Group Invalid" });
         }
 
-        const chartofacc = await chartOfAccService.create({ accountName: data.name, accountSubGroupId: subAcc?.id, accountCategoryId: accCat?.id, Opening_Balance: data.Opening_Balance, createdBy: userId })
+        const chartofacc = await chartOfAccService.create({ accountName: data.name, accountSubCategoryId: subAcc?.id, accountGroupId: accGroup?.id, Opening_Balance: data.Opening_Balance, createdBy: userId })
 
         const newParty = await partyService.create({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, chartofAccountId: chartofacc.id, isVerified: isverified, partyGroupId: partyGroup?.id, createdBy: userId })
 
@@ -105,7 +105,7 @@ partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
         const updateparty = await partyService.update({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email }, id)
         const partyGroup = await partyGroupService.getbyid(updateparty.partyGroupId)
 
-        const updatechartofAcc = await chartOfAccService.update({ accountName: data.name }, updateparty.chartofAccountId)
+        const updatechartofAcc = await chartOfAccService.updates({ accountName: data.name }, updateparty.chartofAccountId)
 
         console.log(updatechartofAcc)
 

@@ -66,75 +66,85 @@ async function seed() {
             { type: "Online Transfer" },
             { type: "Cheque" },
             { type: "Credit" },
+            { type: "Petty Cash" },
         ]
     });
 
-    const assets = await db.accountGroup.create({
+    const assets = await db.accountCategory.create({
         data:
-            { accTypes: "ASSETS" },
+            { accCategory: "ASSETS" },
     });
 
-    const liabilities = await db.accountGroup.create({
+    const liabilities = await db.accountCategory.create({
         data:
-            { accTypes: "LIABILITIES" },
+            { accCategory: "LIABILITIES" },
     });
 
-    const equity = await db.accountGroup.create({
+    const equity = await db.accountCategory.create({
         data:
-            { accTypes: "EQUITY" },
+            { accCategory: "EQUITY" },
     });
 
-    const income = await db.accountGroup.create({
+    const income = await db.accountCategory.create({
         data:
-            { accTypes: "INCOME" },
+            { accCategory: "INCOME" },
     });
 
-    const expencess = await db.accountGroup.create({
+    const expencess = await db.accountCategory.create({
         data:
-            { accTypes: "EXPENCESS" },
+            { accCategory: "EXPENCESS" },
     });
 
-    const fixassets = await db.accountSubGroup.create({
-        data: { accountSubName: "FIX ASSETS", accountGroupId: assets.id, createdBy: userid },
+    const fixassets = await db.accountSubCategory.create({
+        data: { accountSubName: "FIX ASSETS", accountCategoryId: assets.id, createdBy: userid },
     })
 
-    const currentassets = await db.accountSubGroup.create({
-        data: { accountSubName: "CURRENT ASSETS", accountGroupId: assets.id, createdBy: userid }
+    const currentassets = await db.accountSubCategory.create({
+        data: { accountSubName: "CURRENT ASSETS", accountCategoryId: assets.id, createdBy: userid }
     })
 
-    const fixliabilities = await db.accountSubGroup.create({
-        data: { accountSubName: "FIX LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
+    const fixliabilities = await db.accountSubCategory.create({
+        data: { accountSubName: "FIX LIABILITIES", accountCategoryId: liabilities.id, createdBy: userid },
     })
-    const currentLiabilites = await db.accountSubGroup.create({
-        data: { accountSubName: "CURRENT LIABILITIES", accountGroupId: liabilities.id, createdBy: userid },
-    })
-
-    const cash = await db.accountCategory.create({
-        data: { accCategoryName: 'Cash & Cash Equivalents', createdBy: userid }
+    const currentLiabilites = await db.accountSubCategory.create({
+        data: { accountSubName: "CURRENT LIABILITIES", accountCategoryId: liabilities.id, createdBy: userid },
     })
 
-    const bank = await db.accountCategory.create({
-        data: { accCategoryName: 'Bank', createdBy: userid }
+    const cash = await db.accountGroup.create({
+        data: { accountGroupName: 'Cash & Cash Equivalents', createdBy: userid }
     })
 
-    const debtor = await db.accountCategory.create({
-        data: { accCategoryName: 'Debtor', createdBy: userid }
+    const bank = await db.accountGroup.create({
+        data: { accountGroupName: 'Bank', createdBy: userid }
     })
 
-    const vendor = await db.accountCategory.create({
-        data: { accCategoryName: 'Vendor', createdBy: userid }
+    const debtor = await db.accountGroup.create({
+        data: { accountGroupName: 'Debtor', createdBy: userid }
     })
 
-    const acexpencess = await db.accountCategory.create({
-        data: { accCategoryName: 'Expencess', createdBy: userid }
+    const vendor = await db.accountGroup.create({
+        data: { accountGroupName: 'Vendor', createdBy: userid }
+    })
+
+    const acexpencess = await db.accountGroup.create({
+        data: { accountGroupName: 'Expencess', createdBy: userid }
+    })
+
+    const incomes = await db.accountGroup.create({
+        data: { accountGroupName: 'Income', createdBy: userid }
+    })
+
+    const inventory = await db.accountGroup.create({
+        data: { accountGroupName: 'Inventory', createdBy: userid }
     })
 
     await db.chartofAccount.createMany({
         data: [
-            { accountName: "INVENTORY ACCOUNT", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "REVENUE ACCOUNT", accountSubGroupId: currentassets.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "CASH", accountSubGroupId: currentassets.id, accountCategoryId: cash.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "BANK", accountSubGroupId: currentassets.id, accountCategoryId: bank.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "INVENTORY ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: inventory.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "REVENUE ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: incomes.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "LIGHT BILL", accountSubCategoryId: currentassets.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "CASH", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "BANK", accountSubCategoryId: currentassets.id, accountGroupId: bank.id, Opening_Balance: 0, createdBy: userid },
         ]
     })
 

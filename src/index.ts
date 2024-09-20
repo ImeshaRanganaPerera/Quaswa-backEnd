@@ -12,8 +12,11 @@ import { voucherRouter } from "./components/voucher/voucher.router";
 import { userCenterRoute } from "./components/userCenter/userCenter.router";
 import { inventoryRouter } from "./components/inventory/inventory.router";
 import { VoucherProductListRouter } from "./components/voucherProduct/voucherProduct.router";
-// import { itemRouter } from "./components/items/item.router";
-// import { cusDetailRouter } from "./components/customerDetails/customerDetails.route";
+import { chartofAccRouter } from "./components/ChartofAccount/chartofaccount.router";
+import { accCategoryRouter } from "./components/accountCategory/accountCategory.router";
+import { accSubCategoryRouter } from "./components/accountSubCategory/accountSubCategory.router";
+import { accGroupRouter } from "./components/accountGroup/accountGroup.router";
+
 
 dotenv.config();
 
@@ -42,6 +45,10 @@ app.use("/api/voucher", voucherRouter)
 app.use("/api/userCenter", userCenterRoute)
 app.use("/api/inventory", inventoryRouter)
 app.use("/api/voucherProduct", VoucherProductListRouter)
+app.use("/api/chartofAcc", chartofAccRouter)
+app.use("/api/accSubCategory", accSubCategoryRouter)
+app.use("/api/accGroup", accGroupRouter)
+app.use("/api/accCategory", accCategoryRouter)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

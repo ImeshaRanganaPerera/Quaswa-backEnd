@@ -27,28 +27,28 @@ model Center {
 }
 
 model User {
-  id              String            @id @default(uuid())
-  name            String
-  nic             String?           @unique
-  phoneNumber     String?           @unique
-  address         String?
-  dateofbirth     DateTime?
-  username        String            @unique
-  password        String
-  role            Role              @default(SALESMEN)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  Voucher         Voucher[]
-  Party           Party[]
-  Product         Product[]
-  userCenter      userCenter[]
-  Center          Center[]
-  Brand           Brand[]
-  Type            Type[]
-  AccountSubGroup AccountSubGroup[]
-  ChartofAccount  ChartofAccount[]
-  journalLine     journalLine[]
-  AccountCategory AccountCategory[]
+  id                 String               @id @default(uuid())
+  name               String
+  nic                String?              @unique
+  phoneNumber        String?              @unique
+  address            String?
+  dateofbirth        DateTime?
+  username           String               @unique
+  password           String
+  role               Role                 @default(SALESMEN)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  Voucher            Voucher[]
+  Party              Party[]
+  Product            Product[]
+  userCenter         userCenter[]
+  Center             Center[]
+  Brand              Brand[]
+  Type               Type[]
+  ChartofAccount     ChartofAccount[]
+  journalLine        journalLine[]
+  AccountSubCategory AccountSubCategory[]
+  AccountGroup       AccountGroup[]
 }
 
 model userCenter {
@@ -278,48 +278,48 @@ model Inventory {
   @@id([productId, centerId])
 }
 
-model AccountGroup {
-  id              String            @id @default(uuid())
-  accTypes        String
-  AccountSubGroup AccountSubGroup[]
-}
-
-model AccountSubGroup {
-  id             String           @id @default(uuid())
-  accountSubName String
-  AccountGroup   AccountGroup     @relation(fields: [accountGroupId], references: [id])
-  accountGroupId String
-  user           User             @relation(fields: [createdBy], references: [id])
-  createdBy      String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  ChartofAccount ChartofAccount[]
-}
-
 model AccountCategory {
-  id              String           @id @default(uuid())
-  accCategoryName String
-  user            User             @relation(fields: [createdBy], references: [id])
-  createdBy       String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  ChartofAccount  ChartofAccount[]
+  id                 String               @id @default(uuid())
+  accCategory        String
+  AccountSubCategory AccountSubCategory[]
 }
 
-model ChartofAccount {
+model AccountSubCategory {
   id                String           @id @default(uuid())
-  accountName       String
-  accountsubGrp     AccountSubGroup? @relation(fields: [accountSubGroupId], references: [id])
-  accountSubGroupId String?
-  accCategory       AccountCategory? @relation(fields: [accountCategoryId], references: [id])
-  accountCategoryId String?
-  Opening_Balance   Decimal?
+  accountSubName    String
+  AccountCategory   AccountCategory  @relation(fields: [accountCategoryId], references: [id])
+  accountCategoryId String
   user              User             @relation(fields: [createdBy], references: [id])
   createdBy         String
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
-  journalLine       journalLine[]
-  Party             Party[]
+  ChartofAccount    ChartofAccount[]
+}
+
+model AccountGroup {
+  id               String           @id @default(uuid())
+  accountGroupName String
+  user             User             @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  ChartofAccount   ChartofAccount[]
+}
+
+model ChartofAccount {
+  id                   String              @id @default(uuid())
+  accountName          String
+  AccountSubCategory   AccountSubCategory? @relation(fields: [accountSubCategoryId], references: [id])
+  accountSubCategoryId String?
+  accGroup             AccountGroup?       @relation(fields: [accountGroupId], references: [id])
+  accountGroupId       String?
+  Opening_Balance      Decimal?
+  user                 User                @relation(fields: [createdBy], references: [id])
+  createdBy            String
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  journalLine          journalLine[]
+  Party                Party[]
 }
 
 model journalLine {

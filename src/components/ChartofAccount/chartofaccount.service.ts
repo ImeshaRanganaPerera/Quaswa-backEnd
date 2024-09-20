@@ -1,7 +1,12 @@
 import { db } from "../../utils/db.server";
 
 export const list = async () => {
-    return db.chartofAccount.findMany();
+    return db.chartofAccount.findMany({
+        include: {
+            accGroup: true,
+            AccountSubCategory: true
+        }
+    });
 }
 
 export const get = async (id: any) => {
@@ -9,6 +14,7 @@ export const get = async (id: any) => {
         where: {
             id,
         },
+
     });
 }
 
@@ -22,13 +28,33 @@ export const getbyname = async (name: string) => {
 
 export const create = async (data: any) => {
     return db.chartofAccount.create({
-        data: data
+        data: data,
+        include: {
+            accGroup: true,
+            AccountSubCategory: true
+        }
+    });
+}
+
+export const updates = async (data: any, id: any) => {
+    return db.chartofAccount.update({
+        where: { id },
+        data: data,
+        include: {
+            accGroup: true,
+            AccountSubCategory: true
+        }
     });
 }
 
 export const update = async (data: any, id: any) => {
     return db.chartofAccount.update({
-        where: { id },
-        data: data
+        where: id,
+        data: data,
+        include: {
+            accGroup: true,
+            AccountSubCategory: true
+        }
     });
 }
+

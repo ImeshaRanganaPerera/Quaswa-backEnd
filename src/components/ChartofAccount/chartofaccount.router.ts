@@ -5,10 +5,10 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as chartofAccount from './chartofaccount.service'
 
-export const chartofAccRoute = express.Router();
+export const chartofAccRouter = express.Router();
 
 //GET LIST
-chartofAccRoute.get("/", async (request: Request, response: Response) => {
+chartofAccRouter.get("/", async (request: Request, response: Response) => {
     try {
         const data = await chartofAccount.list()
         if (data) {
@@ -21,7 +21,7 @@ chartofAccRoute.get("/", async (request: Request, response: Response) => {
 })
 
 //GET 
-chartofAccRoute.get("/:id", async (request: Request, response: Response) => {
+chartofAccRouter.get("/:id", async (request: Request, response: Response) => {
     const id: any = request.params.id;
     try {
         const data = await chartofAccount.get(id)
@@ -35,7 +35,7 @@ chartofAccRoute.get("/:id", async (request: Request, response: Response) => {
 })
 
 //POST
-chartofAccRoute.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
+chartofAccRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     var data: any = request.body;
     try {
         if (!request.user) {
@@ -56,7 +56,7 @@ chartofAccRoute.post("/", authenticate, async (request: ExpressRequest, response
     }
 })
 
-chartofAccRoute.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
+chartofAccRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;
     const data: any = request.body;
 

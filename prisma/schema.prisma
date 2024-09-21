@@ -50,6 +50,8 @@ model User {
   AccountSubCategory AccountSubCategory[]
   AccountGroup       AccountGroup[]
   partyCategory      partyCategory[]
+  ChequeBook         ChequeBook[]
+  Cheque             Cheque[]
 }
 
 model userCenter {
@@ -142,6 +144,7 @@ model Voucher {
   amount           Decimal?
   location         String?
   paidValue        Decimal?
+  refNumber        String?
   refVoucherNumber String?
   note             String?
   party            Party?           @relation(fields: [partyId], references: [id])
@@ -156,6 +159,7 @@ model Voucher {
   voucherProduct   voucherProduct[]
   VoucherCenter    VoucherCenter[]
   journalLine      journalLine[]
+  Cheque           Cheque[]
 }
 
 model VoucherCenter {
@@ -175,13 +179,13 @@ model Payment {
 }
 
 model PaymentVoucher {
+  id        String   @id @default(uuid())
   amount    Decimal
-  payment   Payment @relation(fields: [paymentId], references: [id])
+  payment   Payment  @relation(fields: [paymentId], references: [id])
   paymentId String
-  voucher   Voucher @relation(fields: [voucherId], references: [id])
+  voucher   Voucher  @relation(fields: [voucherId], references: [id])
   voucherId String
-
-  @@id([paymentId, voucherId])
+  Cheque    Cheque[]
 }
 
 model Brand {
@@ -264,6 +268,7 @@ model voucherProduct {
   MRP          Decimal
   sellingPrice Decimal
   amount       Decimal
+  isdisabale   Boolean  @default(false)
   voucher      Voucher  @relation(fields: [voucherId], references: [id])
   voucherId    String
   product      Product  @relation(fields: [productId], references: [id])
@@ -327,6 +332,42 @@ model ChartofAccount {
   updatedAt            DateTime            @updatedAt
   journalLine          journalLine[]
   Party                Party[]
+  ChequeBook           ChequeBook[]
+}
+
+model ChequeBook {
+  id               String         @id @default(uuid())
+  chequeBookNumber String
+  totalCheques     Int
+  startNumber      String
+  endNumber        String
+  remainingCheques Int
+  account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])
+  chartofAccountId String
+  user             User           @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  Cheque           Cheque[]
+}
+
+model Cheque {
+  id           String     @id @default(uuid())
+  chequeNumber String     @unique
+  issueDate    DateTime?
+  releaseDate  DateTime?
+  amount       Decimal
+  used         Boolean    @default(false)
+  chequeBook   ChequeBook @relation(fields: [chequeBookId], references: [id])
+  chequeBookId String
+  voucher      Voucher?   @relation(fields: [voucherId], references: [id])
+  voucherId    String?
+  paymentVoucher   PaymentVoucher @relation(fields: [paymentVoucherId], references: [id])
+  paymentVoucherId String
+  user      User     @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model journalLine {

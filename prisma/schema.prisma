@@ -125,14 +125,16 @@ model partyproofimage {
 }
 
 model VoucherGroup {
-  id            String        @id @default(uuid())
-  voucherName   String
-  shortname     String
-  inventoryMode InventoryMode
-  isAccount     Boolean
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  voucher       Voucher[]
+  id              String        @id @default(uuid())
+  voucherName     String
+  shortname       String
+  inventoryMode   InventoryMode
+  isAccount       Boolean
+  commonAccountId String?
+  creditDebit     CreditDebit?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  voucher         Voucher[]
 }
 
 model Voucher {
@@ -147,6 +149,7 @@ model Voucher {
   refNumber        String?
   refVoucherNumber String?
   note             String?
+  isconform        Boolean          @default(true)
   party            Party?           @relation(fields: [partyId], references: [id])
   partyId          String?
   voucherGroup     VoucherGroup     @relation(fields: [voucherGroupId], references: [id])
@@ -352,22 +355,22 @@ model ChequeBook {
 }
 
 model Cheque {
-  id           String     @id @default(uuid())
-  chequeNumber String     @unique
-  issueDate    DateTime?
-  releaseDate  DateTime?
-  amount       Decimal
-  used         Boolean    @default(false)
-  chequeBook   ChequeBook @relation(fields: [chequeBookId], references: [id])
-  chequeBookId String
-  voucher      Voucher?   @relation(fields: [voucherId], references: [id])
-  voucherId    String?
+  id               String         @id @default(uuid())
+  chequeNumber     String         @unique
+  issueDate        DateTime?
+  releaseDate      DateTime?
+  amount           Decimal
+  used             Boolean        @default(false)
+  chequeBook       ChequeBook     @relation(fields: [chequeBookId], references: [id])
+  chequeBookId     String
+  voucher          Voucher?       @relation(fields: [voucherId], references: [id])
+  voucherId        String?
   paymentVoucher   PaymentVoucher @relation(fields: [paymentVoucherId], references: [id])
   paymentVoucherId String
-  user      User     @relation(fields: [createdBy], references: [id])
-  createdBy String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user             User           @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model journalLine {
@@ -410,4 +413,9 @@ enum InventoryMode {
 enum centerStatus {
   IN
   OUT
+}
+
+enum CreditDebit {
+  CREDIT
+  DEBIT
 }

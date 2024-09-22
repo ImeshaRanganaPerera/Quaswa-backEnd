@@ -26,6 +26,14 @@ export const getbyname = async (name: string) => {
     })
 }
 
+export const getbygroup = async (id: string) => {
+    return db.chartofAccount.findMany({
+        where: {
+            accountGroupId: id
+        }
+    })
+}
+
 export const create = async (data: any) => {
     return db.chartofAccount.create({
         data: data,

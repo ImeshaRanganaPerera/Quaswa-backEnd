@@ -36,7 +36,7 @@ export const getVoucherbyParty = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data.partyId, note:data.note, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
+        data: { voucherNumber: data.voucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, note: data.note, isconform: data?.isconform, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
     });
 }
 

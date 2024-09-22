@@ -37,24 +37,6 @@ async function seed() {
         ]
     })
 
-    await db.voucherGroup.createMany({
-        data: [
-            { voucherName: "SALES", shortname: "INV", inventoryMode: InventoryMode.MINUS, isAccount: true },
-            { voucherName: "SALES-RETURN", shortname: "SALES-R", inventoryMode: InventoryMode.PLUS, isAccount: true },
-            { voucherName: "GRN", shortname: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true },
-            { voucherName: "PURCHASE-RETURN", shortname: "PURCHASE-R", inventoryMode: InventoryMode.MINUS, isAccount: true },
-            { voucherName: "STOCK-TRANSFER", shortname: "ST", inventoryMode: InventoryMode.DOUBLE, isAccount: false },
-            { voucherName: "PURCHASE-ORDER", shortname: "PO", inventoryMode: InventoryMode.NONE, isAccount: false },
-            { voucherName: "PAYMENT", shortname: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true },
-            { voucherName: "RECEIPT", shortname: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true },
-            { voucherName: "UTILITY-BILL-CREATE", shortname: "UTILITY-BC", inventoryMode: InventoryMode.NONE, isAccount: true },
-            { voucherName: "UTILITY-BILL-PAYMENT", shortname: "UTILITY-BPAY", inventoryMode: InventoryMode.NONE, isAccount: true },
-            { voucherName: "PETTY-CASH", shortname: "PETTY-CASH", inventoryMode: InventoryMode.NONE, isAccount: true },
-            { voucherName: "SUPPLIER-BILL", shortname: "SUPPLIER-BC", inventoryMode: InventoryMode.NONE, isAccount: true },
-        ]
-    });
-
-
     await db.brand.createMany({
         data: [
             { brandName: "BMW", createdBy: userid },
@@ -149,15 +131,36 @@ async function seed() {
         data: { accountGroupName: 'Inventory', createdBy: userid }
     })
 
+    const inventorys = await db.chartofAccount.create({
+        data: { accountName: "INVENTORY ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: inventory.id, Opening_Balance: 0, createdBy: userid },
+    })
+
     await db.chartofAccount.createMany({
         data: [
-            { accountName: "INVENTORY ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: inventory.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "REVENUE ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: incomes.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "LIGHT BILL", accountSubCategoryId: currentLiabilites.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "CASH", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "BANK", accountSubCategoryId: currentassets.id, accountGroupId: bank.id, Opening_Balance: 0, createdBy: userid },
         ]
     })
+
+    await db.voucherGroup.createMany({
+        data: [
+            { voucherName: "SALES", shortname: "INV", inventoryMode: InventoryMode.MINUS, isAccount: true, commonAccountId: inventorys.id, creditDebit: 'CREDIT' },
+            { voucherName: "SALES-RETURN", shortname: "SALES-R", inventoryMode: InventoryMode.PLUS, isAccount: true, commonAccountId: inventorys.id, creditDebit: 'DEBIT' },
+            { voucherName: "GRN", shortname: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true, commonAccountId: inventorys.id, creditDebit: 'DEBIT' },
+            { voucherName: "PURCHASE-RETURN", shortname: "PURCHASE-R", inventoryMode: InventoryMode.MINUS, isAccount: true, commonAccountId: inventorys.id, creditDebit: 'CREDIT' },
+            { voucherName: "STOCK-TRANSFER", shortname: "ST", inventoryMode: InventoryMode.DOUBLE, isAccount: false },
+            { voucherName: "PURCHASE-ORDER", shortname: "PO", inventoryMode: InventoryMode.NONE, isAccount: false },
+            { voucherName: "PAYMENT", shortname: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "RECEIPT", shortname: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "UTILITY-BILL-CREATE", shortname: "UTILITY-BC", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "UTILITY-BILL-PAYMENT", shortname: "UTILITY-BPAY", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "PETTY-CASH", shortname: "PETTY-CASH", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "SUPPLIER-BILL", shortname: "SUPPLIER-BC", inventoryMode: InventoryMode.NONE, isAccount: true },
+            { voucherName: "JOURNAL-ENTRY", shortname: "JE", inventoryMode: InventoryMode.NONE, isAccount: true },
+        ]
+    });
 
 }
 

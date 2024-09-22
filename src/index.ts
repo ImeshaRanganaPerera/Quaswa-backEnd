@@ -17,6 +17,7 @@ import { accCategoryRouter } from "./components/accountCategory/accountCategory.
 import { accSubCategoryRouter } from "./components/accountSubCategory/accountSubCategory.router";
 import { accGroupRouter } from "./components/accountGroup/accountGroup.router";
 import { partyCategoryRouter } from "./components/partyCategory/partyCategory.route";
+import { chequebookRoute } from "./components/ChequeBook/chequebook.router";
 
 
 dotenv.config();
@@ -51,6 +52,7 @@ app.use("/api/chartofAcc", chartofAccRouter)
 app.use("/api/accSubCategory", accSubCategoryRouter)
 app.use("/api/accGroup", accGroupRouter)
 app.use("/api/accCategory", accCategoryRouter)
+app.use("/api/chequebook", chequebookRoute)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

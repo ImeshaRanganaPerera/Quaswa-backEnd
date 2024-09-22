@@ -97,9 +97,12 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         const userId = request.user.id;
         const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
         const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpdetails?.id)
-        const partyAcc = await partyService.get(data.partyId)
         var totalCost = 0;
+        var partyAcc: any;
 
+        if (data?.partyId) {
+            partyAcc = await partyService.get(data?.partyId)
+        }
         if (data.productList) {
             totalCost = data.productList?.reduce((total: number, product: any) => {
                 return total + (product.cost * product.quantity);

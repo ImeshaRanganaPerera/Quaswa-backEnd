@@ -255,7 +255,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     });
 
                     if (data.voucherGroupname === 'GRN') {
-                        const updateProductPrices = await productService.updatePrices({
+                        const updateProductPrices = await productService.updatePricesbulk({
                             cost: product.cost,
                             minPrice: product.minPrice,
                             MRP: product.MRP,

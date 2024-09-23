@@ -32,7 +32,14 @@ export const update = async (data: any, id: any) => {
 
 export const updatePrices = async (data: any, id: any) => {
     return db.product.update({
-        where: {id},
+        where: id,
+        data: data
+    });
+}
+
+export const updatePricesbulk = async (data: any, id: any) => {
+    return db.product.update({
+        where: { id },
         data: data
     });
 }

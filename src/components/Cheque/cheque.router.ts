@@ -17,6 +17,7 @@ chequeRouter.get("/", async (request: Request, response: Response) => {
     }
 })
 
+
 //GET
 chequeRouter.get("/:id", async (request: Request, response: Response) => {
     const id = request.params.id;

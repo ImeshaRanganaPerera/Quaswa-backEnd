@@ -25,14 +25,21 @@ export const create = async (data: any) => {
 
 export const update = async (data: any, id: any) => {
     return db.product.update({
-        where: {id},
+        where: { id },
         data: data
     });
 }
 
 export const updatePrices = async (data: any, id: any) => {
     return db.product.update({
-        where: { id },
+        where: {id},
+        data: data
+    });
+}
+
+export const updateStatus = async (data: any, id: any) => {
+    return db.product.update({
+        where: id,
         data: data
     });
 }

@@ -85,7 +85,31 @@ voucherRouter.get("/party/:partyId", async (request: Request, response: Response
     }
 })
 
+voucherRouter.get("/party/true/:partyId", async (request: Request, response: Response) => {
+    const partyId: any = request.params.partyId;
+    try {
+        const voucherbyParty = await vocuherService.getVoucherbyPartytrue(partyId)
+        if (voucherbyParty) {
+            return response.status(200).json({ data: voucherbyParty });
+        }
+        return response.status(404).json({ message: "Voucher Group could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
 
+voucherRouter.get("/party/false/:partyId", async (request: Request, response: Response) => {
+    const partyId: any = request.params.partyId;
+    try {
+        const voucherbyParty = await vocuherService.getVoucherbyPartyfalse(partyId)
+        if (voucherbyParty) {
+            return response.status(200).json({ data: voucherbyParty });
+        }
+        return response.status(404).json({ message: "Voucher Group could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
 
 //POST
 voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
@@ -339,7 +363,9 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                                         creditAmount: 0,
                                         createdBy: userId
                                     })
-                                ]);
+                                ]
+                                
+                            );
                             } else {
                                 console.error("Invalid account details: Inventory or party account is missing.");
                             }
@@ -599,6 +625,44 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                             console.error("Error creating journal lines:", error);
                         }
                     }
+
+                    if (data.voucherGroupname === 'UTILITY-BILL-CREATE') {
+                        try {
+                            // Fetch necessary accounts concurrently
+                            const [paymode, chartOfAcc] = await Promise.all([
+                                chartofaccService.getbyname("PETTY-CASH"),
+                                chartofaccService.getbyname("Tea")
+                            ]);
+
+                            // Ensure both accounts exist
+                            if (paymode?.id && chartOfAcc) {
+                                const { id: voucherId } = newVoucher;
+                                const { amount } = data;
+
+                                // Create journal lines concurrently
+                                await Promise.all([
+                                    jounallineService.create({
+                                        voucherId,
+                                        chartofAccountId: chartOfAcc.id,
+                                        debitAmount: amount,
+                                        creditAmount: 0,
+                                        createdBy: userId
+                                    }),
+                                    jounallineService.create({
+                                        voucherId,
+                                        chartofAccountId: paymode.id,
+                                        debitAmount: 0,
+                                        creditAmount: amount,
+                                        createdBy: userId
+                                    })
+                                ]);
+                            } else {
+                                console.error("Invalid account details: Inventory or party account is missing.");
+                            }
+                        } catch (error) {
+                            console.error("Error creating journal lines:", error);
+                        }
+                    }
                 }
             }
             if (newVoucher) {
@@ -629,3 +693,22 @@ voucherRouter.put("/:id", authenticate, async (request: ExpressRequest, response
         return response.status(500).json({ message: error.message });
     }
 })
+
+voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, response: Response) => {
+    const id: any = request.params;
+    const data: any = request.body;
+
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+        const updateVoucher = await vocuherService.updateConform(data, id)
+
+        if (updateVoucher) {
+            return response.status(201).json({ message: "Voucher Conform Successfully" });
+        }
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+

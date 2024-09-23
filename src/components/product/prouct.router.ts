@@ -179,6 +179,25 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
     }
 });
 
+productRouter.put("/productStatus/:id", authenticate, async (request: ExpressRequest, response: Response) => {
+    const id: any = request.params;
+    const data: any = request.body;
+
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+        console.log(data)
+        const updateProductStatus = await productService.updateStatus(data, id)
+
+        if (updateProductStatus) {
+            return response.status(201).json({ message: "Product Status Updated Successfully", data: updateProductStatus });
+        }
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+
 productRouter.put("/productPriceUpdate/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;
     const data: any = request.body;
@@ -187,7 +206,7 @@ productRouter.put("/productPriceUpdate/:id", authenticate, async (request: Expre
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-        const updateProduct = await productService.update(data, id)
+        const updateProduct = await productService.updatePrices(data, id)
 
         if (updateProduct) {
             return response.status(201).json({ message: "Product Price Updated Successfully", data: updateProduct });

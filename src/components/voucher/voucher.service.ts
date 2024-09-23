@@ -34,6 +34,24 @@ export const getVoucherbyParty = async (id: any) => {
     });
 }
 
+export const getVoucherbyPartytrue = async (id: any) => {
+    return db.voucher.findMany({
+        where: {
+            partyId: id,
+            isconform: true
+        }
+    });
+}
+
+export const getVoucherbyPartyfalse = async (id: any) => {
+    return db.voucher.findMany({
+        where: {
+            partyId: id,
+            isconform: false
+        }
+    });
+}
+
 export const create = async (data?: any) => {
     return db.voucher.create({
         data: { voucherNumber: data.voucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, note: data.note, isconform: data?.isconform, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
@@ -80,3 +98,10 @@ export const generateVoucherNumber = async (voucherGroupId: any) => {
 
     return newVoucherNumber;
 };
+
+export const updateConform = async (data: any, id: any) => {
+    return db.voucher.update({
+        where: id,
+        data: { isconform: data.isconform }
+    });
+}

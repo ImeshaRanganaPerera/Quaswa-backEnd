@@ -32,26 +32,26 @@ async function seed() {
 
     await db.partyCategory.createMany({
         data: [
-            { category: "RUNNING CUSTOMER", partyGroupId: customer.id, createdBy: userid },
+            { category: "WALKING CUSTOMER", partyGroupId: customer.id, createdBy: userid },
             { category: "COMMON SUPPLIER", partyGroupId: supplier.id, createdBy: userid }
         ]
     })
 
-    await db.brand.createMany({
-        data: [
-            { brandName: "BMW", createdBy: userid },
-            { brandName: "TATA", createdBy: userid },
-            { brandName: "TOYOTA", createdBy: userid },
-        ]
-    });
+    // await db.brand.createMany({
+    //     data: [
+    //         { brandName: "BMW", createdBy: userid },
+    //         { brandName: "TATA", createdBy: userid },
+    //         { brandName: "TOYOTA", createdBy: userid },
+    //     ]
+    // });
 
-    await db.type.createMany({
-        data: [
-            { typeName: "OIL FILTER", createdBy: userid },
-            { typeName: "RIM", createdBy: userid },
-            { typeName: "BUFFER", createdBy: userid },
-        ]
-    });
+    // await db.type.createMany({
+    //     data: [
+    //         { typeName: "OIL FILTER", createdBy: userid },
+    //         { typeName: "RIM", createdBy: userid },
+    //         { typeName: "BUFFER", createdBy: userid },
+    //     ]
+    // });
 
     await db.payment.createMany({
         data: [
@@ -139,8 +139,8 @@ async function seed() {
         data: [
             { accountName: "REVENUE ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: incomes.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "LIGHT BILL", accountSubCategoryId: currentLiabilites.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "CASH", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "BANK", accountSubCategoryId: currentassets.id, accountGroupId: bank.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "CASH BOOK", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "BANK BOOK", accountSubCategoryId: currentassets.id, accountGroupId: bank.id, Opening_Balance: 0, createdBy: userid },
         ]
     })
 

@@ -12,7 +12,7 @@ export const getbyCenter = async (id: any) => {
             status: true,
         },
         include: {
-            product: true, 
+            product: true,
         },
     });
 }

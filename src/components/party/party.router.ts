@@ -123,8 +123,6 @@ partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
 
         const updatechartofAcc = await chartOfAccService.updates({ accountName: data.name }, updateparty.chartofAccountId)
 
-        console.log(updatechartofAcc)
-
         if (updateparty && updatechartofAcc) {
             return response.status(201).json({ message: partyGroup?.partyGroupName + " Updated Successfully", data: updateparty });
         }

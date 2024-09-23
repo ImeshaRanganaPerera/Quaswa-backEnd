@@ -223,8 +223,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 createdBy: userId
             })
 
-            console.log(data)
-
             if (data.payment) {
                 const onlineTransfer = await paymentService.getbyname('Online Transfer')
                 const cash = await paymentService.getbyname('Cash')
@@ -511,158 +509,158 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
             if (voucherGrpdetails?.inventoryMode === "NONE") {
                 if (voucherGrpdetails?.isAccount === true) {
-                    if (data.voucherGroupname === 'PAYMENT') {
-                        try {
-                            // Fetch necessary accounts concurrently
-                            const [paymode, partyAccountId] = await Promise.all([
-                                chartofaccService.getbyname("CASH"),
-                                partyAcc?.chartofAccountId
-                            ]);
+                //     if (data.voucherGroupname === 'PAYMENT') {
+                //         try {
+                //             // Fetch necessary accounts concurrently
+                //             const [paymode, partyAccountId] = await Promise.all([
+                //                 chartofaccService.getbyname("CASH"),
+                //                 partyAcc?.chartofAccountId
+                //             ]);
 
-                            // Ensure both accounts exist
-                            if (paymode?.id && partyAccountId) {
-                                const { id: voucherId } = newVoucher;
-                                const { amount } = data;
+                //             // Ensure both accounts exist
+                //             if (paymode?.id && partyAccountId) {
+                //                 const { id: voucherId } = newVoucher;
+                //                 const { amount } = data;
 
-                                // Create journal lines concurrently
-                                await Promise.all([
-                                    jounallineService.create({
-                                        voucherId,
-                                        chartofAccountId: paymode.id,
-                                        debitAmount: 0,
-                                        creditAmount: amount,
-                                        createdBy: userId
-                                    }),
-                                    jounallineService.create({
-                                        voucherId,
-                                        chartofAccountId: partyAccountId,
-                                        debitAmount: amount,
-                                        creditAmount: 0,
-                                        createdBy: userId
-                                    })
+                //                 // Create journal lines concurrently
+                //                 await Promise.all([
+                //                     jounallineService.create({
+                //                         voucherId,
+                //                         chartofAccountId: paymode.id,
+                //                         debitAmount: 0,
+                //                         creditAmount: amount,
+                //                         createdBy: userId
+                //                     }),
+                //                     jounallineService.create({
+                //                         voucherId,
+                //                         chartofAccountId: partyAccountId,
+                //                         debitAmount: amount,
+                //                         creditAmount: 0,
+                //                         createdBy: userId
+                //                     })
 
-                                ]);
-                            } else {
-                                console.error("Invalid account details: Inventory or party account is missing.");
-                            }
-                        } catch (error) {
-                            console.error("Error creating journal lines:", error);
-                        }
-                    }
+                //                 ]);
+                //             } else {
+                //                 console.error("Invalid account details: Inventory or party account is missing.");
+                //             }
+                //         } catch (error) {
+                //             console.error("Error creating journal lines:", error);
+                //         }
+                //     }
 
-                    if (data.voucherGroupname === 'RECEIPT') {
-                        try {
-                            // Fetch necessary accounts concurrently
-                            const [paymode, partyAccountId] = await Promise.all([
-                                chartofaccService.getbyname("CASH"),
-                                partyAcc?.chartofAccountId
-                            ]);
+                //     if (data.voucherGroupname === 'RECEIPT') {
+                //         try {
+                //             // Fetch necessary accounts concurrently
+                //             const [paymode, partyAccountId] = await Promise.all([
+                //                 chartofaccService.getbyname("CASH"),
+                //                 partyAcc?.chartofAccountId
+                //             ]);
 
-                            // Ensure both accounts exist
-                            if (paymode?.id && partyAccountId) {
-                                const { id: voucherId } = newVoucher;
-                                const { amount } = data;
+                //             // Ensure both accounts exist
+                //             if (paymode?.id && partyAccountId) {
+                //                 const { id: voucherId } = newVoucher;
+                //                 const { amount } = data;
 
-                                // Create journal lines concurrently
-                                await Promise.all([
-                                    jounallineService.create({
-                                        voucherId,
-                                        chartofAccountId: paymode.id,
-                                        debitAmount: amount,
-                                        creditAmount: 0,
-                                        createdBy: userId
-                                    }),
-                                    jounallineService.create({
-                                        voucherId,
-                                        chartofAccountId: partyAccountId,
-                                        debitAmount: 0,
-                                        creditAmount: amount,
-                                        createdBy: userId
-                                    })
-                                ]);
-                            } else {
-                                console.error("Invalid account details: Inventory or party account is missing.");
-                            }
-                        } catch (error) {
-                            console.error("Error creating journal lines:", error);
-                        }
-                    }
+                //                 // Create journal lines concurrently
+                //                 await Promise.all([
+                //                     jounallineService.create({
+                //                         voucherId,
+                //                         chartofAccountId: paymode.id,
+                //                         debitAmount: amount,
+                //                         creditAmount: 0,
+                //                         createdBy: userId
+                //                     }),
+                //                     jounallineService.create({
+                //                         voucherId,
+                //                         chartofAccountId: partyAccountId,
+                //                         debitAmount: 0,
+                //                         creditAmount: amount,
+                //                         createdBy: userId
+                //                     })
+                //                 ]);
+                //             } else {
+                //                 console.error("Invalid account details: Inventory or party account is missing.");
+                //             }
+                //         } catch (error) {
+                //             console.error("Error creating journal lines:", error);
+                //         }
+                //     }
 
-                    if (data.voucherGroupname === 'PETTY-CASH') {
-                        try {
-                            // Fetch necessary accounts concurrently
-                            const [paymode, chartOfAcc] = await Promise.all([
-                                chartofaccService.getbyname("PETTY-CASH"),
-                                chartofaccService.getbyname("Tea")
-                            ]);
+                //     if (data.voucherGroupname === 'PETTY-CASH') {
+                //         try {
+                //             // Fetch necessary accounts concurrently
+                //             const [paymode, chartOfAcc] = await Promise.all([
+                //                 chartofaccService.getbyname("PETTY-CASH"),
+                //                 chartofaccService.getbyname("Tea")
+                //             ]);
 
-                            // Ensure both accounts exist
-                            if (paymode?.id && chartOfAcc) {
-                                const { id: voucherId } = newVoucher;
-                                const { amount } = data;
+                //             // Ensure both accounts exist
+                //             if (paymode?.id && chartOfAcc) {
+                //                 const { id: voucherId } = newVoucher;
+                //                 const { amount } = data;
 
-                                // Create journal lines concurrently
-                                await Promise.all([
-                                    jounallineService.create({
-                                        voucherId,
-                                        chartofAccountId: chartOfAcc.id,
-                                        debitAmount: amount,
-                                        creditAmount: 0,
-                                        createdBy: userId
-                                    }),
-                                    jounallineService.create({
-                                        voucherId,
-                                        chartofAccountId: paymode.id,
-                                        debitAmount: 0,
-                                        creditAmount: amount,
-                                        createdBy: userId
-                                    })
-                                ]);
-                            } else {
-                                console.error("Invalid account details: Inventory or party account is missing.");
-                            }
-                        } catch (error) {
-                            console.error("Error creating journal lines:", error);
-                        }
-                    }
+                //                 // Create journal lines concurrently
+                //                 await Promise.all([
+                //                     jounallineService.create({
+                //                         voucherId,
+                //                         chartofAccountId: chartOfAcc.id,
+                //                         debitAmount: amount,
+                //                         creditAmount: 0,
+                //                         createdBy: userId
+                //                     }),
+                //                     jounallineService.create({
+                //                         voucherId,
+                //                         chartofAccountId: paymode.id,
+                //                         debitAmount: 0,
+                //                         creditAmount: amount,
+                //                         createdBy: userId
+                //                     })
+                //                 ]);
+                //             } else {
+                //                 console.error("Invalid account details: Inventory or party account is missing.");
+                //             }
+                //         } catch (error) {
+                //             console.error("Error creating journal lines:", error);
+                //         }
+                //     }
 
-                    if (data.voucherGroupname === 'UTILITY-BILL-CREATE') {
-                        try {
-                            // Fetch necessary accounts concurrently
-                            const [paymode, chartOfAcc] = await Promise.all([
-                                chartofaccService.getbyname("PETTY-CASH"),
-                                chartofaccService.getbyname("Tea")
-                            ]);
+                //     if (data.voucherGroupname === 'UTILITY-BILL-CREATE') {
+                //         try {
+                //             // Fetch necessary accounts concurrently
+                //             const [paymode, chartOfAcc] = await Promise.all([
+                //                 chartofaccService.getbyname("PETTY-CASH"),
+                //                 chartofaccService.getbyname("Tea")
+                //             ]);
 
-                            // Ensure both accounts exist
-                            if (paymode?.id && chartOfAcc) {
-                                const { id: voucherId } = newVoucher;
-                                const { amount } = data;
+                //             // Ensure both accounts exist
+                //             if (paymode?.id && chartOfAcc) {
+                //                 const { id: voucherId } = newVoucher;
+                //                 const { amount } = data;
 
-                                // Create journal lines concurrently
-                                await Promise.all([
-                                    jounallineService.create({
-                                        voucherId,
-                                        chartofAccountId: chartOfAcc.id,
-                                        debitAmount: amount,
-                                        creditAmount: 0,
-                                        createdBy: userId
-                                    }),
-                                    jounallineService.create({
-                                        voucherId,
-                                        chartofAccountId: paymode.id,
-                                        debitAmount: 0,
-                                        creditAmount: amount,
-                                        createdBy: userId
-                                    })
-                                ]);
-                            } else {
-                                console.error("Invalid account details: Inventory or party account is missing.");
-                            }
-                        } catch (error) {
-                            console.error("Error creating journal lines:", error);
-                        }
-                    }
+                //                 // Create journal lines concurrently
+                //                 await Promise.all([
+                //                     jounallineService.create({
+                //                         voucherId,
+                //                         chartofAccountId: chartOfAcc.id,
+                //                         debitAmount: amount,
+                //                         creditAmount: 0,
+                //                         createdBy: userId
+                //                     }),
+                //                     jounallineService.create({
+                //                         voucherId,
+                //                         chartofAccountId: paymode.id,
+                //                         debitAmount: 0,
+                //                         creditAmount: amount,
+                //                         createdBy: userId
+                //                     })
+                //                 ]);
+                //             } else {
+                //                 console.error("Invalid account details: Inventory or party account is missing.");
+                //             }
+                //         } catch (error) {
+                //             console.error("Error creating journal lines:", error);
+                //         }
+                //     }
                 }
             }
             if (newVoucher) {

@@ -37,6 +37,10 @@ async function seed() {
         ]
     })
 
+    await db.discountLevel.create({
+        data: { level: 'Cash Discount', createdBy: userid }
+    })
+
     // await db.brand.createMany({
     //     data: [
     //         { brandName: "BMW", createdBy: userid },

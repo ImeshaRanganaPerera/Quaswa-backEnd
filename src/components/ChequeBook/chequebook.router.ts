@@ -5,10 +5,10 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as chequebookservice from './chequebook.service'
 
-export const chequebookRoute = express.Router();
+export const chequebookRouter = express.Router();
 
 //GET
-chequebookRoute.get("/", async (request: Request, response: Response) => {
+chequebookRouter.get("/", async (request: Request, response: Response) => {
     try {
         const data = await chequebookservice.list();
         return response.status(200).json({ data: data });
@@ -18,7 +18,7 @@ chequebookRoute.get("/", async (request: Request, response: Response) => {
 })
 
 //GET
-chequebookRoute.get("/:id", async (request: Request, response: Response) => {
+chequebookRouter.get("/:id", async (request: Request, response: Response) => {
     const id: any = request.params.id;
     try {
         const data = await chequebookservice.get(id)
@@ -32,7 +32,7 @@ chequebookRoute.get("/:id", async (request: Request, response: Response) => {
 })
 
 //POST
-chequebookRoute.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
+chequebookRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     var data: any = request.body;
     try {
         
@@ -57,7 +57,7 @@ chequebookRoute.post("/", authenticate, async (request: ExpressRequest, response
 })
 
 //UPDATE
-chequebookRoute.put("/:id", async (request: Request, response: Response) => {
+chequebookRouter.put("/:id", async (request: Request, response: Response) => {
     const id: any = request.params;
     const data: any = request.body;
     try {

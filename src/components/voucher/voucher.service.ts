@@ -23,6 +23,7 @@ export const getVoucherbyGrp = async (id: any) => {
         include: {
             party: true,
         }
+
     });
 }
 
@@ -38,7 +39,11 @@ export const getVoucherbyPartytrue = async (id: any) => {
     return db.voucher.findMany({
         where: {
             partyId: id,
-            isconform: true
+            isconform: true,
+            OR: [
+                { voucherNumber: { startsWith: 'GRN' } },
+                { voucherNumber: { startsWith: 'INV' } },
+            ],
         }
     });
 }

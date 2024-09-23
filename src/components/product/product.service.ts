@@ -3,7 +3,8 @@ import { db } from "../../utils/db.server";
 export const list = async () => {
     return db.product.findMany({
         include: {
-            OEMNumber: true
+            OEMNumber: true,
+            productDiscountLevel: true
         },
     });
 }

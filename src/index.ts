@@ -17,7 +17,9 @@ import { accCategoryRouter } from "./components/accountCategory/accountCategory.
 import { accSubCategoryRouter } from "./components/accountSubCategory/accountSubCategory.router";
 import { accGroupRouter } from "./components/accountGroup/accountGroup.router";
 import { partyCategoryRouter } from "./components/partyCategory/partyCategory.route";
-import { chequebookRoute } from "./components/ChequeBook/chequebook.router";
+import { chequebookRouter } from "./components/ChequeBook/chequebook.router";
+import { chequeRouter } from "./components/Cheque/cheque.router";
+import { discountLevelRouter } from "./components/discountLevel/disscountLevel.router";
 
 
 dotenv.config();
@@ -52,7 +54,9 @@ app.use("/api/chartofAcc", chartofAccRouter)
 app.use("/api/accSubCategory", accSubCategoryRouter)
 app.use("/api/accGroup", accGroupRouter)
 app.use("/api/accCategory", accCategoryRouter)
-app.use("/api/chequebook", chequebookRoute)
+app.use("/api/chequebook", chequebookRouter)
+app.use("/api/cheque", chequeRouter)
+app.use("/api/discountLevel", discountLevelRouter)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

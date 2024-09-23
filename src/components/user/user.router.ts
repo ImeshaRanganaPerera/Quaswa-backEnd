@@ -46,87 +46,34 @@ userRouter.get("/:id", authenticate, async (request: ExpressRequest, response: R
 //POST
 userRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     const data: any = request.body;
+
+    if (!request.user) {
+        return response.status(401).json({ message: "User not authorized" });
+    }
+
+    const createdBy = request.user.id;
+
     try {
-        if (!request.user) {
-            return response.status(401).json({ message: "User not authorized" });
-        }
-
-        const createdBy = request.user.id;
-
-        if (data.centers) {
-
-            var newUser = await UserService.create(data);
-
-            if (!newUser) {
-                return response.status(500).json({ message: "Failed to create user" });
-            }
-
-            if (data.centers && data.role === "MANAGER") {
-                let centers = data.centers
-                delete data.centers
-
-                const centerPromises = centers.map(async (center: { centerId: string }) => {
-                    const userCenter = await userCenterService.create({
-                        userId: newUser.id,
-                        centerId: center.centerId
-                    });
-                    if (!userCenter) {
-                        throw new Error("Failed to update center association");
-                    }
-                });
-
-                try {
-                    await Promise.all(centerPromises);
-                } catch (error: any) {
-                    return response.status(500).json({ message: error.message });
-                }
-            }
-            return response.status(201).json({ message: "User created successfully", data: newUser });
-
-        }
-
-        // Handle user creation
-        var newUser = await UserService.create(data);
+        // Create user
+        const newUser = await UserService.create({
+            id: data.id,
+            name: data.name,
+            nic: data.nic,
+            phoneNumber: data.phoneNumber,
+            address: data.address,
+            dateofbirth: data.dateofbirth,
+            username: data.username,
+            password: data.password,
+            role: data.role,
+        });
 
         if (!newUser) {
             return response.status(500).json({ message: "Failed to create user" });
         }
 
-        if (data.role === "ADMIN") {
-            const centerList = await centerService.getCenterMode("PHYSICAL")
+        // Handle role-based logic
+        await handleRoleBasedLogic(data, newUser.id, createdBy);
 
-            const centerPromises = centerList.map(async (center: { id: string }) => {
-                const userCenter = await userCenterService.create({
-                    userId: newUser.id,
-                    centerId: center.id
-                });
-                if (!userCenter) {
-                    throw new Error("Failed to update center association");
-                }
-            });
-
-            try {
-                await Promise.all(centerPromises);
-            } catch (error: any) {
-                return response.status(500).json({ message: error.message });
-            }
-        }
-
-
-        // If role is "SALESMEN", create a new center and associate it with the user
-        if (data.role === "SALESMEN") {
-            const newCenter = await centerService.create({ centerName: data.name, createdBy });
-
-            if (!newCenter) {
-                return response.status(500).json({ message: "Failed to create center" });
-            }
-
-            const userCenter = await userCenterService.create({ userId: newUser.id, centerId: newCenter.id });
-
-            if (!userCenter) {
-                return response.status(500).json({ message: "Failed to update center association" });
-            }
-        }
         return response.status(201).json({ message: "User created successfully", data: newUser });
 
     } catch (error: any) {
@@ -134,6 +81,66 @@ userRouter.post("/", authenticate, async (request: ExpressRequest, response: Res
         return response.status(500).json({ message: error.message });
     }
 });
+
+// Helper function to handle role-based center associations
+async function handleRoleBasedLogic(data: any, userId: string, createdBy: string) {
+    const { role, centers } = data;
+
+    if (role === "MANAGER" && centers) {
+        await associateCentersWithManager(centers, userId);
+    } else if (role === "ADMIN") {
+        await associateCentersWithAdmin(userId);
+    } else if (role === "SALESMEN") {
+        await createAndAssociateCenterForSalesmen(data.name, userId, createdBy);
+    }
+}
+
+// Function to associate centers with a manager
+async function associateCentersWithManager(centers: { centerId: string }[], userId: string) {
+    const centerPromises = centers.map(async (center) => {
+        const userCenter = await userCenterService.create({
+            userId,
+            centerId: center.centerId
+        });
+        if (!userCenter) {
+            throw new Error("Failed to update center association");
+        }
+    });
+
+    await Promise.all(centerPromises);
+}
+
+// Function to associate centers with an admin
+async function associateCentersWithAdmin(userId: string) {
+    const centerList = await centerService.getCenterMode("PHYSICAL");
+
+    const centerPromises = centerList.map(async (center) => {
+        const userCenter = await userCenterService.create({
+            userId,
+            centerId: center.id
+        });
+        if (!userCenter) {
+            throw new Error("Failed to update center association");
+        }
+    });
+
+    await Promise.all(centerPromises);
+}
+
+// Function to create and associate a center for salesmen
+async function createAndAssociateCenterForSalesmen(centerName: string, userId: string, createdBy: string) {
+    const newCenter = await centerService.create({ centerName, createdBy });
+
+    if (!newCenter) {
+        throw new Error("Failed to create center");
+    }
+
+    const userCenter = await userCenterService.create({ userId, centerId: newCenter.id });
+
+    if (!userCenter) {
+        throw new Error("Failed to update center association");
+    }
+}
 
 //LOGIN
 userRouter.post("/login", async (request: Request, response: Response) => {

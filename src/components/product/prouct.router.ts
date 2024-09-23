@@ -7,6 +7,7 @@ import * as productService from './product.service'
 import * as inventoryService from '../inventory/inventory.service'
 import * as centerService from '../center/center.service'
 import * as OENumberService from '../OEMNumber/oemnumber.service'
+import * as productdiscountlevelService from '../productDiscountLevel/productDiscount.service'
 
 
 export const productRouter = express.Router();
@@ -89,17 +90,32 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 return oenum; // Return the created OEM number
             });
 
+            const discountLevelsPromises = data.discountLevels.map(async (discount: any) => {
+                const dis = await productdiscountlevelService.create({
+                    productId: newProduct.id,
+                    discountLevelId: discount.discountLevelId,
+                    discountRate: discount.discountRate,
+                    createdBy: userId
+                });
+                if (!dis) {
+                    throw new Error("Failed to update Discount Rates");
+                }
+                return dis; // Return the created OEM number
+            });
+
             try {
                 // Wait for all promises
-                const [inventoryResults, oemNumbers] = await Promise.all([
+                const [inventoryResults, oemNumbers, discountList] = await Promise.all([
                     Promise.all(centerPromises), // Wait for all inventory updates
-                    Promise.all(OEMnumberPromises) // Wait for all OEM numbers to be created
+                    Promise.all(OEMnumberPromises), // Wait for all OEM numbers to be created
+                    Promise.all(discountLevelsPromises),
                 ]);
 
                 // Combine product and OEM numbers into a single data object
                 const combinedData = {
                     ...newProduct,
-                    OEMNumber: oemNumbers
+                    OEMNumber: oemNumbers,
+                    productDiscountLevel: discountList
                 };
 
                 // Return the response including the combined data
@@ -123,6 +139,7 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
+        const userId = request.user.id;
 
         const productData = {
             barcode: data.barcode,
@@ -153,16 +170,30 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
             return oenum;
         });
 
+        const discountLevelsPromises = data.discountLevels.map(async (discount: any) => {
+            const dis = await productdiscountlevelService.upserts({
+                discountLevelId: discount.discountLevelId,
+                discountRate: discount.discountRate,
+                createdBy: userId
+            }, id);
+            if (!dis) {
+                throw new Error("Failed to update Discount Rates");
+            }
+            return dis; // Return the created OEM number
+        });
+
         try {
             // Wait for all promises
-            const [oemNumbers] = await Promise.all([
-                Promise.all(OEMnumberPromises)
+            const [oemNumbers, discountList] = await Promise.all([
+                Promise.all(OEMnumberPromises),
+                Promise.all(discountLevelsPromises),
             ]);
 
             // Combine product and OEM numbers into a single data object
             const combinedData = {
                 ...updateProduct,
-                OEMNumber: oemNumbers
+                OEMNumber: oemNumbers,
+                productDiscountLevel: discountList
             };
 
             // Return the response including the combined data

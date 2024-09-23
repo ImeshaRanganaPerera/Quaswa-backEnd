@@ -27,31 +27,34 @@ model Center {
 }
 
 model User {
-  id                 String               @id @default(uuid())
-  name               String
-  nic                String?              @unique
-  phoneNumber        String?              @unique
-  address            String?
-  dateofbirth        DateTime?
-  username           String               @unique
-  password           String
-  role               Role                 @default(SALESMEN)
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  Voucher            Voucher[]
-  Party              Party[]
-  Product            Product[]
-  userCenter         userCenter[]
-  Center             Center[]
-  Brand              Brand[]
-  Type               Type[]
-  ChartofAccount     ChartofAccount[]
-  journalLine        journalLine[]
-  AccountSubCategory AccountSubCategory[]
-  AccountGroup       AccountGroup[]
-  partyCategory      partyCategory[]
-  ChequeBook         ChequeBook[]
-  Cheque             Cheque[]
+  id                   String                 @id @default(uuid())
+  name                 String
+  nic                  String?                @unique
+  phoneNumber          String?                @unique
+  address              String?
+  dateofbirth          DateTime?
+  username             String                 @unique
+  password             String
+  isconform            Boolean                @default(false)
+  role                 Role                   @default(SALESMEN)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  Voucher              Voucher[]
+  Party                Party[]
+  Product              Product[]
+  userCenter           userCenter[]
+  Center               Center[]
+  Brand                Brand[]
+  Type                 Type[]
+  ChartofAccount       ChartofAccount[]
+  journalLine          journalLine[]
+  AccountSubCategory   AccountSubCategory[]
+  AccountGroup         AccountGroup[]
+  partyCategory        partyCategory[]
+  ChequeBook           ChequeBook[]
+  Cheque               Cheque[]
+  discountLevel        discountLevel[]
+  productDiscountLevel productDiscountLevel[]
 }
 
 model userCenter {
@@ -248,8 +251,13 @@ model OEMNumber {
 }
 
 model discountLevel {
-  id                   String                 @id @default(uuid())
-  level                String
+  id    String @id @default(uuid())
+  level String
+
+  user                 User                   @relation(fields: [createdBy], references: [id])
+  createdBy            String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
   productDiscountLevel productDiscountLevel[]
 }
 
@@ -259,6 +267,11 @@ model productDiscountLevel {
   discountLevel   discountLevel @relation(fields: [discountLevelId], references: [id])
   discountLevelId String
   discountRate    String
+
+  user      User     @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@id([productId, discountLevelId])
 }

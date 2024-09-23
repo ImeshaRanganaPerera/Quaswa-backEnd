@@ -17,7 +17,7 @@ centerRouter.get("/", async (request: Request, response: Response) => {
         const data = await centerService.getlist();
         return response.status(200).json({ data: data, message: "" });
     } catch (error: any) {
-        return response.status(500).json(error.message);
+        return response.status(500).json({ message: error.message });
     }
 })
 
@@ -31,7 +31,21 @@ centerRouter.get("/:id", async (request: Request, response: Response) => {
         }
         return response.status(404).json({ message: "Center could not be found" });
     } catch (error: any) {
-        return response.status(500).json(error.message);
+        return response.status(500).json({ message: error.message });
+    }
+})
+
+//GET
+centerRouter.get("/centerMode/:mode", async (request: Request, response: Response) => {
+    const mode: any = request.params.mode;
+    try {
+        const data = await centerService.getCenterMode(mode)
+        if (data) {
+            return response.status(200).json({ data: data });
+        }
+        return response.status(404).json({ message: "Center could not be found" });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
     }
 })
 
@@ -89,7 +103,7 @@ centerRouter.post("/", authenticate, async (request: ExpressRequest, response: R
             return response.status(201).json({ message: "Center Created Successfully", data: newCenter });
         }
     } catch (error: any) {
-        return response.status(500).json(error.message);
+        return response.status(500).json({ message: error.message });
     }
 })
 
@@ -103,6 +117,6 @@ centerRouter.put("/:id", async (request: Request, response: Response) => {
             return response.status(201).json({ message: "Center Updated Successfully", data: updateCenter });
         }
     } catch (error: any) {
-        return response.status(500).json(error.message);
+        return response.status(500).json({ message: error.message });
     }
 })

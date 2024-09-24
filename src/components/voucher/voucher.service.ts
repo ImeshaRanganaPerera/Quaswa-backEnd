@@ -11,7 +11,8 @@ export const get = async (id: any) => {
         }, include: {
             party: true,
             voucherProduct: true,
-            referVouchers: true
+            referVouchers: true,
+            PaymentVoucher: true
         }
     });
 }

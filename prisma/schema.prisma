@@ -177,7 +177,7 @@ model referVouchers {
   refVoucherNumber String
   invoiceDate      DateTime
   invoiceAmount    Decimal
-  settledAmount     Decimal
+  settledAmount    Decimal
   paidAmount       Decimal
   voucher          Voucher  @relation(fields: [voucherId], references: [id])
   voucherId        String
@@ -205,13 +205,14 @@ model Payment {
 }
 
 model PaymentVoucher {
-  id        String   @id @default(uuid())
-  amount    Decimal
-  payment   Payment  @relation(fields: [paymentId], references: [id])
-  paymentId String
-  voucher   Voucher  @relation(fields: [voucherId], references: [id])
-  voucherId String
-  Cheque    Cheque[]
+  id          String   @id @default(uuid())
+  amount      Decimal
+  paymentType String?
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  paymentId   String
+  voucher     Voucher  @relation(fields: [voucherId], references: [id])
+  voucherId   String
+  Cheque      Cheque[]
 }
 
 model Brand {

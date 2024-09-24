@@ -257,10 +257,10 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 const Credit = await paymentService.getbyname('Credit')
 
                 const paymentVouchers = [
-                    { voucherId: newVoucher.id, paymentId: onlineTransfer?.id, amount: data.payment.onlineTransfer },
-                    { voucherId: newVoucher.id, paymentId: cash?.id, amount: data.payment.cash },
-                    { voucherId: newVoucher.id, paymentId: Cheque?.id, amount: data.payment.cheque },
-                    { voucherId: newVoucher.id, paymentId: Credit?.id, amount: data.payment.credit }
+                    { voucherId: newVoucher.id, paymentId: onlineTransfer?.id, paymentType: onlineTransfer?.type, amount: data.payment.onlineTransfer },
+                    { voucherId: newVoucher.id, paymentId: cash?.id, paymentType: cash?.type, amount: data.payment.cash },
+                    { voucherId: newVoucher.id, paymentId: Cheque?.id, paymentType: Cheque?.type, amount: data.payment.cheque },
+                    { voucherId: newVoucher.id, paymentId: Credit?.id, paymentType: Credit?.type, amount: data.payment.credit }
                 ].filter(record => record.paymentId);
 
                 const paymentVoucherResult = await paymentVoucherService.createMany(paymentVouchers);
@@ -292,10 +292,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                             id: voucher.id,
                             paidValue: updatedPaidValue
                         });
-
-                        console.log(voucher.id)
                         var selectedVoucher = await vocuherService.getbyid(voucher.id)
-
                         await referVoucherService.create({
                             refVoucherNumber: selectedVoucher?.voucherNumber,
                             invoiceDate: selectedVoucher?.date,

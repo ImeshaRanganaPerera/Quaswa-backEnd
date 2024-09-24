@@ -55,6 +55,7 @@ model User {
   Cheque               Cheque[]
   discountLevel        discountLevel[]
   productDiscountLevel productDiscountLevel[]
+  referVouchers        referVouchers[]
 }
 
 model userCenter {
@@ -155,6 +156,8 @@ model Voucher {
   isconform        Boolean          @default(true)
   party            Party?           @relation(fields: [partyId], references: [id])
   partyId          String?
+  chartofacc       ChartofAccount?  @relation(fields: [chartofAccountId], references: [id])
+  chartofAccountId String?
   voucherGroup     VoucherGroup     @relation(fields: [voucherGroupId], references: [id])
   voucherGroupId   String
   user             User             @relation(fields: [createdBy], references: [id])
@@ -166,6 +169,23 @@ model Voucher {
   VoucherCenter    VoucherCenter[]
   journalLine      journalLine[]
   Cheque           Cheque[]
+  referVouchers    referVouchers[]
+}
+
+model referVouchers {
+  id               String   @id @default(uuid())
+  refVoucherNumber String
+  invoiceDate      DateTime
+  invoiceAmount    Decimal
+  dueAmount        Decimal
+  settleAmount     Decimal
+  voucher          Voucher  @relation(fields: [voucherId], references: [id])
+  voucherId        String
+  isdelete         Boolean  @default(false)
+  user             User     @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model VoucherCenter {
@@ -349,6 +369,7 @@ model ChartofAccount {
   journalLine          journalLine[]
   Party                Party[]
   ChequeBook           ChequeBook[]
+  Voucher              Voucher[]
 }
 
 model ChequeBook {

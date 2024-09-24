@@ -10,7 +10,16 @@ export const get = async (id: any) => {
             id,
         }, include: {
             party: true,
-            voucherProduct: true
+            voucherProduct: true,
+            referVouchers: true
+        }
+    });
+}
+
+export const getbyid = async (id: any) => {
+    return db.voucher.findFirst({
+        where: {
+            id: id
         }
     });
 }
@@ -35,11 +44,16 @@ export const getVoucherbyParty = async (id: any) => {
     });
 }
 
-export const getVoucherbyPartytrue = async (id: any) => {
+export const getVoucherbyPartytrue = async (id: any, condition: any) => {
     return db.voucher.findMany({
         where: {
             partyId: id,
-            isconform: true,
+            isconform: condition,
+            NOT: {
+                paidValue: {
+                    equals: db.voucher.fields.amount
+                }
+            },
             OR: [
                 { voucherNumber: { startsWith: 'GRN' } },
                 { voucherNumber: { startsWith: 'INV' } },
@@ -59,7 +73,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, note: data.note, isconform: data?.isconform, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
+        data: { voucherNumber: data.voucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, isconform: data?.isconform, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
     });
 }
 
@@ -110,3 +124,23 @@ export const updateConform = async (data: any, id: any) => {
         data: { isconform: data.isconform }
     });
 }
+
+export const findManyByIds = async (voucherIds: any[]) => {
+    return db.voucher.findMany({
+        where: {
+            id: { in: voucherIds }
+        },
+        orderBy: { createdAt: 'asc' } // Order by the oldest first (if needed)
+    });
+};
+
+export const updatepaidValue = async (data: any) => {
+    return db.voucher.update({
+        where: {
+            id: data.id,
+        },
+        data: {
+            paidValue: data.paidValue,
+        }
+    });
+};

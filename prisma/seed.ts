@@ -2,8 +2,6 @@ import { Role, InventoryMode } from "@prisma/client";
 import { db } from "../src/utils/db.server"
 import { format, toZonedTime } from 'date-fns-tz';
 import { hash } from "bcrypt";
-import { create } from '../src/components/voucherPayment/voucherPayment.service';
-
 
 async function seed() {
     const currentDateTime = new Date();
@@ -18,6 +16,7 @@ async function seed() {
             username: "admin",
             password: hashedPassword,
             role: Role.ADMIN,  // Using the Role enum
+            isconform: true
         }
     });
     const userid = user.id;
@@ -41,21 +40,21 @@ async function seed() {
         data: { level: 'Cash Discount', createdBy: userid }
     })
 
-    // await db.brand.createMany({
-    //     data: [
-    //         { brandName: "BMW", createdBy: userid },
-    //         { brandName: "TATA", createdBy: userid },
-    //         { brandName: "TOYOTA", createdBy: userid },
-    //     ]
-    // });
+    await db.brand.createMany({
+        data: [
+            { brandName: "BMW", createdBy: userid },
+            { brandName: "TATA", createdBy: userid },
+            { brandName: "TOYOTA", createdBy: userid },
+        ]
+    });
 
-    // await db.type.createMany({
-    //     data: [
-    //         { typeName: "OIL FILTER", createdBy: userid },
-    //         { typeName: "RIM", createdBy: userid },
-    //         { typeName: "BUFFER", createdBy: userid },
-    //     ]
-    // });
+    await db.type.createMany({
+        data: [
+            { typeName: "OIL FILTER", createdBy: userid },
+            { typeName: "RIM", createdBy: userid },
+            { typeName: "BUFFER", createdBy: userid },
+        ]
+    });
 
     await db.payment.createMany({
         data: [

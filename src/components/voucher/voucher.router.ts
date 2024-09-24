@@ -88,6 +88,24 @@ voucherRouter.get("/party/:partyId", async (request: Request, response: Response
     }
 })
 
+voucherRouter.post("/chartofAcc/condition/:chartofaccId", authenticate, async (request: ExpressRequest, response: Response) => {
+    const chartofaccId: any = request.params.chartofaccId;
+    const data: any = request.body;
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        const voucherbyParty = await vocuherService.getVoucherbyChartofacc(chartofaccId, data.condition)
+        if (voucherbyParty) {
+            return response.status(200).json({ data: voucherbyParty });
+        }
+        return response.status(404).json({ message: "Voucher Group could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
+
 voucherRouter.post("/party/condition/:partyId", authenticate, async (request: ExpressRequest, response: Response) => {
     const partyId: any = request.params.partyId;
     const data: any = request.body;
@@ -105,6 +123,7 @@ voucherRouter.post("/party/condition/:partyId", authenticate, async (request: Ex
         return response.status(500).json(error.message);
     }
 })
+
 
 voucherRouter.get("/party/false/:partyId", async (request: Request, response: Response) => {
     const partyId: any = request.params.partyId;
@@ -281,8 +300,8 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                             refVoucherNumber: selectedVoucher?.voucherNumber,
                             invoiceDate: selectedVoucher?.date,
                             invoiceAmount: selectedVoucher?.amount,
-                            dueAmount: updatedPaidValue,
-                            settleAmount: paidValue,
+                            settledAmount: updatedPaidValue,
+                            paidAmount: updatedPaidValue - paidValue,
                             voucherId: newVoucher.id,
                             createdBy: userId
                         });

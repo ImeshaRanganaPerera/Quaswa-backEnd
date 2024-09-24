@@ -177,8 +177,8 @@ model referVouchers {
   refVoucherNumber String
   invoiceDate      DateTime
   invoiceAmount    Decimal
-  dueAmount        Decimal
-  settleAmount     Decimal
+  settledAmount     Decimal
+  paidAmount       Decimal
   voucher          Voucher  @relation(fields: [voucherId], references: [id])
   voucherId        String
   isdelete         Boolean  @default(false)

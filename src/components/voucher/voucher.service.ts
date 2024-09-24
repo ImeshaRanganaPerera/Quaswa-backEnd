@@ -62,6 +62,23 @@ export const getVoucherbyPartytrue = async (id: any, condition: any) => {
     });
 }
 
+export const getVoucherbyChartofacc = async (id: any, condition: any) => {
+    return db.voucher.findMany({
+        where: {
+            chartofAccountId: id,
+            isconform: condition,
+            NOT: {
+                paidValue: {
+                    equals: db.voucher.fields.amount
+                }
+            },
+            OR: [
+                { voucherNumber: { startsWith: 'UTILITY-BC' } },
+            ],
+        }
+    });
+}
+
 export const getVoucherbyPartyfalse = async (id: any) => {
     return db.voucher.findMany({
         where: {

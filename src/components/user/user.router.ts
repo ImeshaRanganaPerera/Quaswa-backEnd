@@ -56,7 +56,6 @@ userRouter.post("/", authenticate, async (request: ExpressRequest, response: Res
     try {
         // Create user
         const newUser = await UserService.create({
-            id: data.id,
             name: data.name,
             nic: data.nic,
             phoneNumber: data.phoneNumber,

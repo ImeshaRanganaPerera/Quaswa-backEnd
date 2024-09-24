@@ -11,7 +11,7 @@ import * as voucherCenter from '../centerVoucher/centerVoucher.service'
 import * as productVoucherService from '../voucherProduct/voucherProduct.service'
 import * as inventoryService from '../inventory/inventory.service'
 import * as productService from '../product/product.service'
-import * as jounallineService from '../journalline/journalline.service'
+import * as journalLineService from '../journalline/journalline.service'
 import * as chartofaccService from '../ChartofAccount/chartofaccount.service'
 import * as partyService from '../party/party.service'
 import * as paymentService from '../payment/payment.service'
@@ -32,6 +32,39 @@ voucherRouter.get("/", async (request: Request, response: Response) => {
         return response.status(500).json({ message: error.message });
     }
 })
+
+voucherRouter.get("/filter", async (request: Request, response: Response) => {
+    try {
+        const { partyId, startDate, endDate } = request.query;
+        
+        if (!partyId) {
+            return response.status(400).json({ message: "partyId is required." });
+        }
+
+        // startDate format and if no end date set todays date
+        const filterStartDate = startDate ? new Date(startDate as string) : new Date();
+        // if no endDate set end date as startDate plus 1 day (wadiye hithanna epa)
+        const filterEndDate = endDate ? new Date(endDate as string) : new Date(filterStartDate.getTime() + 24 * 60 * 60 * 1000);
+
+        console.log(`partyId=${partyId} between ${filterStartDate} and ${filterEndDate}`);
+        if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
+            return response.status(400).json({ message: "Invalid date format." });
+        }
+
+        const vouchers = await vocuherService.getVouchersByPartyAndDateRange(partyId as string, filterStartDate, filterEndDate);
+
+        if (!vouchers || vouchers.length === 0) {
+            return response.status(404).json({ message: "No vouchers found for the specified partyId and date range." });
+        }
+
+        return response.status(200).json({ data: vouchers });
+
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
 
 //GET 
 voucherRouter.get("/:id", async (request: Request, response: Response) => {
@@ -314,6 +347,28 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 }
             }
 
+            if (data.journalEntries && data.journalEntries.length > 0) {
+                const journalEntries = data.journalEntries;
+
+                // Loop through each journal entry and create corresponding journalLine
+                for (let entry of journalEntries) {
+                    var chartofAccId = entry.accountId
+                    if (entry.accountId === "CASH") {
+                        var cashchartofaccid = await chartofaccService.getbyname('CASH BOOK')
+                        chartofAccId = cashchartofaccid?.id
+                    }
+                    const journalLineData = {
+                        voucherId: newVoucher.id, // Link to the created voucher
+                        chartofAccountId: chartofAccId, // Account ID from the journal entry
+                        debitAmount: entry.debit || 0, // Debit amount if present
+                        creditAmount: entry.credit || 0, // Credit amount if present
+                        ref: data.refNumber, // Reference number from the voucher
+                        createdBy: userId, // Assuming `req.user.id` contains the user ID
+                    };
+
+                    await journalLineService.create(journalLineData);
+                }
+            }
 
             if (data.productList) {
                 const centerPromises = data.productList?.map(async (product: any) => {
@@ -377,14 +432,14 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
                                 // Create journal lines concurrently
                                 await Promise.all([
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: inventoryAccount.id,
                                         debitAmount: amount,
                                         creditAmount: 0,
                                         createdBy: userId
                                     }),
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: partyAccountId,
                                         debitAmount: 0,
@@ -416,21 +471,21 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
                                 // Create journal lines concurrently
                                 await Promise.all([
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: inventoryAccount.id,
                                         debitAmount: totalCost,
                                         creditAmount: 0,
                                         createdBy: userId
                                     }),
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: partyAccountId,
                                         debitAmount: 0,
                                         creditAmount: totalCost,
                                         createdBy: userId
                                     }),
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: revenueAccount?.id,
                                         debitAmount: profit,
@@ -508,21 +563,21 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
                                 // Create journal lines concurrently
                                 await Promise.all([
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: inventoryAccount.id,
                                         debitAmount: 0,
                                         creditAmount: totalCost,
                                         createdBy: userId
                                     }),
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: partyAccountId,
                                         debitAmount: amount,
                                         creditAmount: 0,
                                         createdBy: userId
                                     }),
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: revenueAccount?.id,
                                         debitAmount: 0,
@@ -552,14 +607,14 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
                                 // Create journal lines concurrently
                                 await Promise.all([
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: inventoryAccount.id,
                                         debitAmount: 0,
                                         creditAmount: amount,
                                         createdBy: userId
                                     }),
-                                    jounallineService.create({
+                                    journalLineService.create({
                                         voucherId,
                                         chartofAccountId: partyAccountId,
                                         debitAmount: amount,
@@ -600,14 +655,14 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
                     //                 // Create journal lines concurrently
                     //                 await Promise.all([
-                    //                     jounallineService.create({
+                    //                     journalLineService.create({
                     //                         voucherId,
                     //                         chartofAccountId: paymode.id,
                     //                         debitAmount: 0,
                     //                         creditAmount: amount,
                     //                         createdBy: userId
                     //                     }),
-                    //                     jounallineService.create({
+                    //                     journalLineService.create({
                     //                         voucherId,
                     //                         chartofAccountId: partyAccountId,
                     //                         debitAmount: amount,
@@ -639,14 +694,14 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
                     //                 // Create journal lines concurrently
                     //                 await Promise.all([
-                    //                     jounallineService.create({
+                    //                     journalLineService.create({
                     //                         voucherId,
                     //                         chartofAccountId: paymode.id,
                     //                         debitAmount: amount,
                     //                         creditAmount: 0,
                     //                         createdBy: userId
                     //                     }),
-                    //                     jounallineService.create({
+                    //                     journalLineService.create({
                     //                         voucherId,
                     //                         chartofAccountId: partyAccountId,
                     //                         debitAmount: 0,
@@ -677,14 +732,14 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
                     //                 // Create journal lines concurrently
                     //                 await Promise.all([
-                    //                     jounallineService.create({
+                    //                     journalLineService.create({
                     //                         voucherId,
                     //                         chartofAccountId: chartOfAcc.id,
                     //                         debitAmount: amount,
                     //                         creditAmount: 0,
                     //                         createdBy: userId
                     //                     }),
-                    //                     jounallineService.create({
+                    //                     journalLineService.create({
                     //                         voucherId,
                     //                         chartofAccountId: paymode.id,
                     //                         debitAmount: 0,
@@ -715,14 +770,14 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
                     //                 // Create journal lines concurrently
                     //                 await Promise.all([
-                    //                     jounallineService.create({
+                    //                     journalLineService.create({
                     //                         voucherId,
                     //                         chartofAccountId: chartOfAcc.id,
                     //                         debitAmount: amount,
                     //                         creditAmount: 0,
                     //                         createdBy: userId
                     //                     }),
-                    //                     jounallineService.create({
+                    //                     journalLineService.create({
                     //                         voucherId,
                     //                         chartofAccountId: paymode.id,
                     //                         debitAmount: 0,

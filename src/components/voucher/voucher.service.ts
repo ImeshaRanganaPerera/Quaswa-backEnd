@@ -91,7 +91,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, isconform: data?.isconform, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, isconform: data?.isconform, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
     });
 }
 
@@ -159,6 +159,24 @@ export const updatepaidValue = async (data: any) => {
         },
         data: {
             paidValue: data.paidValue,
+        }
+    });
+};
+
+export const getVouchersByPartyAndDateRange = async (partyId: string, startDate: Date, endDate: Date) => {
+    return db.voucher.findMany({
+        where: {
+            partyId: partyId,
+            date: {
+                gte: startDate,  
+                lte: endDate, 
+            }
+        },
+        include: {
+            party: true,
+            voucherProduct: true,
+            referVouchers: true,
+            PaymentVoucher: true,
         }
     });
 };

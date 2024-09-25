@@ -62,5 +62,5 @@ export const getNextChequeNumber = async (chartOfAccountId: string) => {
     //     data: { remainingCheques: chequeBook.remainingCheques - 1 }
     // });
 
-    return nextChequeNumber.toString();
+    return { nextNumber: nextChequeNumber, chequeBookId: chequeBook.id }
 };

@@ -21,6 +21,19 @@ chartofAccRouter.get("/", async (request: Request, response: Response) => {
     }
 })
 
+chartofAccRouter.get("/chartofaccSum/:id", async (request: Request, response: Response) => {
+    const id: any = request.params.id;
+    try {
+        const data = await chartofaccService.sumbalance(id)
+        if (data) {
+            return response.status(200).json({ data: data });
+        }
+        return response.status(404).json({ message: "Chart of Account could not be found" });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+
 //GET 
 chartofAccRouter.get("/:id", async (request: Request, response: Response) => {
     const id: any = request.params.id;
@@ -44,7 +57,7 @@ chartofAccRouter.get("/getbyGroup/:name", async (request: Request, response: Res
         if (!accGrp) {
             return response.status(404).json({ message: "Account Group not found" });
         }
-        
+
         const data = await chartofaccService.getbygroup(accGrp?.id)
         if (data) {
             return response.status(200).json({ data: data });

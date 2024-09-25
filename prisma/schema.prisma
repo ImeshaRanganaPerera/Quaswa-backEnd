@@ -390,22 +390,24 @@ model ChequeBook {
 }
 
 model Cheque {
-  id               String         @id @default(uuid())
-  chequeNumber     String         @unique
+  id               String          @id @default(uuid())
+  chequeNumber     String          @unique
+  chequeBankName   String?
   issueDate        DateTime?
   releaseDate      DateTime?
   amount           Decimal
-  used             Boolean        @default(false)
-  chequeBook       ChequeBook     @relation(fields: [chequeBookId], references: [id])
-  chequeBookId     String
-  voucher          Voucher?       @relation(fields: [voucherId], references: [id])
+  used             Boolean         @default(false)
+  creditDebit      CreditDebit
+  chequeBook       ChequeBook?     @relation(fields: [chequeBookId], references: [id])
+  chequeBookId     String?
+  voucher          Voucher?        @relation(fields: [voucherId], references: [id])
   voucherId        String?
-  paymentVoucher   PaymentVoucher @relation(fields: [paymentVoucherId], references: [id])
-  paymentVoucherId String
-  user             User           @relation(fields: [createdBy], references: [id])
+  paymentVoucher   PaymentVoucher? @relation(fields: [paymentVoucherId], references: [id])
+  paymentVoucherId String?
+  user             User            @relation(fields: [createdBy], references: [id])
   createdBy        String
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 }
 
 model journalLine {

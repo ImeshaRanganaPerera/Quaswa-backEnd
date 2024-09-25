@@ -24,3 +24,23 @@ export const update = async (data: any, id: any) => {
         data: data
     });
 }
+
+export const updatechequeRemaning = async (id: any) => {
+    const checkbook = await db.chequeBook.findFirst({
+        where: {
+            id: id,
+            remainingCheques: {
+                gt: 0 // Ensure there are remaining cheques
+            },
+        }
+    })
+
+    if (!checkbook || checkbook.remainingCheques === undefined) {
+        throw new Error("Cheque book not found or remaining cheques value is undefined.");
+    }
+
+    await db.chequeBook.update({
+        where: { id: checkbook.id },
+        data: { remainingCheques: checkbook.remainingCheques - 1 }
+    });
+}

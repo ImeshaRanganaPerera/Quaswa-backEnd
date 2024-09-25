@@ -17,6 +17,8 @@ import * as partyService from '../party/party.service'
 import * as paymentService from '../payment/payment.service'
 import * as paymentVoucherService from '../voucherPayment/voucherPayment.service'
 import * as referVoucherService from '../referVouchers/referVouchers.service'
+import * as chequebookService from '../ChequeBook/chequebook.service'
+import * as chequeService from '../Cheque/cheque.service'
 
 export const voucherRouter = express.Router();
 
@@ -36,7 +38,7 @@ voucherRouter.get("/", async (request: Request, response: Response) => {
 voucherRouter.get("/filter", async (request: Request, response: Response) => {
     try {
         const { partyId, startDate, endDate } = request.query;
-        
+
         if (!partyId) {
             return response.status(400).json({ message: "partyId is required." });
         }
@@ -64,7 +66,6 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
         return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
     }
 });
-
 
 //GET 
 voucherRouter.get("/:id", async (request: Request, response: Response) => {
@@ -192,14 +193,14 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 return total + (product.cost * product.quantity);
             }, 0);
         }
+        const newVoucher = await vocuherService.create({
+            ...data,
+            voucherNumber: newVoucherNumber,
+            voucherGroupId: voucherGrpdetails?.id,
+            createdBy: userId
+        })
 
         if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
-            const newVoucher = await vocuherService.create({
-                ...data,
-                voucherNumber: newVoucherNumber,
-                voucherGroupId: voucherGrpdetails?.id,
-                createdBy: userId
-            })
             const centerPromises = data.productList.map(async (product: any) => {
                 const voucherProduct = await productVoucherService.create({
                     cost: product.cost,
@@ -276,27 +277,48 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         }
 
         else {
-            const newVoucher = await vocuherService.create({
-                ...data,
-                voucherNumber: newVoucherNumber,
-                voucherGroupId: voucherGrpdetails?.id,
-                createdBy: userId
-            })
-
             if (data.payment) {
-                const onlineTransfer = await paymentService.getbyname('Online Transfer')
-                const cash = await paymentService.getbyname('Cash')
-                const Cheque = await paymentService.getbyname('Cheque')
-                const Credit = await paymentService.getbyname('Credit')
+                const onlineTransfer = await paymentService.getbyname('Online Transfer');
+                const cash = await paymentService.getbyname('Cash');
+                const Cheque = await paymentService.getbyname('Cheque');
+                const Credit = await paymentService.getbyname('Credit');
 
+                // Prepare payment vouchers
                 const paymentVouchers = [
                     { voucherId: newVoucher.id, paymentId: onlineTransfer?.id, paymentType: onlineTransfer?.type, amount: data.payment.onlineTransfer },
                     { voucherId: newVoucher.id, paymentId: cash?.id, paymentType: cash?.type, amount: data.payment.cash },
                     { voucherId: newVoucher.id, paymentId: Cheque?.id, paymentType: Cheque?.type, amount: data.payment.cheque },
                     { voucherId: newVoucher.id, paymentId: Credit?.id, paymentType: Credit?.type, amount: data.payment.credit }
-                ].filter(record => record.paymentId);
+                ].filter(record => record.paymentId && record.amount > 0);
 
-                const paymentVoucherResult = await paymentVoucherService.createMany(paymentVouchers);
+                let chequePaymentVoucher = null;
+
+                // Loop to create each payment voucher and capture the cheque payment voucher
+                for (const voucher of paymentVouchers) {
+                    const createdVoucher = await paymentVoucherService.create(voucher);
+
+                    // Check if this is the cheque voucher
+                    if (voucher.paymentId === Cheque?.id) {
+                        chequePaymentVoucher = createdVoucher;
+                    }
+                }
+                // Now handle the cheque creation if applicable
+                if (data.payment.cheque > 0 && chequePaymentVoucher) {
+                    console.log(data.payment.chequeBookId);
+                    const cheque = await chequeService.create({
+                        chequeNumber: data.payment.chequenumber.toString(),
+                        chequeBankName: data.payment.chequeBankName,
+                        issueDate: data.date,
+                        releaseDate: data.payment.releaseDate,
+                        amount: data.payment.cheque,
+                        chequeBookId: data.payment.chequeBookId,
+                        voucherId: newVoucher.id,
+                        paymentVoucherId: chequePaymentVoucher.id,
+                        creditDebit: data.payment.creditDebit,
+                        createdBy: userId
+                    });
+                    await chequebookService.updatechequeRemaning(data.payment?.chequeBookId);
+                }
             }
 
             if (data.selectedVoucherIds && data.amount > 0) {
@@ -356,6 +378,15 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     if (entry.accountId === "CASH") {
                         var cashchartofaccid = await chartofaccService.getbyname('CASH BOOK')
                         chartofAccId = cashchartofaccid?.id
+                    }
+                    if (entry.accountId === "Check") {
+                        var pendingCheque = await chartofaccService.getbyname('PENDING CHEQUE')
+                        chartofAccId = pendingCheque?.id
+                    }
+                    if (entry.accountId === "Expencess") {
+                        var expencessacc = await chartofaccService.getbyname('EXPENCESS ACCOUNT')
+                        chartofAccId = expencessacc?.id
+                        console.log(chartofAccId)
                     }
                     const journalLineData = {
                         voucherId: newVoucher.id, // Link to the created voucher

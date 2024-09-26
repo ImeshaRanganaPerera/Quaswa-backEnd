@@ -19,6 +19,7 @@ import * as paymentVoucherService from '../voucherPayment/voucherPayment.service
 import * as referVoucherService from '../referVouchers/referVouchers.service'
 import * as chequebookService from '../ChequeBook/chequebook.service'
 import * as chequeService from '../Cheque/cheque.service'
+import * as pettyCashIOUService from '../pettycashIOU/pettycashIOU.service'
 
 export const voucherRouter = express.Router();
 
@@ -386,18 +387,38 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     if (entry.accountId === "Expencess") {
                         var expencessacc = await chartofaccService.getbyname('EXPENCESS ACCOUNT')
                         chartofAccId = expencessacc?.id
-                        console.log(chartofAccId)
+                    }
+                    if (entry.accountId === "PettyCash") {
+                        var expencessacc = await chartofaccService.getbyname('PETTY CASH')
+                        chartofAccId = expencessacc?.id
+                    }
+                    if (entry.accountId === "UserExp") {
+                        var expencessacc = await chartofaccService.getbyname('USER EXPENCESS ACCOUNT')
+                        chartofAccId = expencessacc?.id
                     }
                     const journalLineData = {
                         voucherId: newVoucher.id, // Link to the created voucher
                         chartofAccountId: chartofAccId, // Account ID from the journal entry
                         debitAmount: entry.debit || 0, // Debit amount if present
                         creditAmount: entry.credit || 0, // Credit amount if present
-                        ref: data.refNumber, // Reference number from the voucher
+                        ref: entry.ref, // Reference number from the voucher
                         createdBy: userId, // Assuming `req.user.id` contains the user ID
                     };
 
                     await journalLineService.create(journalLineData);
+                }
+            }
+
+            if (data.iou && data.iou.length > 0) {
+                const iou = data.iou;
+                for (let entry of iou) {
+                    const ioudata = {
+                        voucherId: newVoucher.id,
+                        userid: entry.userid,
+                        amount: entry.amount,
+                        createdBy: userId,
+                    }
+                    await pettyCashIOUService.create(ioudata);
                 }
             }
 

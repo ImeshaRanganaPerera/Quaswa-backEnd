@@ -32,7 +32,6 @@ userRouter.get("/:id", authenticate, async (request: ExpressRequest, response: R
         if (!request.user) {
             return response.status(401);
         }
-
         const user = await UserService.get(id)
         if (user) {
             return response.status(200).json(user);

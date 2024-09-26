@@ -21,10 +21,13 @@ chartofAccRouter.get("/", async (request: Request, response: Response) => {
     }
 })
 
-chartofAccRouter.get("/chartofaccSum/:id", async (request: Request, response: Response) => {
-    const id: any = request.params.id;
+chartofAccRouter.get("/chartofaccSum/:name", async (request: Request, response: Response) => {
+    const name: any = request.params.name;
     try {
-        const data = await chartofaccService.sumbalance(id)
+        const chartofacc = await chartofaccService.getbyname(name)
+        
+        const data = await chartofaccService.sumbalance(chartofacc?.id)
+        console.log(data)
         if (data) {
             return response.status(200).json({ data: data });
         }

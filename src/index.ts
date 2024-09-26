@@ -20,6 +20,8 @@ import { partyCategoryRouter } from "./components/partyCategory/partyCategory.ro
 import { chequebookRouter } from "./components/ChequeBook/chequebook.router";
 import { chequeRouter } from "./components/Cheque/cheque.router";
 import { discountLevelRouter } from "./components/discountLevel/disscountLevel.router";
+import { journalLineRouter } from "./components/journalline/journalline.router";
+import { pettyCashIOURouter } from "./components/pettycashIOU/pettycashIOU.router";
 
 
 dotenv.config();
@@ -57,6 +59,8 @@ app.use("/api/accCategory", accCategoryRouter)
 app.use("/api/chequebook", chequebookRouter)
 app.use("/api/cheque", chequeRouter)
 app.use("/api/discountLevel", discountLevelRouter)
+app.use("/api/jornalLine", journalLineRouter)
+app.use("/api/pettyCashIOU", pettyCashIOURouter)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

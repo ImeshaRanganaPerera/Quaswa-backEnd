@@ -12,6 +12,21 @@ export const get = async (id: any) => {
     });
 }
 
+export const getbyRef = async (name: any) => {
+    return db.journalLine.findMany({
+        where: {
+            ref: name,
+        },
+        include: {
+            account: {
+                select: {
+                    accountName: true, // This will retrieve the account name
+                },
+            },
+        },
+    });
+}
+
 export const create = async (data: any) => {
     return db.journalLine.create({
         data: data

@@ -56,6 +56,9 @@ model User {
   discountLevel        discountLevel[]
   productDiscountLevel productDiscountLevel[]
   referVouchers        referVouchers[]
+  pettycashIOU         pettycashIOU[]         @relation("UserIOU")
+  createdPettycashIOU  pettycashIOU[]         @relation("CreatedByUserIOU")
+  pettyCashIOUDetails  pettyCashIOUDetails[]
 }
 
 model userCenter {
@@ -129,16 +132,14 @@ model partyproofimage {
 }
 
 model VoucherGroup {
-  id              String        @id @default(uuid())
-  voucherName     String
-  shortname       String
-  inventoryMode   InventoryMode
-  isAccount       Boolean
-  commonAccountId String?
-  creditDebit     CreditDebit?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  voucher         Voucher[]
+  id            String        @id @default(uuid())
+  voucherName   String
+  shortname     String
+  inventoryMode InventoryMode
+  isAccount     Boolean
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  voucher       Voucher[]
 }
 
 model Voucher {
@@ -170,6 +171,39 @@ model Voucher {
   journalLine      journalLine[]
   Cheque           Cheque[]
   referVouchers    referVouchers[]
+  pettycashIOU     pettycashIOU[]
+}
+
+model pettycashIOU {
+  id                  String                @id @default(uuid())
+  userid              String
+  amount              Decimal?
+  spent               Decimal?
+  returnDate          DateTime?
+  returnAmount        Decimal?
+  voucher             Voucher               @relation(fields: [voucherId], references: [id])
+  voucherId           String
+  isReturn            Boolean               @default(false)
+  isDelete            Boolean               @default(false)
+  user                User                  @relation("UserIOU", fields: [userid], references: [id])
+  createdByUser       User                  @relation("CreatedByUserIOU", fields: [createdBy], references: [id])
+  createdBy           String
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  pettyCashIOUDetails pettyCashIOUDetails[]
+}
+
+model pettyCashIOUDetails {
+  id             String       @id @default(uuid())
+  refnumber      String?
+  description    String?
+  amount         Decimal?
+  pettycashIOU   pettycashIOU @relation(fields: [pettycashIOUId], references: [id])
+  pettycashIOUId String
+  user           User         @relation(fields: [createdBy], references: [id])
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 model referVouchers {

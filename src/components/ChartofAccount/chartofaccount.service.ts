@@ -33,7 +33,7 @@ export const getbygroup = async (id: string) => {
         where: {
             accountGroupId: id,
             NOT: {
-                accountName: 'EXPENCESS ACCOUNT'
+                accountName: { in: ['EXPENCESS ACCOUNT', 'USER EXPENCESS ACCOUNT'] }
             }
         }
     })

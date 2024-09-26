@@ -25,6 +25,13 @@ export const update = async (data: any, id: any) => {
     });
 }
 
+export const updateused = async (data: any, id: string) => {
+    return db.cheque.update({
+        where: { id: id }, // Pass id as a string, not an object
+        data: { used: data.used } // Use the 'used' field from data
+    });
+};
+
 export const getNextChequeNumber = async (chartOfAccountId: string) => {
     // Step 1: Find a ChequeBook with remaining cheques and matching chartOfAccountId
     let chequeBook = await db.chequeBook.findFirst({
@@ -63,4 +70,25 @@ export const getNextChequeNumber = async (chartOfAccountId: string) => {
     // });
 
     return { nextNumber: nextChequeNumber, chequeBookId: chequeBook.id }
+};
+
+export const getUnusedChequesByAccountId = async (chartofAccountId: string) => {
+    return await db.cheque.findMany({
+        where: {
+            OR: [
+                {
+                    chequeBook: {
+                        chartofAccountId: chartofAccountId,
+                    },
+                },
+                {
+                    chequeBookId: null, // Include cheques where chequeBookId is null
+                },
+            ],
+            used: false,
+        },
+        orderBy: {
+            creditDebit: 'asc', // Sort by creditDebit, ascending ('Credit' before 'Debit')
+        },
+    });
 };

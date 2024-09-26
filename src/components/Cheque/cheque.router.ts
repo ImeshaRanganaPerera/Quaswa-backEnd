@@ -4,6 +4,8 @@ import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as chequeservice from './cheque.service'
+import * as journalLineService from '../journalline/journalline.service'
+import * as chartofaccService from '../ChartofAccount/chartofaccount.service'
 
 export const chequeRouter = express.Router();
 
@@ -12,6 +14,19 @@ chequeRouter.get("/", async (request: Request, response: Response) => {
     try {
         const data = await chequeservice.list();
         return response.status(200).json({ data: data });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
+
+chequeRouter.get("/unusedCheque/:id", async (request: Request, response: Response) => {
+    const id = request.params.id;
+    try {
+        const data = await chequeservice.getUnusedChequesByAccountId(id)
+        if (data) {
+            return response.status(200).json({ data: data });
+        }
+        return response.status(404).json({ message: "Cheques could not be found" });
     } catch (error: any) {
         return response.status(500).json(error.message);
     }
@@ -82,3 +97,45 @@ chequeRouter.put("/:id", async (request: Request, response: Response) => {
         return response.status(500).json(error.message);
     }
 })
+
+chequeRouter.put("/used/:id", authenticate, async (request: ExpressRequest, response: Response) => {
+    const id: string = request.params.id; // Correct extraction of the ID
+    const data: any = request.body;
+
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+        const userId = request.user.id;
+
+        const updateCheque = await chequeservice.updateused({ used: data.used }, id); // Pass 'id' as a string
+
+        // Handle journal entries if present
+        if (data.journalEntries && data.journalEntries.length > 0) {
+            const journalEntries = data.journalEntries;
+
+            for (let entry of journalEntries) {
+                var chartofAccId = entry.accountId;
+                if (entry.accountId === "Cheque") {
+                    const pendingCheque = await chartofaccService.getbyname('PENDING CHEQUE');
+                    chartofAccId = pendingCheque?.id;
+                }
+                const journalLineData = {
+                    chartofAccountId: chartofAccId,
+                    debitAmount: entry.debit || 0,
+                    creditAmount: entry.credit || 0,
+                    ref: entry.ref,
+                    createdBy: userId,
+                };
+
+                await journalLineService.create(journalLineData);
+            }
+        }
+
+        if (updateCheque) {
+            return response.status(201).json({ message: "Cheque Updated Successfully", data: updateCheque });
+        }
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});

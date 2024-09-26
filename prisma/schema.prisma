@@ -319,9 +319,8 @@ model OEMNumber {
 }
 
 model discountLevel {
-  id    String @id @default(uuid())
-  level String
-
+  id                   String                 @id @default(uuid())
+  level                String
   user                 User                   @relation(fields: [createdBy], references: [id])
   createdBy            String
   createdAt            DateTime               @default(now())
@@ -443,6 +442,7 @@ model Cheque {
   issueDate        DateTime?
   releaseDate      DateTime?
   amount           Decimal
+  month            String?
   used             Boolean         @default(false)
   creditDebit      CreditDebit
   chequeBook       ChequeBook?     @relation(fields: [chequeBookId], references: [id])

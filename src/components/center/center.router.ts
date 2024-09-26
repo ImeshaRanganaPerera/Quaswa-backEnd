@@ -15,7 +15,7 @@ export const centerRouter = express.Router();
 centerRouter.get("/", async (request: Request, response: Response) => {
     try {
         const data = await centerService.getlist();
-        return response.status(200).json({ data: data, message: "" });
+        return response.status(200).json({ data: data });
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
     }

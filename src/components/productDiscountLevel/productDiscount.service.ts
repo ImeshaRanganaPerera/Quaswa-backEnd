@@ -36,15 +36,15 @@ export const update = async (data: any, id: any) => {
 
 export const upserts = async (data: any, productId: string) => {
     return db.productDiscountLevel.upsert({
-      where: { productId_discountLevelId: { productId: productId, discountLevelId: data.discountLevelId } },
-      update: {
-        discountRate: data.discountRate
-      },
-      create: {
-        productId: productId,
-        discountLevelId: data.discountLevelId,
-        discountRate: data.discountRate,
-        createdBy: data.createdBy
-      }
+        where: { productId_discountLevelId: { productId: productId, discountLevelId: data.discountLevelId } },
+        update: {
+            discountRate: data.discountRate
+        },
+        create: {
+            productId: productId,
+            discountLevelId: data.discountLevelId,
+            discountRate: data.discountRate,
+            createdBy: data.createdBy
+        }
     });
-  };
+};

@@ -23,6 +23,7 @@ import { discountLevelRouter } from "./components/discountLevel/disscountLevel.r
 import { journalLineRouter } from "./components/journalline/journalline.router";
 import { pettyCashIOURouter } from "./components/pettycashIOU/pettycashIOU.router";
 import { VoucherGrpRouter } from "./components/voucherGroup/vouchergrp.router";
+import { productDiscountRouter } from "./components/productDiscountLevel/prodcutDiscount.router";
 
 
 dotenv.config();
@@ -60,6 +61,7 @@ app.use("/api/accCategory", accCategoryRouter)
 app.use("/api/chequebook", chequebookRouter)
 app.use("/api/cheque", chequeRouter)
 app.use("/api/discountLevel", discountLevelRouter)
+app.use("/api/productDiscount", productDiscountRouter)
 app.use("/api/jornalLine", journalLineRouter)
 app.use("/api/pettyCashIOU", pettyCashIOURouter)
 app.use("/api/voucherGrp", VoucherGrpRouter)

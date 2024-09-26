@@ -7,13 +7,13 @@ export const list = async () => {
     });
 }
 
-// export const get = async (id: any) => {
-//     return db.productDiscountLevel.findUnique({
-//         where: {
-
-//         },
-//     });
-// }
+export const get = async (id: any) => {
+    return db.productDiscountLevel.findMany({
+        where: {
+            discountLevelId: id
+        },
+    });
+}
 
 export const create = async (data: any) => {
     return db.productDiscountLevel.create({

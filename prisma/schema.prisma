@@ -69,6 +69,7 @@ model User {
   pettycashIOU         pettycashIOU[]         @relation("UserIOU")
   createdPettycashIOU  pettycashIOU[]         @relation("CreatedByUserIOU")
   pettyCashIOUDetails  pettyCashIOUDetails[]
+  vistingCustomer      vistingCustomer[]
 }
 
 model userCenter {
@@ -112,6 +113,7 @@ model Party {
   updatedAt        DateTime          @updatedAt
   Voucher          Voucher[]
   partyproofimage  partyproofimage[]
+  vistingCustomer  vistingCustomer[]
 }
 
 model partyCategory {
@@ -123,6 +125,17 @@ model partyCategory {
   createdBy    String
   createdAt    DateTime   @default(now())
   Party        Party[]
+}
+
+model vistingCustomer {
+  id        String   @id @default(uuid())
+  party     Party    @relation(fields: [partyId], references: [id])
+  partyId   String
+  note      String?
+  status    String?
+  user      User     @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime @default(now())
 }
 
 model proofimage {

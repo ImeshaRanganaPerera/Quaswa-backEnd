@@ -24,6 +24,7 @@ import { journalLineRouter } from "./components/journalline/journalline.router";
 import { pettyCashIOURouter } from "./components/pettycashIOU/pettycashIOU.router";
 import { VoucherGrpRouter } from "./components/voucherGroup/vouchergrp.router";
 import { productDiscountRouter } from "./components/productDiscountLevel/prodcutDiscount.router";
+import { visitingCustomerRouter } from "./components/visitedCustomer/visitedCustomer.router";
 
 
 dotenv.config();
@@ -65,6 +66,7 @@ app.use("/api/productDiscount", productDiscountRouter)
 app.use("/api/jornalLine", journalLineRouter)
 app.use("/api/pettyCashIOU", pettyCashIOURouter)
 app.use("/api/voucherGrp", VoucherGrpRouter)
+app.use("/api/visitingCustomer", visitingCustomerRouter)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

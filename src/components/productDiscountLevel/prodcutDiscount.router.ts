@@ -19,3 +19,16 @@ productDiscountRouter.get("/", async (request: Request, response: Response) => {
         return response.status(500).json({ message: error.message });
     }
 })
+
+productDiscountRouter.get("/:id", async (request: Request, response: Response) => {
+    const id: any = request.params.id;
+    try {
+        const data = await productDiscountLevel.get(id)
+        if (data) {
+            return response.status(200).json({ data: data });
+        }
+        return response.status(404).json({ message: "Discount Level not be found" });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})

@@ -22,6 +22,7 @@ import { chequeRouter } from "./components/Cheque/cheque.router";
 import { discountLevelRouter } from "./components/discountLevel/disscountLevel.router";
 import { journalLineRouter } from "./components/journalline/journalline.router";
 import { pettyCashIOURouter } from "./components/pettycashIOU/pettycashIOU.router";
+import { VoucherGrpRouter } from "./components/voucherGroup/vouchergrp.router";
 
 
 dotenv.config();
@@ -61,6 +62,7 @@ app.use("/api/cheque", chequeRouter)
 app.use("/api/discountLevel", discountLevelRouter)
 app.use("/api/jornalLine", journalLineRouter)
 app.use("/api/pettyCashIOU", pettyCashIOURouter)
+app.use("/api/voucherGrp", VoucherGrpRouter)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

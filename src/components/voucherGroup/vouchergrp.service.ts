@@ -4,6 +4,19 @@ export const list = async () => {
     return db.voucherGroup.findMany({});
 }
 
+export const getsidemenu = async () => {
+    return db.voucherGroup.findMany({
+        where: {
+            isSidemenu: true
+        },
+        select: {
+            label: true,
+            category: true,
+            voucherName: true
+        }
+    });
+}
+
 export const getbyname = async (name: any) => {
     return db.voucherGroup.findFirst({
         where: {

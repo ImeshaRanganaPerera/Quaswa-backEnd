@@ -26,6 +26,16 @@ model Center {
   VoucherCenter VoucherCenter[]
 }
 
+model companyDetails {
+  id          String  @id @default(uuid())
+  companyName String?
+  telPhone1   String?
+  telPhone2   String?
+  email       String?
+  address1    String?
+  address2    String?
+}
+
 model User {
   id                   String                 @id @default(uuid())
   name                 String
@@ -137,6 +147,9 @@ model VoucherGroup {
   shortname     String
   inventoryMode InventoryMode
   isAccount     Boolean
+  label         String?
+  category      String?
+  isSidemenu    Boolean?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   voucher       Voucher[]

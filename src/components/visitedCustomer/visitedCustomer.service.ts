@@ -3,12 +3,12 @@ import { db } from "../../utils/db.server";
 export const list = async () => {
     return db.vistingCustomer.findMany({
         include: {
-            user: {
+            party: {
                 select: {
                     name: true
                 }
             },
-            party: {
+            user: {
                 select: {
                     name: true
                 }

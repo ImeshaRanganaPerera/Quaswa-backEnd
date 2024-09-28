@@ -32,6 +32,7 @@ async function seed() {
     await db.partyCategory.createMany({
         data: [
             { category: "WALKING CUSTOMER", partyGroupId: customer.id, createdBy: userid },
+            { category: "VISITING CUSTOMER", partyGroupId: customer.id, isEditable: false, createdBy: userid },
             { category: "COMMON SUPPLIER", partyGroupId: supplier.id, createdBy: userid }
         ]
     })

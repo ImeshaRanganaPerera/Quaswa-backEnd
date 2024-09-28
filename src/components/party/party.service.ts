@@ -1,7 +1,9 @@
 import { db } from "../../utils/db.server";
 
 export const list = async () => {
-    return db.party.findMany();
+    return db.party.findMany({
+
+    });
 }
 
 export const get = async (id: any) => {
@@ -16,7 +18,15 @@ export const getbyGroup = async (id: any) => {
     return db.party.findMany({
         where: {
             partyGroupId: id,
+
         },
+        include: {
+            partyCategory: {
+                select: {
+                    category: true
+                }
+            }
+        }
     });
 }
 

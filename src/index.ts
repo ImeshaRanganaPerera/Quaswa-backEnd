@@ -25,6 +25,8 @@ import { pettyCashIOURouter } from "./components/pettycashIOU/pettycashIOU.route
 import { VoucherGrpRouter } from "./components/voucherGroup/vouchergrp.router";
 import { productDiscountRouter } from "./components/productDiscountLevel/prodcutDiscount.router";
 import { visitingCustomerRouter } from "./components/visitedCustomer/visitedCustomer.router";
+import { commsissionRateRouter } from "./components/commissionRate/commissionRate.route";
+import { partyTypeRouter } from "./components/partyType/partyType.route";
 
 
 dotenv.config();
@@ -62,11 +64,13 @@ app.use("/api/accCategory", accCategoryRouter)
 app.use("/api/chequebook", chequebookRouter)
 app.use("/api/cheque", chequeRouter)
 app.use("/api/discountLevel", discountLevelRouter)
+app.use("/api/commission", commsissionRateRouter)
 app.use("/api/productDiscount", productDiscountRouter)
 app.use("/api/jornalLine", journalLineRouter)
 app.use("/api/pettyCashIOU", pettyCashIOURouter)
 app.use("/api/voucherGrp", VoucherGrpRouter)
 app.use("/api/visitingCustomer", visitingCustomerRouter)
+app.use("/api/partyType", partyTypeRouter)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

@@ -9,6 +9,7 @@ import * as chartOfAccService from '../ChartofAccount/chartofaccount.service'
 import * as accSubCategory from '../accountSubCategory/accountSubCategory.service'
 import * as accGrp from '../accountGroup/accountGroup.service'
 import * as partyCategoryService from '../partyCategory/partyCategory.service'
+import * as visitingCustomerService from '../visitedCustomer/visitedCustomer.service'
 
 export const partyRouter = express.Router();
 
@@ -80,7 +81,12 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
         else {
             subAcc = await accSubCategory.getbyname("CURRENT ASSETS")
             accGroup = await accGrp.getbyname("Receivable")
-            partyCateId = data.partyCategoryId
+            if (data.visitingCustomer) {
+                partycategory = await partyCategoryService.getbyname('VISITING CUSTOMER')
+                partyCateId = partycategory?.id;
+            } else {
+                partyCateId = data.partyCategoryId
+            }
         }
 
         const partyGroup = await partyGroupService.getbyname(data.partyGroup)
@@ -90,7 +96,17 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
 
         const chartofacc = await chartOfAccService.create({ accountName: data.name, accountSubCategoryId: subAcc?.id, accountGroupId: accGroup?.id, Opening_Balance: data.Opening_Balance, createdBy: userId })
 
-        const newParty = await partyService.create({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, chartofAccountId: chartofacc.id, isVerified: isverified, partyCategoryId: partyCateId, partyGroupId: partyGroup?.id, createdBy: userId })
+        const newParty = await partyService.create({ name: data?.name, nic: data?.nic, phoneNumber: data?.phoneNumber, creditPeriod: data?.creditPeriod, creditValue: data?.creditValue, address1: data?.address1, address2: data?.address2, email: data?.email, chartofAccountId: chartofacc.id, isVerified: isverified, partyCategoryId: partyCateId, partyTypeId: data?.partyTypeId, partyGroupId: partyGroup?.id, createdBy: userId })
+
+        if (data.visitingCustomer) {
+            var visitingdata = {
+                partyId: newParty.id,
+                note: data.visitingCustomer.note,
+                status: data.visitingCustomer.status,
+                createdBy: userId
+            }
+            await visitingCustomerService.create(visitingdata)
+        }
 
         if (newParty) {
             return response.status(201).json({ message: data.partyGroup + " Created Successfully", data: newParty });

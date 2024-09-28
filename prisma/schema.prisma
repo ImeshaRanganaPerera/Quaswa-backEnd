@@ -37,39 +37,43 @@ model companyDetails {
 }
 
 model User {
-  id                   String                 @id @default(uuid())
-  name                 String
-  nic                  String?                @unique
-  phoneNumber          String?                @unique
-  address              String?
-  dateofbirth          DateTime?
-  username             String                 @unique
-  password             String
-  isconform            Boolean                @default(false)
-  role                 Role                   @default(SALESMEN)
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  Voucher              Voucher[]
-  Party                Party[]
-  Product              Product[]
-  userCenter           userCenter[]
-  Center               Center[]
-  Brand                Brand[]
-  Type                 Type[]
-  ChartofAccount       ChartofAccount[]
-  journalLine          journalLine[]
-  AccountSubCategory   AccountSubCategory[]
-  AccountGroup         AccountGroup[]
-  partyCategory        partyCategory[]
-  ChequeBook           ChequeBook[]
-  Cheque               Cheque[]
-  discountLevel        discountLevel[]
-  productDiscountLevel productDiscountLevel[]
-  referVouchers        referVouchers[]
-  pettycashIOU         pettycashIOU[]         @relation("UserIOU")
-  createdPettycashIOU  pettycashIOU[]         @relation("CreatedByUserIOU")
-  pettyCashIOUDetails  pettyCashIOUDetails[]
-  vistingCustomer      vistingCustomer[]
+  id                    String                  @id @default(uuid())
+  name                  String
+  nic                   String?                 @unique
+  phoneNumber           String?                 @unique
+  address               String?
+  dateofbirth           DateTime?
+  target                Decimal?
+  username              String                  @unique
+  password              String
+  isconform             Boolean                 @default(false)
+  role                  Role                    @default(SALESMEN)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  Voucher               Voucher[]
+  Party                 Party[]
+  Product               Product[]
+  userCenter            userCenter[]
+  Center                Center[]
+  Brand                 Brand[]
+  Type                  Type[]
+  ChartofAccount        ChartofAccount[]
+  journalLine           journalLine[]
+  AccountSubCategory    AccountSubCategory[]
+  AccountGroup          AccountGroup[]
+  partyCategory         partyCategory[]
+  ChequeBook            ChequeBook[]
+  Cheque                Cheque[]
+  discountLevel         discountLevel[]
+  productDiscountLevel  productDiscountLevel[]
+  referVouchers         referVouchers[]
+  pettycashIOU          pettycashIOU[]          @relation("UserIOU")
+  createdPettycashIOU   pettycashIOU[]          @relation("CreatedByUserIOU")
+  pettyCashIOUDetails   pettyCashIOUDetails[]
+  vistingCustomer       vistingCustomer[]
+  commissionLevel       commissionLevel[]
+  productcommissionRate productcommissionRate[]
+  partyType             partyType[]
 }
 
 model userCenter {
@@ -103,6 +107,8 @@ model Party {
   isVerified       Boolean?
   partyCategory    partyCategory?    @relation(fields: [partyCategoryId], references: [id])
   partyCategoryId  String?
+  partyType        partyType?        @relation(fields: [partyTypeId], references: [id])
+  partyTypeId      String?
   chartofacc       ChartofAccount?   @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String?
   PartyGroup       PartyGroup        @relation(fields: [partyGroupId], references: [id])
@@ -121,10 +127,22 @@ model partyCategory {
   category     String
   PartyGroup   PartyGroup @relation(fields: [partyGroupId], references: [id])
   partyGroupId String
+  isEditable   Boolean    @default(true)
   user         User       @relation(fields: [createdBy], references: [id])
   createdBy    String
   createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   Party        Party[]
+}
+
+model partyType {
+  id        String   @id @default(uuid())
+  type      String
+  user      User     @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Party     Party[]
 }
 
 model vistingCustomer {
@@ -136,6 +154,7 @@ model vistingCustomer {
   user      User     @relation(fields: [createdBy], references: [id])
   createdBy String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model proofimage {
@@ -296,31 +315,32 @@ model Type {
 }
 
 model Product {
-  id                   String                 @id @default(uuid())
-  unit                 Unit                   @default(PCS)
-  itemCode             String?                @unique()
-  barcode              String?                @unique()
-  productName          String
-  printName            String?
-  image                String?
-  criticalLevel        Int?
-  cost                 Decimal?
-  minPrice             Decimal?
-  MRP                  Decimal?
-  sellingPrice         Decimal?
-  status               Boolean                @default(true)
-  type                 Type                   @relation(fields: [typeId], references: [id])
-  typeId               String
-  brand                Brand                  @relation(fields: [brandId], references: [id])
-  brandId              String
-  user                 User                   @relation(fields: [createdBy], references: [id])
-  createdBy            String
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  Inventory            Inventory[]
-  voucherProduct       voucherProduct[]
-  OEMNumber            OEMNumber[]
-  productDiscountLevel productDiscountLevel[]
+  id                    String                  @id @default(uuid())
+  unit                  Unit                    @default(PCS)
+  itemCode              String?                 @unique()
+  barcode               String?                 @unique()
+  productName           String
+  printName             String?
+  image                 String?
+  criticalLevel         Int?
+  cost                  Decimal?
+  minPrice              Decimal?
+  MRP                   Decimal?
+  sellingPrice          Decimal?
+  status                Boolean                 @default(true)
+  type                  Type                    @relation(fields: [typeId], references: [id])
+  typeId                String
+  brand                 Brand                   @relation(fields: [brandId], references: [id])
+  brandId               String
+  user                  User                    @relation(fields: [createdBy], references: [id])
+  createdBy             String
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  Inventory             Inventory[]
+  voucherProduct        voucherProduct[]
+  OEMNumber             OEMNumber[]
+  productDiscountLevel  productDiscountLevel[]
+  productcommissionRate productcommissionRate[]
 }
 
 model OEMNumber {
@@ -329,6 +349,31 @@ model OEMNumber {
   OEMnumber String
 
   @@id([OEMnumber, productId])
+}
+
+model commissionLevel {
+  id                    String                  @id @default(uuid())
+  commissionlevel       String
+  user                  User                    @relation(fields: [createdBy], references: [id])
+  createdBy             String
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  productcommissionRate productcommissionRate[]
+}
+
+model productcommissionRate {
+  product          Product         @relation(fields: [productId], references: [id])
+  productId        String
+  commission       commissionLevel @relation(fields: [commissionRateId], references: [id])
+  commissionRateId String
+  commissionRate   String
+
+  user      User     @relation(fields: [createdBy], references: [id])
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([productId, commissionRateId])
 }
 
 model discountLevel {

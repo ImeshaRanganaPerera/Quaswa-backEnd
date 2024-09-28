@@ -3,11 +3,18 @@ import { db } from "../../utils/db.server";
 
 export const getlist = async () => {
     const customer = await db.partyGroup.findFirst({
-        where: { partyGroupName: "CUSTOMER" }
+        where: { partyGroupName: "CUSTOMER" },
     })
 
     return db.partyCategory.findMany({
-        where: { partyGroupId: customer?.id }
+        where: {
+            partyGroupId: customer?.id,
+            NOT: {
+                category: {
+                    startsWith: 'VISITING CUSTOMER'
+                }
+            }
+        }
     });
 }
 
@@ -21,9 +28,7 @@ export const getbyname = async (name: any) => {
 
 export const getbyid = async (id: any) => {
     return db.partyCategory.findUnique({
-        where: {
-            id
-        }
+        where: id
     });
 }
 

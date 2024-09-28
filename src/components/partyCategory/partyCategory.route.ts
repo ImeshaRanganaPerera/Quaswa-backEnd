@@ -56,6 +56,10 @@ partyCategoryRouter.put("/:id", authenticate, async (request: ExpressRequest, re
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
+        const category = await partyCategoryService.getbyid(id)
+        if (category?.isEditable === false) {
+            return response.status(403).json({ message: "Category not Editable" });
+        }
         const updatepartyCategory = await partyCategoryService.update(data, id)
         if (updatepartyCategory) {
             return response.status(201).json({ message: "Party Category Updated Successfully", data: updatepartyCategory });

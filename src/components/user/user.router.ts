@@ -60,6 +60,7 @@ userRouter.post("/", authenticate, async (request: ExpressRequest, response: Res
             phoneNumber: data.phoneNumber,
             address: data.address,
             dateofbirth: data.dateofbirth,
+            target: data.target,
             username: data.username,
             password: data.password,
             role: data.role,

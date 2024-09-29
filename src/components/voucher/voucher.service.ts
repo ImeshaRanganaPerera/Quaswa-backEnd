@@ -95,6 +95,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
         where: {
             partyId: id,
             isconform: false
+            
         }
     });
 }

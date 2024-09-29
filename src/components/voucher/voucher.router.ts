@@ -63,7 +63,6 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
         }
 
         return response.status(200).json({ data: vouchers });
-
     } catch (error: any) {
         console.error("Error fetching vouchers:", error);
         return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });

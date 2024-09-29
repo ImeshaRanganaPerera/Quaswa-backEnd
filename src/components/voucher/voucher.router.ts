@@ -51,7 +51,7 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
         // if no endDate set end date as startDate plus 1 day (wadiye hithanna epa)
         const filterEndDate = endDate ? new Date(endDate as string) : new Date(filterStartDate.getTime() + 24 * 60 * 60 * 1000);
 
-        console.log(`voucherGroupId=${VoucherGrpName} between ${filterStartDate} and ${filterEndDate}`);
+        console.log(`VoucherGrpName=${VoucherGrpName} between ${filterStartDate} and ${filterEndDate}`);
         if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
             return response.status(400).json({ message: "Invalid date format." });
         }

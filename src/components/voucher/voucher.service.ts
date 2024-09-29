@@ -173,10 +173,10 @@ export const updatepaidValue = async (data: any) => {
     });
 };
 
-export const getVouchersByPartyAndDateRange = async (partyId: string, startDate: Date, endDate: Date) => {
+export const getVouchersByPartyAndDateRange = async (voucherGroupId: string, startDate: Date, endDate: Date) => {
     return db.voucher.findMany({
         where: {
-            partyId: partyId,
+            voucherGroupId: voucherGroupId,
             date: {
                 gte: startDate,  
                 lte: endDate, 

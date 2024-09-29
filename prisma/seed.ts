@@ -106,6 +106,9 @@ async function seed() {
     const currentLiabilites = await db.accountSubCategory.create({
         data: { accountSubName: "CURRENT LIABILITIES", accountCategoryId: liabilities.id, createdBy: userid },
     })
+    const Expencess = await db.accountSubCategory.create({
+        data: { accountSubName: "Expencess", accountCategoryId: expencess.id, createdBy: userid },
+    })
 
     const cash = await db.accountGroup.create({
         data: { accountGroupName: 'Cash & Cash Equivalents', createdBy: userid }
@@ -141,10 +144,9 @@ async function seed() {
 
     await db.chartofAccount.createMany({
         data: [
-            { accountName: "REVENUE ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: incomes.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "LIGHT BILL", accountSubCategoryId: currentLiabilites.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "EXPENCESS ACCOUNT", accountSubCategoryId: currentLiabilites.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "USER EXPENCESS ACCOUNT", accountSubCategoryId: currentLiabilites.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "EXPENCESS ACCOUNT", accountSubCategoryId: Expencess.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "PURCHASE EXPENCESS", accountSubCategoryId: Expencess.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "USER EXPENCESS ACCOUNT", accountSubCategoryId: Expencess.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "CASH BOOK", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "PETTY CASH", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "BANK BOOK", accountSubCategoryId: currentassets.id, accountGroupId: bank.id, Opening_Balance: 0, createdBy: userid },
@@ -154,7 +156,7 @@ async function seed() {
 
     await db.voucherGroup.createMany({
         data: [
-            { voucherName: "SALES", shortname: "INV", inventoryMode: InventoryMode.MINUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Sales" },
+            { voucherName: "INVOICE", shortname: "INV", inventoryMode: InventoryMode.MINUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Invoice" },
             { voucherName: "SALES-RETURN", shortname: "SALES-R", inventoryMode: InventoryMode.PLUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Sales Return" },
             { voucherName: "SALES-ORDER", shortname: "SALES-O", inventoryMode: InventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Sales", label: "Sales Order" },
             { voucherName: "GRN", shortname: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true, isSidemenu: true, category: "Inventory", label: "GRN" },
@@ -162,6 +164,7 @@ async function seed() {
             { voucherName: "STOCK-TRANSFER", shortname: "ST", inventoryMode: InventoryMode.DOUBLE, isAccount: false, isSidemenu: true, category: "Inventory", label: "Stock Transfer" },
             { voucherName: "PURCHASE-ORDER", shortname: "PO", inventoryMode: InventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Inventory", label: "Purchase Order" },
             { voucherName: "PAYMENT", shortname: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Payment" },
+            { voucherName: "DIRECT PAYMENT", shortname: "PAYMENT-D", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Direct Payment" },
             { voucherName: "RECEIPT", shortname: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Recipt" },
             { voucherName: "UTILITY-BILL-CREATE", shortname: "UTILITY-BC", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Utility Bill Create" },
             { voucherName: "UTILITY-BILL-PAYMENT", shortname: "UTILITY-BPAY", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Utility Bill Payment" },

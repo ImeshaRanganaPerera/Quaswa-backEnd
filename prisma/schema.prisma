@@ -101,6 +101,7 @@ model Party {
   phoneNumber      String?           @unique
   address1         String?
   address2         String?
+  city             String?
   creditPeriod     String?
   creditValue      String?
   email            String?

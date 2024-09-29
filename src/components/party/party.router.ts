@@ -42,9 +42,11 @@ partyRouter.get("/:id", async (request: Request, response: Response) => {
 
 partyRouter.get("/partygroup/:name", async (request: Request, response: Response) => {
     const name: any = request.params.name;
+    const condition: boolean = request.query.condition === 'true';
+    console.log(condition)
     try {
         const partyGroup = await partyGroupService.getbyname(name)
-        const party = await partyService.getbyGroup(partyGroup?.id)
+        const party = await partyService.getbyGroup(partyGroup?.id, condition)
         if (party) {
             return response.status(200).json({ data: party });
         }
@@ -96,7 +98,7 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
 
         const chartofacc = await chartOfAccService.create({ accountName: data.name, accountSubCategoryId: subAcc?.id, accountGroupId: accGroup?.id, Opening_Balance: data.Opening_Balance, createdBy: userId })
 
-        const newParty = await partyService.create({ name: data?.name, nic: data?.nic, phoneNumber: data?.phoneNumber, creditPeriod: data?.creditPeriod, creditValue: data?.creditValue, address1: data?.address1, address2: data?.address2, email: data?.email, chartofAccountId: chartofacc.id, isVerified: isverified, partyCategoryId: partyCateId, partyTypeId: data?.partyTypeId, partyGroupId: partyGroup?.id, createdBy: userId })
+        const newParty = await partyService.create({ name: data?.name, nic: data?.nic, phoneNumber: data?.phoneNumber, creditPeriod: data?.creditPeriod, creditValue: data?.creditValue, address1: data?.address1, city: data?.city, address2: data?.address2, email: data?.email, chartofAccountId: chartofacc.id, isVerified: isverified, partyCategoryId: partyCateId, partyTypeId: data?.partyTypeId, partyGroupId: partyGroup?.id, createdBy: userId })
 
         if (data.visitingCustomer) {
             var visitingdata = {
@@ -134,7 +136,7 @@ partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
             partyCateId = data.partyCategoryId
         }
 
-        const updateparty = await partyService.update({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, address2: data.address2, email: data.email, partyCategoryId: partyCateId }, id)
+        const updateparty = await partyService.update({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, city: data?.city, address2: data.address2, isVerified: data?.isVerified, email: data.email, partyCategoryId: partyCateId }, id)
         const partyGroup = await partyGroupService.getbyid(updateparty.partyGroupId)
 
         const updatechartofAcc = await chartOfAccService.updates({ accountName: data.name }, updateparty.chartofAccountId)

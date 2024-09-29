@@ -38,26 +38,28 @@ voucherRouter.get("/", async (request: Request, response: Response) => {
 
 voucherRouter.get("/filter", async (request: Request, response: Response) => {
     try {
-        const { partyId, startDate, endDate } = request.query;
+        const { VoucherGrpName, startDate, endDate } = request.query;
 
-        if (!partyId) {
-            return response.status(400).json({ message: "partyId is required." });
+        if (!VoucherGrpName) {
+            return response.status(400).json({ message: "VoucherGrpname is required." });
         }
+
+        const grpname = await voucherGrpService.getbyname(VoucherGrpName)
 
         // startDate format and if no end date set todays date
         const filterStartDate = startDate ? new Date(startDate as string) : new Date();
         // if no endDate set end date as startDate plus 1 day (wadiye hithanna epa)
         const filterEndDate = endDate ? new Date(endDate as string) : new Date(filterStartDate.getTime() + 24 * 60 * 60 * 1000);
 
-        console.log(`partyId=${partyId} between ${filterStartDate} and ${filterEndDate}`);
+        console.log(`voucherGroupId=${VoucherGrpName} between ${filterStartDate} and ${filterEndDate}`);
         if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
             return response.status(400).json({ message: "Invalid date format." });
         }
 
-        const vouchers = await vocuherService.getVouchersByPartyAndDateRange(partyId as string, filterStartDate, filterEndDate);
+        const vouchers = await vocuherService.getVouchersByPartyAndDateRange(grpname?.id as string, filterStartDate, filterEndDate);
 
         if (!vouchers || vouchers.length === 0) {
-            return response.status(404).json({ message: "No vouchers found for the specified partyId and date range." });
+            return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });
         }
 
         return response.status(200).json({ data: vouchers });
@@ -158,7 +160,6 @@ voucherRouter.post("/party/condition/:partyId", authenticate, async (request: Ex
         return response.status(500).json(error.message);
     }
 })
-
 
 voucherRouter.get("/party/false/:partyId", async (request: Request, response: Response) => {
     const partyId: any = request.params.partyId;
@@ -458,7 +459,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             }
 
             if (voucherGrpdetails?.inventoryMode === "PLUS") {
-
                 const newVoucherCenter = await voucherCenter.create({
                     centerId: data.centerId,
                     voucherId: newVoucher.id,
@@ -467,125 +467,35 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 if (!newVoucherCenter) {
                     throw new Error("Failed to update Voucher Center to list association");
                 }
-
                 if (voucherGrpdetails?.isAccount === true) {
-                    if (data.voucherGroupname === 'GRN') {
-                        try {
-                            // Fetch necessary accounts concurrently
-                            const [inventoryAccount, partyAccountId] = await Promise.all([
-                                chartofaccService.getbyname("INVENTORY ACCOUNT"),
-                                partyAcc?.chartofAccountId
-                            ]);
-
-                            // Ensure both accounts exist
-                            if (inventoryAccount?.id && partyAccountId) {
-                                const { id: voucherId } = newVoucher;
-                                const { amount } = data;
-
-                                // Create journal lines concurrently
-                                await Promise.all([
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: inventoryAccount.id,
-                                        debitAmount: amount,
-                                        creditAmount: 0,
-                                        createdBy: userId
-                                    }),
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: partyAccountId,
-                                        debitAmount: 0,
-                                        creditAmount: amount,
-                                        createdBy: userId
-                                    })
-                                ]);
-                            } else {
-                                console.error("Invalid account details: Inventory or party account is missing.");
-                            }
-                        } catch (error) {
-                            console.error("Error creating journal lines:", error);
+                    const inventoryPromise = data.productList.map(async (product: any) => {
+                        const inventory = await inventoryService.upsert({
+                            productId: product.productId,
+                            centerId: data.centerId,
+                            quantity: product.quantity
+                        });
+                        if (!inventory) {
+                            throw new Error("Failed to update product to list association");
                         }
-                    }
-                    else {
-                        try {
-                            // Fetch necessary accounts concurrently
-                            const [inventoryAccount, revenueAccount, partyAccountId] = await Promise.all([
-                                chartofaccService.getbyname("INVENTORY ACCOUNT"),
-                                chartofaccService.getbyname("REVENUE ACCOUNT"),
-                                partyAcc?.chartofAccountId
-                            ]);
-
-                            // Ensure both accounts exist
-                            if (inventoryAccount?.id && partyAccountId) {
-                                const { id: voucherId } = newVoucher;
-                                const { amount } = data;
-                                const profit = parseFloat(amount) - totalCost
-
-                                // Create journal lines concurrently
-                                await Promise.all([
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: inventoryAccount.id,
-                                        debitAmount: totalCost,
-                                        creditAmount: 0,
-                                        createdBy: userId
-                                    }),
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: partyAccountId,
-                                        debitAmount: 0,
-                                        creditAmount: totalCost,
-                                        createdBy: userId
-                                    }),
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: revenueAccount?.id,
-                                        debitAmount: profit,
-                                        creditAmount: 0,
-                                        createdBy: userId
-                                    })
-                                ]
-
-                                );
-                            } else {
-                                console.error("Invalid account details: Inventory or party account is missing.");
-                            }
-                        } catch (error) {
-                            console.error("Error creating journal lines:", error);
-                        }
-                    }
-                }
-
-                const inventoryPromise = data.productList.map(async (product: any) => {
-                    const inventory = await inventoryService.upsert({
-                        productId: product.productId,
-                        centerId: data.centerId,
-                        quantity: product.quantity
                     });
-                    if (!inventory) {
-                        throw new Error("Failed to update product to list association");
-                    }
-                });
 
-                try {
-                    await Promise.all(inventoryPromise);
-                } catch (error: any) {
-                    return response.status(500).json({ message: error.message });
+                    try {
+                        await Promise.all(inventoryPromise);
+                    } catch (error: any) {
+                        return response.status(500).json({ message: error.message });
+                    }
                 }
             }
 
             if (voucherGrpdetails?.inventoryMode === "MINUS") {
-
                 const newVoucherCenter = await voucherCenter.create({
                     centerId: data.centerId,
                     voucherId: newVoucher.id,
                     centerStatus: "OUT"
                 })
-
                 if (!newVoucherCenter) {
                     throw new Error("Failed to update Voucher Center to list association");
                 }
-
                 const inventoryPromise = data.productList.map(async (product: any) => {
                     const inventory = await inventoryService.upsert({
                         productId: product.productId,
@@ -596,93 +506,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         throw new Error("Failed to update product to list association");
                     }
                 });
-
-                if (voucherGrpdetails?.isAccount === true) {
-                    if (data.voucherGroupname === 'SALES') {
-                        try {
-                            // Fetch necessary accounts concurrently
-                            const [inventoryAccount, revenueAccount, partyAccountId] = await Promise.all([
-                                chartofaccService.getbyname("INVENTORY ACCOUNT"),
-                                chartofaccService.getbyname("REVENUE ACCOUNT"),
-                                partyAcc?.chartofAccountId
-                            ]);
-
-                            // Ensure both accounts exist
-                            if (inventoryAccount?.id && partyAccountId) {
-                                const { id: voucherId } = newVoucher;
-                                const { amount } = data;
-                                const profit = parseFloat(amount) - totalCost
-
-                                // Create journal lines concurrently
-                                await Promise.all([
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: inventoryAccount.id,
-                                        debitAmount: 0,
-                                        creditAmount: totalCost,
-                                        createdBy: userId
-                                    }),
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: partyAccountId,
-                                        debitAmount: amount,
-                                        creditAmount: 0,
-                                        createdBy: userId
-                                    }),
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: revenueAccount?.id,
-                                        debitAmount: 0,
-                                        creditAmount: profit,
-                                        createdBy: userId
-                                    })
-                                ]);
-                            } else {
-                                console.error("Invalid account details: Inventory or party account is missing.");
-                            }
-                        } catch (error) {
-                            console.error("Error creating journal lines:", error);
-                        }
-                    }
-                    else {
-                        try {
-                            // Fetch necessary accounts concurrently
-                            const [inventoryAccount, partyAccountId] = await Promise.all([
-                                chartofaccService.getbyname("INVENTORY ACCOUNT"),
-                                partyAcc?.chartofAccountId
-                            ]);
-
-                            // Ensure both accounts exist
-                            if (inventoryAccount?.id && partyAccountId) {
-                                const { id: voucherId } = newVoucher;
-                                const { amount } = data;
-
-                                // Create journal lines concurrently
-                                await Promise.all([
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: inventoryAccount.id,
-                                        debitAmount: 0,
-                                        creditAmount: amount,
-                                        createdBy: userId
-                                    }),
-                                    journalLineService.create({
-                                        voucherId,
-                                        chartofAccountId: partyAccountId,
-                                        debitAmount: amount,
-                                        creditAmount: 0,
-                                        createdBy: userId
-                                    })
-                                ]);
-                            } else {
-                                console.error("Invalid account details: Inventory or party account is missing.");
-                            }
-                        } catch (error) {
-                            console.error("Error creating journal lines:", error);
-                        }
-                    }
-                }
-
                 try {
                     await Promise.all(inventoryPromise);
                 } catch (error: any) {

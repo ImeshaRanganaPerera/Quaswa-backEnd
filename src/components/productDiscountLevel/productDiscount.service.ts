@@ -1,5 +1,4 @@
 import { db } from "../../utils/db.server";
-import { upsert } from '../inventory/inventory.service';
 
 export const list = async () => {
     return db.productDiscountLevel.findMany({

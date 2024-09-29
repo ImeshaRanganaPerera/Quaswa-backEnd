@@ -14,11 +14,11 @@ export const get = async (id: any) => {
     });
 }
 
-export const getbyGroup = async (id: any) => {
+export const getbyGroup = async (id: any, condition: boolean) => {
     return db.party.findMany({
         where: {
             partyGroupId: id,
-
+            isVerified: condition
         },
         include: {
             partyCategory: {
@@ -40,6 +40,7 @@ export const create = async (data: any) => {
 export const update = async (data: any, id: any) => {
     return db.party.update({
         where: id,
-        data: data
+        data: data,
+        include: { partyCategory: { select: { category: true } } }
     });
 }

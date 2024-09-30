@@ -208,8 +208,13 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         const userId = request.user.id;
         const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
         const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpdetails?.id)
+
+        if (data.refVoucherNumber) {
+            await vocuherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, isRef: data.isRef })
+        }
         var totalCost = 0;
         var partyAcc: any;
+
 
         if (data?.partyId) {
             partyAcc = await partyService.get(data?.partyId)
@@ -233,6 +238,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     quantity: product.quantity,
                     discount: product.discount,
                     MRP: product.MRP,
+                    minPrice: product.minPrice,
                     sellingPrice: product.sellingPrice,
                     amount: product.amount,
                     voucherId: newVoucher.id,
@@ -462,6 +468,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         remainingQty: product.quantity,
                         discount: product.discount,
                         MRP: product.MRP,
+                        minPrice: product.minPrice,
                         sellingPrice: product.sellingPrice,
                         amount: product.amount,
                         voucherId: newVoucher.id,

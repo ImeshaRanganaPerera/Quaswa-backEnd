@@ -47,6 +47,7 @@ export const getVoucherbyGrp = async (id: any) => {
     });
 }
 
+
 export const getVoucherbyParty = async (id: any) => {
     return db.voucher.findMany({
         where: {
@@ -102,7 +103,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, isconform: data?.isconform, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
     });
 }
 
@@ -110,6 +111,27 @@ export const update = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
         data: data
+    });
+}
+
+export const updateVoucherNumber = async (data: any) => {
+    const voucher = await db.voucher.findFirst({
+        where: {
+            voucherNumber: data.refVoucherNumber,
+        },
+    });
+
+    if (!voucher) {
+        throw new Error("Voucher not found");
+    }
+    return db.voucher.update({
+        where: {
+            id: voucher.id,
+        },
+        data: {
+            isRef: data.isRef,
+            refVoucherNumber: data.refVoucherNumber,
+        },
     });
 }
 
@@ -185,7 +207,25 @@ export const getVouchersByPartyAndDateRange = async (voucherGroupId: string, sta
         },
         include: {
             party: true,
-            voucherProduct: true,
+            voucherProduct: {
+                select: {
+                    id: true,
+                    remainingQty: true,
+                    MRP: true,
+                    cost: true,
+                    sellingPrice: true,
+                    minPrice: true,
+                    discount: true,
+                    quantity: true,
+                    amount: true,
+                    product: {
+                        select: {
+                            productName: true,
+                            printName: true
+                        }
+                    }
+                }
+            },
             referVouchers: true,
             PaymentVoucher: true,
             VoucherCenter: {
@@ -206,7 +246,25 @@ export const getRefVoucherbyVoucherGrpid = async (data: any) => {
             isRef: false
         },
         include: {
-            voucherProduct: true,
+            voucherProduct: {
+                select: {
+                    id: true,
+                    remainingQty: true,
+                    MRP: true,
+                    cost: true,
+                    sellingPrice: true,
+                    minPrice: true,
+                    discount: true,
+                    quantity: true,
+                    amount: true,
+                    product: {
+                        select: {
+                            productName: true,
+                            printName: true
+                        }
+                    }
+                }
+            }
         }
     });
 }

@@ -410,6 +410,7 @@ model voucherProduct {
   quantity     Decimal
   discount     String
   MRP          Decimal
+  minPrice     Decimal?
   sellingPrice Decimal
   amount       Decimal
   remainingQty Decimal?

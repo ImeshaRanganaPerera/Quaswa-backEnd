@@ -95,7 +95,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
         where: {
             partyId: id,
             isconform: false
-            
+
         }
     });
 }
@@ -174,13 +174,13 @@ export const updatepaidValue = async (data: any) => {
     });
 };
 
-export const getVouchersByPartyAndDateRange = async (voucherGroupId: string, startDate: Date, endDate: Date) => {
+export const getVouchersByPartyAndDateRange = async (voucherGroupId: string, startDate?: Date, endDate?: Date) => {
     return db.voucher.findMany({
         where: {
             voucherGroupId: voucherGroupId,
             date: {
-                gte: startDate,  
-                lte: endDate, 
+                gte: startDate,
+                lte: endDate,
             }
         },
         include: {
@@ -188,6 +188,20 @@ export const getVouchersByPartyAndDateRange = async (voucherGroupId: string, sta
             voucherProduct: true,
             referVouchers: true,
             PaymentVoucher: true,
+            VoucherCenter: true
         }
     });
 };
+
+export const getRefVoucherbyVoucherGrpid = async (data: any) => {
+    return db.voucher.findMany({
+        where: {
+            voucherGroupId: data.voucherGroupId,
+            partyId: data.partyId,
+            isRef: false
+        },
+        include: {
+            voucherProduct: true,
+        }
+    });
+}

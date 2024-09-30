@@ -37,5 +37,30 @@ VoucherProductListRouter.get("/byvoucher/:id", authenticate, async (request: Exp
     }
 })
 
+VoucherProductListRouter.get("/byProductCenter", authenticate, async (request: ExpressRequest, response: Response) => {
+    const { productId, centerId } = request.query; // Extract query parameters
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        const data = {
+            productId: productId,
+            centerId: centerId 
+        };
+        console.log(data);
+        const voucherProductlist = await voucherProductService.getbyProductIdCenterId(data);
+        if (voucherProductlist && voucherProductlist.length > 0) {
+            return response.status(200).json({ data: voucherProductlist });
+        }
+        return response.status(404).json({ message: "Voucher Products could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+});
+
+
+
+
 
 

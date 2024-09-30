@@ -154,10 +154,15 @@ userRouter.post("/login", async (request: Request, response: Response) => {
         if (!isPasswordCorrect) {
             return response.status(404).json({ message: "Username or Password Incorrect!" })
         }
+
+        const companyDetails = await UserService.getAllCompanyDetails();
+
         const data = {
             token: genarateJwt(user),
-            name: user.name
+            name: user.name,
+            companyDetails: companyDetails
         }
+        
         return response.status(201).json({ message: 'Login Successfully', data: data });
     } catch (error: any) {
         return response.status(500).json(error.message);

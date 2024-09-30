@@ -43,13 +43,16 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
         if (!VoucherGrpName) {
             return response.status(400).json({ message: "VoucherGrpname is required." });
         }
-
         const grpname = await voucherGrpService.getbyname(VoucherGrpName)
 
-        // startDate format and if no end date set todays date
+        // startDate format and if no end date set today's date
         const filterStartDate = startDate ? new Date(startDate as string) : new Date();
-        // if no endDate set end date as startDate plus 1 day (wadiye hithanna epa)
-        const filterEndDate = endDate ? new Date(endDate as string) : new Date(filterStartDate.getTime() + 24 * 60 * 60 * 1000);
+        filterStartDate.setHours(0, 0, 0, 0); // Set the time to midnight
+
+        // if no endDate set end date as today's date
+        const filterEndDate = endDate ? new Date(endDate as string) : new Date();
+        filterEndDate.setHours(23, 59, 59, 999);
+
 
         console.log(`VoucherGrpName=${VoucherGrpName} between ${filterStartDate} and ${filterEndDate}`);
         if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
@@ -57,6 +60,28 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
         }
 
         const vouchers = await vocuherService.getVouchersByPartyAndDateRange(grpname?.id as string, filterStartDate, filterEndDate);
+
+        if (!vouchers || vouchers.length === 0) {
+            return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });
+        }
+
+        return response.status(200).json({ data: vouchers });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
+voucherRouter.get("/refVoucher", async (request: Request, response: Response) => {
+    try {
+        const { VoucherGrpName, partyId } = request.query;
+
+        if (!VoucherGrpName) {
+            return response.status(400).json({ message: "VoucherGrpname is required." });
+        }
+        const grpname = await voucherGrpService.getbyname(VoucherGrpName)
+
+        const vouchers = await vocuherService.getRefVoucherbyVoucherGrpid({ voucherGroupId: grpname?.id, partyId: partyId });
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });
@@ -211,7 +236,8 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     sellingPrice: product.sellingPrice,
                     amount: product.amount,
                     voucherId: newVoucher.id,
-                    productId: product.productId
+                    productId: product.productId,
+                    centerId: product.toCenterId
                 });
                 if (!voucherProduct) {
                     throw new Error("Failed to update product to list association");
@@ -312,13 +338,15 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         issueDate: data.date,
                         releaseDate: data.payment.releaseDate,
                         amount: data.payment.cheque,
-                        chequeBookId: data.payment.chequeBookId,
+                        chequeBookId: data.payment?.chequeBookId,
                         voucherId: newVoucher.id,
                         paymentVoucherId: chequePaymentVoucher.id,
                         creditDebit: data.payment.creditDebit,
                         createdBy: userId
                     });
-                    await chequebookService.updatechequeRemaning(data.payment?.chequeBookId);
+                    if (data.payment?.chequeBookId !== undefined) {
+                        await chequebookService.updatechequeRemaning(data.payment?.chequeBookId);
+                    }
                 }
             }
 
@@ -396,6 +424,10 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         var expencessacc = await chartofaccService.getbyname('USER EXPENCESS ACCOUNT')
                         chartofAccId = expencessacc?.id
                     }
+                    if (entry.accountId === "Sales") {
+                        var expencessacc = await chartofaccService.getbyname('SALES ACCOUNT')
+                        chartofAccId = expencessacc?.id
+                    }
                     const journalLineData = {
                         voucherId: newVoucher.id, // Link to the created voucher
                         chartofAccountId: chartofAccId, // Account ID from the journal entry
@@ -427,12 +459,14 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     const voucherProduct = await productVoucherService.create({
                         cost: product.cost,
                         quantity: product.quantity,
+                        remainingQty: product.quantity,
                         discount: product.discount,
                         MRP: product.MRP,
                         sellingPrice: product.sellingPrice,
                         amount: product.amount,
                         voucherId: newVoucher.id,
-                        productId: product.productId
+                        productId: product.productId,
+                        centerId: data.centerId
                     });
 
                     if (data.voucherGroupname === 'GRN') {

@@ -46,3 +46,11 @@ export const update = async (userData: any, id: any) => {
         data: userData
     });
 }
+
+export const getAllCompanyDetails = async () => {
+    return db.companyDetails.findFirst({
+        where: {
+            companyName: 'HITECH (PVT) LTD'
+        }
+    });
+};

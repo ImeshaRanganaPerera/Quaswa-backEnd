@@ -15,6 +15,21 @@ export const getbyVoucherId = async (id: any) => {
     });
 }
 
+export const getbyProductIdCenterId = async (data: any) => {
+    return db.voucherProduct.findMany({
+        where: {
+            centerId: data.centerId,
+            productId: data.productId,
+            remainingQty: {
+                gt: 0,
+            }
+        },
+        include: {
+            product: true
+        },
+    });
+}
+
 export const create = async (data: any) => {
     return db.voucherProduct.create({
         data: data

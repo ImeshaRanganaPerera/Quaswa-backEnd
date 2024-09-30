@@ -7,7 +7,7 @@ async function seed() {
     const currentDateTime = new Date();
     const timezone = 'Asia/Colombo';
 
-    const utcDateTime = format(toZonedTime(currentDateTime, timezone), 'yyyy-MM-dd HH:mm:ss.SSSXXX', { timeZone: 'UTC' });
+    // const utcDateTime = format(toZonedTime(currentDateTime, timezone), 'yyyy-MM-dd HH:mm:ss.SSSXXX', { timeZone: 'UTC' });
     const hashedPassword = await hash("1234", 10);
     const user = await db.user.create({
         data: {
@@ -20,6 +20,17 @@ async function seed() {
         }
     });
     const userid = user.id;
+
+    const CompanyDetails = await db.companyDetails.create({
+        data: {
+            companyName: "HITECH (PVT) LTD",
+            address1: "Colombo",
+            address2: "Sri Lanka",
+            telPhone1: "0764533003",
+            telPhone2: "0729451231",
+            email: 'info@hitechlanka.lk',
+        }
+    })
 
     const customer = await db.partyGroup.create({
         data: { partyGroupName: "CUSTOMER" }
@@ -110,6 +121,10 @@ async function seed() {
         data: { accountSubName: "Expencess", accountCategoryId: expencess.id, createdBy: userid },
     })
 
+    const Incomes = await db.accountSubCategory.create({
+        data: { accountSubName: "Income", accountCategoryId: income.id, createdBy: userid },
+    })
+
     const cash = await db.accountGroup.create({
         data: { accountGroupName: 'Cash & Cash Equivalents', createdBy: userid }
     })
@@ -146,6 +161,7 @@ async function seed() {
         data: [
             { accountName: "EXPENCESS ACCOUNT", accountSubCategoryId: Expencess.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "PURCHASE EXPENCESS", accountSubCategoryId: Expencess.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "SALES ACCOUNT", accountSubCategoryId: Incomes.id, accountGroupId: incomes.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "USER EXPENCESS ACCOUNT", accountSubCategoryId: Expencess.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "CASH BOOK", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "PETTY CASH", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },

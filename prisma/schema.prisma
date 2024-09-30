@@ -14,16 +14,17 @@ datasource db {
 }
 
 model Center {
-  id            String          @id @default(uuid())
-  centerName    String
-  mode          CenterMode      @default(VIRTUAL)
-  user          User            @relation(fields: [createdBy], references: [id])
-  createdBy     String
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt()
-  userCenter    userCenter[]
-  Inventory     Inventory[]
-  VoucherCenter VoucherCenter[]
+  id             String           @id @default(uuid())
+  centerName     String
+  mode           CenterMode       @default(VIRTUAL)
+  user           User             @relation(fields: [createdBy], references: [id])
+  createdBy      String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt()
+  userCenter     userCenter[]
+  Inventory      Inventory[]
+  VoucherCenter  VoucherCenter[]
+  voucherProduct voucherProduct[]
 }
 
 model companyDetails {
@@ -199,6 +200,7 @@ model Voucher {
   paidValue        Decimal?
   refNumber        String?
   refVoucherNumber String?
+  isRef            Boolean          @default(false)
   note             String?
   isconform        Boolean          @default(true)
   party            Party?           @relation(fields: [partyId], references: [id])
@@ -410,11 +412,14 @@ model voucherProduct {
   MRP          Decimal
   sellingPrice Decimal
   amount       Decimal
+  remainingQty Decimal?
   isdisabale   Boolean  @default(false)
   voucher      Voucher  @relation(fields: [voucherId], references: [id])
   voucherId    String
   product      Product  @relation(fields: [productId], references: [id])
   productId    String
+  center       Center?  @relation(fields: [centerId], references: [id])
+  centerId     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

@@ -188,7 +188,12 @@ export const getVouchersByPartyAndDateRange = async (voucherGroupId: string, sta
             voucherProduct: true,
             referVouchers: true,
             PaymentVoucher: true,
-            VoucherCenter: true
+            VoucherCenter: {
+                select: {
+                    center: true,
+                    centerStatus: true,
+                }
+            }
         }
     });
 };

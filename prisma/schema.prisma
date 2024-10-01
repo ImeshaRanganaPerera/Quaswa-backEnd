@@ -509,6 +509,7 @@ model Cheque {
   releaseDate      DateTime?
   amount           Decimal
   month            String?
+  year             String?
   used             Boolean         @default(false)
   creditDebit      CreditDebit
   chequeBook       ChequeBook?     @relation(fields: [chequeBookId], references: [id])

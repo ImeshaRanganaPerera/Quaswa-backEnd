@@ -108,7 +108,7 @@ chequeRouter.put("/used/:id", authenticate, async (request: ExpressRequest, resp
         }
         const userId = request.user.id;
 
-        const updateCheque = await chequeservice.updateused({ used: data.used }, id); // Pass 'id' as a string
+        const updateCheque = await chequeservice.updateused({ used: data.used, month: data.month, year: data.year }, id); // Pass 'id' as a string
 
         // Handle journal entries if present
         if (data.journalEntries && data.journalEntries.length > 0) {

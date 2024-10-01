@@ -241,6 +241,12 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
         },
         include: {
             party: true,
+            chartofacc: {
+                select: {
+                    accountName: true,
+                }
+            },
+            
             voucherProduct: {
                 select: {
                     MRP: true,
@@ -293,6 +299,12 @@ export const getVouchersByUserAndDateRange = async (userId: string, startDate?: 
             }
         },
         include: {
+            chartofacc: {
+                select: {
+                    accountName: true,
+                }
+            },
+
             party: true,
             voucherProduct: {
                 select: {

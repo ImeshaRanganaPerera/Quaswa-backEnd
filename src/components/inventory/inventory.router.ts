@@ -20,3 +20,20 @@ inventoryRouter.get("/:id", async (request: Request, response: Response) => {
         return response.status(500).json({ message: error.message });
     }
 })
+
+inventoryRouter.get("/filter", async (request: Request, response: Response) => {
+    const { productId, centerId, date } = request.query;
+
+    try {
+        // Convert undefined to null, ensuring the service receives correct types
+        const productIdFilter = productId ? String(productId) : null;
+        const centerIdFilter = centerId ? String(centerId) : null;
+        const dateFilter = date ? String(date) : null;
+
+        // Call the service function to filter inventory and calculate total quantity
+        const result = await inventoryService.calculateTotalQuantity(productIdFilter, centerIdFilter, dateFilter);
+        return response.status(200).json({ data: result.inventories, total: result.totalQuantity });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});

@@ -357,6 +357,7 @@ model OEMNumber {
 model commissionLevel {
   id                    String                  @id @default(uuid())
   commissionlevel       String
+  days                  Int?
   user                  User                    @relation(fields: [createdBy], references: [id])
   createdBy             String
   createdAt             DateTime                @default(now())

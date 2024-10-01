@@ -209,9 +209,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
         const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpdetails?.id)
 
-        if (data.refVoucherNumber) {
-            await vocuherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, isRef: data.isRef })
-        }
         var totalCost = 0;
         var partyAcc: any;
 
@@ -230,6 +227,10 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             voucherGroupId: voucherGrpdetails?.id,
             createdBy: userId
         })
+
+        if (data.refVoucherNumber) {
+            await vocuherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, isRef: data.isRef, voucherId: newVoucher.voucherNumber })
+        }
 
         if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
             const centerPromises = data.productList.map(async (product: any) => {
@@ -356,53 +357,57 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 }
             }
 
-            if (data.selectedVoucherIds && data.amount > 0) {
-                let remainingAmount = data.amount; // Amount to be paid
-                const selectedVouchers = await vocuherService.findManyByIds(data.selectedVoucherIds.map((v: any) => v.voucherId));
+            if (data.voucherGroupname !== "DIRECT PAYMENT") {
+                if (data.selectedVoucherIds && data.amount > 0) {
+                    let remainingAmount = data.amount; // Amount to be paid
+                    const selectedVouchers = await vocuherService.findManyByIds(data.selectedVoucherIds.map((v: any) => v.voucherId));
 
-                for (const voucher of selectedVouchers) {
-                    // Safely handle the voucher.amount and voucher.paidValue as Decimal or number
-                    const voucherAmount = voucher.amount instanceof Prisma.Decimal ? voucher.amount.toNumber() : (voucher.amount || 0);
-                    const paidValue = voucher.paidValue instanceof Prisma.Decimal ? voucher.paidValue.toNumber() : (voucher.paidValue || 0);
+                    for (const voucher of selectedVouchers) {
+                        // Safely handle the voucher.amount and voucher.paidValue as Decimal or number
+                        const voucherAmount = voucher.amount instanceof Prisma.Decimal ? voucher.amount.toNumber() : (voucher.amount || 0);
+                        const paidValue = voucher.paidValue instanceof Prisma.Decimal ? voucher.paidValue.toNumber() : (voucher.paidValue || 0);
 
-                    const remainingVoucherAmount = voucherAmount - paidValue; // Remaining unpaid amount for this voucher
+                        const remainingVoucherAmount = voucherAmount - paidValue; // Remaining unpaid amount for this voucher
 
-                    if (remainingAmount <= 0) {
-                        break; // No remaining amount to distribute
+                        if (remainingAmount <= 0) {
+                            break; // No remaining amount to distribute
+                        }
+
+                        // Calculate how much can be paid on this voucher
+                        const payableAmount = Math.min(remainingVoucherAmount, remainingAmount);
+
+                        if (payableAmount > 0) {
+                            // Update the paidValue of the voucher
+                            const updatedPaidValue = paidValue + payableAmount;
+
+                            await vocuherService.updatepaidValue({
+                                id: voucher.id,
+                                paidValue: updatedPaidValue
+                            });
+                            var selectedVoucher = await vocuherService.getbyid(voucher.id)
+                            await referVoucherService.create({
+                                refVoucherNumber: selectedVoucher?.voucherNumber,
+                                invoiceDate: selectedVoucher?.date,
+                                invoiceAmount: selectedVoucher?.amount,
+                                settledAmount: updatedPaidValue,
+                                paidAmount: updatedPaidValue - paidValue,
+                                voucherId: newVoucher.id,
+                                createdBy: userId
+                            });
+
+                            // Decrease the remaining amount by the amount just paid
+                            remainingAmount -= payableAmount;
+                        }
                     }
 
-                    // Calculate how much can be paid on this voucher
-                    const payableAmount = Math.min(remainingVoucherAmount, remainingAmount);
-
-                    if (payableAmount > 0) {
-                        // Update the paidValue of the voucher
-                        const updatedPaidValue = paidValue + payableAmount;
-
-                        await vocuherService.updatepaidValue({
-                            id: voucher.id,
-                            paidValue: updatedPaidValue
-                        });
-                        var selectedVoucher = await vocuherService.getbyid(voucher.id)
-                        await referVoucherService.create({
-                            refVoucherNumber: selectedVoucher?.voucherNumber,
-                            invoiceDate: selectedVoucher?.date,
-                            invoiceAmount: selectedVoucher?.amount,
-                            settledAmount: updatedPaidValue,
-                            paidAmount: updatedPaidValue - paidValue,
-                            voucherId: newVoucher.id,
-                            createdBy: userId
-                        });
-
-                        // Decrease the remaining amount by the amount just paid
-                        remainingAmount -= payableAmount;
+                    if (remainingAmount > 0) {
+                        // If there's still some remaining amount that couldn't be distributed
+                        return response.status(400).json({ message: "Payment exceeds total due for selected vouchers." });
                     }
-                }
-
-                if (remainingAmount > 0) {
-                    // If there's still some remaining amount that couldn't be distributed
-                    return response.status(400).json({ message: "Payment exceeds total due for selected vouchers." });
                 }
             }
+
+
 
             if (data.journalEntries && data.journalEntries.length > 0) {
                 const journalEntries = data.journalEntries;

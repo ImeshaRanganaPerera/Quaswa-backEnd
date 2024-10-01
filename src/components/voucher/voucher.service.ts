@@ -63,7 +63,7 @@ export const getVoucherbyPartytrue = async (id: any, condition: any) => {
             isconform: condition,
             NOT: {
                 paidValue: {
-                    equals: db.voucher.fields.amount
+                    gte: db.voucher.fields.amount
                 }
             },
             OR: [
@@ -81,7 +81,7 @@ export const getVoucherbyChartofacc = async (id: any, condition: any) => {
             isconform: condition,
             NOT: {
                 paidValue: {
-                    equals: db.voucher.fields.amount
+                    gt: db.voucher.fields.amount
                 }
             },
             OR: [
@@ -163,7 +163,7 @@ export const updateVoucherNumber = async (data: any) => {
         },
         data: {
             isRef: data.isRef,
-            refVoucherNumber: data.refVoucherNumber,
+            refVoucherNumber: data.voucherId,
         },
     });
 }

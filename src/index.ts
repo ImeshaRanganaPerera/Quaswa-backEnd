@@ -27,6 +27,7 @@ import { productDiscountRouter } from "./components/productDiscountLevel/prodcut
 import { visitingCustomerRouter } from "./components/visitedCustomer/visitedCustomer.router";
 import { commsissionRateRouter } from "./components/commissionRate/commissionRate.route";
 import { partyTypeRouter } from "./components/partyType/partyType.route";
+import { proofImageRouter } from "./components/proofImage/proofImage.router";
 
 
 dotenv.config();
@@ -71,6 +72,7 @@ app.use("/api/pettyCashIOU", pettyCashIOURouter)
 app.use("/api/voucherGrp", VoucherGrpRouter)
 app.use("/api/visitingCustomer", visitingCustomerRouter)
 app.use("/api/partyType", partyTypeRouter)
+app.use("/api/proofImage", proofImageRouter)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

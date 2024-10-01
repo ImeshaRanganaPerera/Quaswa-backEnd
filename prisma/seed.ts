@@ -191,6 +191,14 @@ async function seed() {
         ]
     });
 
+    await db.proofimage.createMany({
+        data: [
+            {name: 'BR Image'},
+            {name: 'NIC Image'},
+            {name: 'Shop Imge'},
+        ]
+    })
+
 }
 
 seed().catch((error) => {

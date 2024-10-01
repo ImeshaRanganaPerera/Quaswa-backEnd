@@ -101,6 +101,8 @@ chartofAccRouter.put("/:id", authenticate, async (request: ExpressRequest, respo
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
+
+        console.log(data)
         const updateChartofAcc = await chartofaccService.update(data, id)
 
         if (updateChartofAcc) {

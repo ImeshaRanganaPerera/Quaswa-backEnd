@@ -61,6 +61,7 @@ export const updates = async (data: any, id: any) => {
 }
 
 export const update = async (data: any, id: any) => {
+    console.log(data)
     return db.chartofAccount.update({
         where: id,
         data: data,

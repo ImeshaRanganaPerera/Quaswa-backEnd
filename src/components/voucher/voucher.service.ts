@@ -103,7 +103,40 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy }
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy },
+        include: {
+            party: true,
+            voucherProduct: {
+                select: {
+                    MRP: true,
+                    amount: true,
+                    centerId: true,
+                    cost: true,
+                    createdAt: true,
+                    id: true,
+                    isdisabale: true,
+                    minPrice: true,
+                    discount: true,
+                    productId: true,
+                    quantity: true,
+                    remainingQty: true,
+                    sellingPrice: true,
+                    updatedAt: true,
+                    voucherId: true,
+                    product: {
+                        select: {
+                            productName: true,
+                            printName: true
+                        }
+                    }
+                }
+            },
+            referVouchers: true,
+            PaymentVoucher: true,
+            user: true,
+            VoucherCenter: true,
+            voucherGroup: true,
+        }
     });
 }
 
@@ -196,9 +229,10 @@ export const updatepaidValue = async (data: any) => {
     });
 };
 
-export const getVouchersByPartyAndDateRange = async (voucherGroupId: string, startDate?: Date, endDate?: Date) => {
+export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any) => {
     return db.voucher.findMany({
         where: {
+            ...(userId && { createdBy: userId }),
             voucherGroupId: voucherGroupId,
             date: {
                 gte: startDate,
@@ -209,15 +243,21 @@ export const getVouchersByPartyAndDateRange = async (voucherGroupId: string, sta
             party: true,
             voucherProduct: {
                 select: {
-                    id: true,
-                    remainingQty: true,
                     MRP: true,
+                    amount: true,
+                    centerId: true,
                     cost: true,
-                    sellingPrice: true,
+                    createdAt: true,
+                    id: true,
+                    isdisabale: true,
                     minPrice: true,
                     discount: true,
+                    productId: true,
                     quantity: true,
-                    amount: true,
+                    remainingQty: true,
+                    sellingPrice: true,
+                    updatedAt: true,
+                    voucherId: true,
                     product: {
                         select: {
                             productName: true,
@@ -228,6 +268,64 @@ export const getVouchersByPartyAndDateRange = async (voucherGroupId: string, sta
             },
             referVouchers: true,
             PaymentVoucher: true,
+            user: {
+                select: {
+                    name: true,
+                }
+            },
+            VoucherCenter: {
+                select: {
+                    center: true,
+                    centerStatus: true,
+                }
+            }
+        }
+    });
+};
+
+export const getVouchersByUserAndDateRange = async (userId: string, startDate?: Date, endDate?: Date) => {
+    return db.voucher.findMany({
+        where: {
+            createdBy: userId,
+            date: {
+                gte: startDate,
+                lte: endDate,
+            }
+        },
+        include: {
+            party: true,
+            voucherProduct: {
+                select: {
+                    MRP: true,
+                    amount: true,
+                    centerId: true,
+                    cost: true,
+                    createdAt: true,
+                    id: true,
+                    isdisabale: true,
+                    minPrice: true,
+                    discount: true,
+                    productId: true,
+                    quantity: true,
+                    remainingQty: true,
+                    sellingPrice: true,
+                    updatedAt: true,
+                    voucherId: true,
+                    product: {
+                        select: {
+                            productName: true,
+                            printName: true
+                        }
+                    }
+                }
+            },
+            referVouchers: true,
+            PaymentVoucher: true,
+            user: {
+                select: {
+                    name: true,
+                }
+            },
             VoucherCenter: {
                 select: {
                     center: true,
@@ -248,15 +346,21 @@ export const getRefVoucherbyVoucherGrpid = async (data: any) => {
         include: {
             voucherProduct: {
                 select: {
-                    id: true,
-                    remainingQty: true,
                     MRP: true,
+                    amount: true,
+                    centerId: true,
                     cost: true,
-                    sellingPrice: true,
+                    createdAt: true,
+                    id: true,
+                    isdisabale: true,
                     minPrice: true,
                     discount: true,
+                    productId: true,
                     quantity: true,
-                    amount: true,
+                    remainingQty: true,
+                    sellingPrice: true,
+                    updatedAt: true,
+                    voucherId: true,
                     product: {
                         select: {
                             productName: true,

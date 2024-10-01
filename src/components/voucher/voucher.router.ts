@@ -38,7 +38,7 @@ voucherRouter.get("/", async (request: Request, response: Response) => {
 
 voucherRouter.get("/filter", async (request: Request, response: Response) => {
     try {
-        const { VoucherGrpName, startDate, endDate } = request.query;
+        const { VoucherGrpName, startDate, endDate, userId } = request.query;
 
         if (!VoucherGrpName) {
             return response.status(400).json({ message: "VoucherGrpname is required." });
@@ -59,7 +59,7 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
             return response.status(400).json({ message: "Invalid date format." });
         }
 
-        const vouchers = await vocuherService.getVouchersByPartyAndDateRange(grpname?.id as string, filterStartDate, filterEndDate);
+        const vouchers = await vocuherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId,);
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });
@@ -553,7 +553,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 }
             }
             if (newVoucher) {
-                return response.status(201).json({ message: "Voucher Created Successfully" });
+                return response.status(201).json({ message: "Voucher Created Successfully", data: newVoucher });
             }
         }
     } catch (error: any) {

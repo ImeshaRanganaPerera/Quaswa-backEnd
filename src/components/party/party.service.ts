@@ -2,7 +2,13 @@ import { db } from "../../utils/db.server";
 
 export const list = async () => {
     return db.party.findMany({
-
+        include: {
+            user: {
+                select: {
+                    name: true
+                }
+            },
+        }
     });
 }
 

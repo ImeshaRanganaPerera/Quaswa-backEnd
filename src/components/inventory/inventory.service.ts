@@ -17,6 +17,14 @@ export const getbyCenter = async (id: any) => {
     });
 }
 
+export const getbyProductId = async (id: any) => {
+    return db.inventory.findMany({
+        where: {
+            productId: id,
+        }
+    });
+}
+
 export const filterInventory = async (productId?: string, centerId?: string, date?: string) => {
     const filterConditions: any = {
         status: true,
@@ -92,6 +100,9 @@ export const upsert = async (data: any) => {
     } else {
         newQuantity = new Decimal(data.quantity);
     }
+    
+
+
 
     return db.inventory.upsert({
         where: {

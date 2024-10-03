@@ -325,7 +325,7 @@ model Product {
   id                    String                  @id @default(uuid())
   unit                  Unit                    @default(PCS)
   itemCode              String?                 @unique()
-  barcode               String?                 @unique()
+  barcode               String?                 
   productName           String
   printName             String?
   image                 String?

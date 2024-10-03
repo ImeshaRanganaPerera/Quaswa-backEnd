@@ -94,6 +94,19 @@ voucherRouter.get("/refVoucher", async (request: Request, response: Response) =>
     }
 });
 
+voucherRouter.get("/vouchersByAuthUser", async (req: Request, res: Response) => {
+    try {
+        const { month, year } = req.query;
+
+        const vouchersGroupedByAuthUser = await vocuherService.getVouchersGroupedByAuthUser(parseInt(month as string), parseInt(year as string));
+
+        return res.status(200).json({ data: vouchersGroupedByAuthUser });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return res.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
 //GET 
 voucherRouter.get("/:id", async (request: Request, response: Response) => {
     const id: any = request.params.id;

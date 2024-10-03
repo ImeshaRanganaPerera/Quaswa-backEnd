@@ -117,7 +117,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, createdBy: data.createdBy },
         include: {
             party: true,
             voucherProduct: {
@@ -405,3 +405,68 @@ export const getRefVoucherbyVoucherGrpid = async (data: any) => {
         }
     });
 }
+
+export const getVouchersGroupedByAuthUser = async (month?: number, year?: number) => {
+    const currentDate = new Date();
+    const selectedMonth = month !== undefined ? month - 1 : currentDate.getMonth();
+    const selectedYear = year !== undefined ? year : currentDate.getFullYear();
+
+    console.log("Selected month: ", selectedMonth, "Selected year: ", selectedYear)
+
+    const startDate = new Date(selectedYear, selectedMonth, 1);
+    const endDate = new Date(selectedYear, selectedMonth + 1, 0);
+
+    // Fetch the voucherGroup IDs for SALES-RETURN and INVOICE
+    const salesReturnGroup = await db.voucherGroup.findFirst({
+        where: { voucherName: 'SALES-RETURN' },
+        select: { id: true }
+    });
+
+    const invoiceGroup = await db.voucherGroup.findFirst({
+        where: { voucherName: 'INVOICE' },
+        select: { id: true }
+    });
+
+    if (!salesReturnGroup || !invoiceGroup) {
+        throw new Error("Unable to find specified voucher groups");
+    }
+
+    const salesReturnVouchers = await db.voucher.groupBy({
+        by: ['authUser'],
+        where: {
+            date: {
+                gte: startDate,
+                lte: endDate,
+            },
+            voucherGroupId: salesReturnGroup.id,  // Filter by SALES-RETURN group ID
+        },
+        _sum: {
+            amount: true,
+        },
+        _count: {
+            id: true,  // Count the number of vouchers per authUser
+        },
+    });
+
+    const invoiceVouchers = await db.voucher.groupBy({
+        by: ['authUser'],
+        where: {
+            date: {
+                gte: startDate,
+                lte: endDate,
+            },
+            voucherGroupId: invoiceGroup.id,  // Filter by INVOICE group ID
+        },
+        _sum: {
+            amount: true,
+        },
+        _count: {
+            id: true,  // Count the number of vouchers per authUser
+        },
+    });
+
+    return {
+        salesReturnVouchers,
+        invoiceVouchers,
+    };
+};

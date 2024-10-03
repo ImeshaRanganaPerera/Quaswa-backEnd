@@ -223,10 +223,13 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         }
         const newVoucher = await vocuherService.create({
             ...data,
+            authUser: data.authUser ? data.authUser : userId,
             voucherNumber: newVoucherNumber,
             voucherGroupId: voucherGrpdetails?.id,
             createdBy: userId
         })
+
+        console.log(newVoucher)
 
         if (data.refVoucherNumber) {
             await vocuherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, isRef: data.isRef, voucherId: newVoucher.voucherNumber })
@@ -311,6 +314,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         }
 
         else {
+            console.log(data)
             if (data.payment) {
                 const onlineTransfer = await paymentService.getbyname('Online Transfer');
                 const cash = await paymentService.getbyname('Cash');
@@ -406,8 +410,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     }
                 }
             }
-
-
 
             if (data.journalEntries && data.journalEntries.length > 0) {
                 const journalEntries = data.journalEntries;

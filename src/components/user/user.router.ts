@@ -160,6 +160,7 @@ userRouter.post("/login", async (request: Request, response: Response) => {
         const data = {
             token: genarateJwt(user),
             name: user.name,
+            role: user.role,
             companyDetails: companyDetails
         }
         

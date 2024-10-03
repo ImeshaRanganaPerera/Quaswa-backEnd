@@ -1,6 +1,5 @@
 import { Decimal } from "@prisma/client/runtime/library";
 import { db } from "../../utils/db.server";
-import { startOfDay, endOfDay } from 'date-fns';
 
 export const getlist = async () => {
     return db.inventory.findMany();
@@ -18,48 +17,62 @@ export const getbyCenter = async (id: any) => {
     });
 }
 
-export const filterInventory = async (productId: string | null, centerId: string | null, specificDate: string | null) => {
-    let dateFilter = {
-        createdAt: {
-            gte: startOfDay(new Date()), // Default to today's date
-            lte: endOfDay(new Date()),   // Default to today's date
-        }
+export const filterInventory = async (productId?: string, centerId?: string, date?: string) => {
+    const filterConditions: any = {
+        status: true,
     };
 
-    if (specificDate) {
-        dateFilter = {
-            createdAt: {
-                gte: startOfDay(new Date(specificDate)),
-                lte: endOfDay(new Date(specificDate)),
-            }
-        };
+    // Filtering conditions based on productId and centerId
+    if (productId) {
+        filterConditions.productId = productId;
     }
 
-    return db.inventory.findMany({
-        where: {
-            ...(productId ? { productId: productId } : {}),
-            ...(centerId ? { centerId: centerId } : {}),
-            status: true,
-            ...dateFilter
-        },
+    if (centerId) {
+        filterConditions.centerId = centerId;
+    }
+
+    console.log("Filter Conditions:", filterConditions);
+
+    // Fetch inventory list filtered by productId and/or centerId
+    const inventories = await db.inventory.findMany({
+        where: filterConditions,
         include: {
             product: true,
             center: true,
         },
     });
-};
 
-// Calculate the total quantity based on filtering by product, center, and specific date
-export const calculateTotalQuantity = async (productId: string | null, centerId: string | null, specificDate: string | null) => {
-    const inventories = await filterInventory(productId, centerId, specificDate);
+    console.log("Inventories fetched:", inventories);
 
-    const totalQuantity = inventories.reduce((total: Decimal, inventory: any) => {
-        return total.plus(new Decimal(inventory.quantity || 0));
-    }, new Decimal(0));
+    // Calculate total quantity for the specified date
+    const currentDate = new Date();
+    const filterDate = date ? new Date(date) : currentDate;
+
+    const dateStart = new Date(filterDate.setHours(0, 0, 0, 0));
+    const dateEnd = new Date(filterDate.setHours(23, 59, 59, 999));
+
+    const inventoriesOnDate = await db.inventory.findMany({
+        where: {
+            status: true,
+            updatedAt: {
+                gte: dateStart,
+                lt: dateEnd,
+            },
+        },
+    });
+
+    console.log("Inventories on date:", inventoriesOnDate);
+
+    let totalQuantity: Decimal = new Decimal(0);
+    inventoriesOnDate.forEach((inventory) => {
+        if (inventory.quantity) {
+            totalQuantity = totalQuantity.plus(new Decimal(inventory.quantity));
+        }
+    });
 
     return {
-        totalQuantity,
         inventories,
+        totalQuantity,
     };
 };
 

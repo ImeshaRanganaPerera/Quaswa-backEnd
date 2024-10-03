@@ -52,21 +52,21 @@ async function seed() {
         data: { level: 'Cash Discount', createdBy: userid }
     })
 
-    await db.brand.createMany({
-        data: [
-            { brandName: "BMW", createdBy: userid },
-            { brandName: "TATA", createdBy: userid },
-            { brandName: "TOYOTA", createdBy: userid },
-        ]
-    });
+    // await db.brand.createMany({
+    //     data: [
+    //         { brandName: "BMW", createdBy: userid },
+    //         { brandName: "TATA", createdBy: userid },
+    //         { brandName: "TOYOTA", createdBy: userid },
+    //     ]
+    // });
 
-    await db.type.createMany({
-        data: [
-            { typeName: "OIL FILTER", createdBy: userid },
-            { typeName: "RIM", createdBy: userid },
-            { typeName: "BUFFER", createdBy: userid },
-        ]
-    });
+    // await db.type.createMany({
+    //     data: [
+    //         { typeName: "OIL FILTER", createdBy: userid },
+    //         { typeName: "RIM", createdBy: userid },
+    //         { typeName: "BUFFER", createdBy: userid },
+    //     ]
+    // });
 
     await db.payment.createMany({
         data: [
@@ -173,10 +173,10 @@ async function seed() {
     await db.voucherGroup.createMany({
         data: [
             { voucherName: "INVOICE", shortname: "INV", inventoryMode: InventoryMode.MINUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Invoice" },
-            { voucherName: "SALES-RETURN", shortname: "SALES-R", inventoryMode: InventoryMode.PLUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Sales Return" },
-            { voucherName: "SALES-ORDER", shortname: "SALES-O", inventoryMode: InventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Sales", label: "Sales Order" },
+            { voucherName: "SALES-RETURN", shortname: "SRET", inventoryMode: InventoryMode.PLUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Sales Return" },
+            { voucherName: "SALES-ORDER", shortname: "SO", inventoryMode: InventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Sales", label: "Sales Order" },
             { voucherName: "GRN", shortname: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true, isSidemenu: true, category: "Inventory", label: "GRN" },
-            { voucherName: "PURCHASE-RETURN", shortname: "PURCHASE-R", inventoryMode: InventoryMode.MINUS, isAccount: true, isSidemenu: true, category: "Inventory", label: "Purchase Return" },
+            { voucherName: "PURCHASE-RETURN", shortname: "PRT", inventoryMode: InventoryMode.MINUS, isAccount: true, isSidemenu: true, category: "Inventory", label: "Purchase Return" },
             { voucherName: "STOCK-TRANSFER", shortname: "ST", inventoryMode: InventoryMode.DOUBLE, isAccount: false, isSidemenu: true, category: "Inventory", label: "Stock Transfer" },
             { voucherName: "PURCHASE-ORDER", shortname: "PO", inventoryMode: InventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Inventory", label: "Purchase Order" },
             { voucherName: "PAYMENT", shortname: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Payment" },

@@ -51,7 +51,6 @@ model User {
   role                  Role                    @default(SALESMEN)
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
-  Voucher               Voucher[]
   Party                 Party[]
   Product               Product[]
   userCenter            userCenter[]
@@ -75,6 +74,8 @@ model User {
   commissionLevel       commissionLevel[]
   productcommissionRate productcommissionRate[]
   partyType             partyType[]
+  userAuth              Voucher[]               @relation("UserAuth")
+  createdbyUserVoucher  Voucher[]               @relation("CreatedByUserVoucher")
 }
 
 model userCenter {
@@ -202,6 +203,7 @@ model Voucher {
   refVoucherNumber String?
   isRef            Boolean          @default(false)
   note             String?
+  dueDays          Int?
   isconform        Boolean          @default(true)
   party            Party?           @relation(fields: [partyId], references: [id])
   partyId          String?
@@ -209,7 +211,9 @@ model Voucher {
   chartofAccountId String?
   voucherGroup     VoucherGroup     @relation(fields: [voucherGroupId], references: [id])
   voucherGroupId   String
-  user             User             @relation(fields: [createdBy], references: [id])
+  user             User?            @relation("UserAuth", fields: [authUser], references: [id])
+  authUser         String?
+  createdByUser    User             @relation("CreatedByUserVoucher", fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
@@ -333,8 +337,8 @@ model Product {
   status                Boolean                 @default(true)
   type                  Type                    @relation(fields: [typeId], references: [id])
   typeId                String
-  brand                 Brand                   @relation(fields: [brandId], references: [id])
-  brandId               String
+  brand                 Brand?                   @relation(fields: [brandId], references: [id])
+  brandId               String?
   user                  User                    @relation(fields: [createdBy], references: [id])
   createdBy             String
   createdAt             DateTime                @default(now())
@@ -383,6 +387,7 @@ model productcommissionRate {
 model discountLevel {
   id                   String                 @id @default(uuid())
   level                String
+  days                 Int?
   user                 User                   @relation(fields: [createdBy], references: [id])
   createdBy            String
   createdAt            DateTime               @default(now())

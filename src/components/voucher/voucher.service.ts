@@ -11,6 +11,12 @@ export const get = async (id: any) => {
         },
         include: {
             party: true,
+            user: {
+                select: {
+                    name: true,
+                    phoneNumber: true,
+                }
+            },
             voucherProduct: {
                 include: {
                     product: {
@@ -18,7 +24,7 @@ export const get = async (id: any) => {
                             productName: true,
                             printName: true
                         }
-                    }
+                    },
                 }
             },
             referVouchers: true,
@@ -31,6 +37,14 @@ export const getbyid = async (id: any) => {
     return db.voucher.findFirst({
         where: {
             id: id
+        },
+        include: {
+            user: {
+                select: {
+                    name: true,
+                    phoneNumber: true,
+                }
+            },
         }
     });
 }
@@ -103,7 +117,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, voucherGroupId: data.voucherGroupId, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, createdBy: data.createdBy },
         include: {
             party: true,
             voucherProduct: {
@@ -133,7 +147,12 @@ export const create = async (data?: any) => {
             },
             referVouchers: true,
             PaymentVoucher: true,
-            user: true,
+            user: {
+                select: {
+                    name: true,
+                    phoneNumber: true,
+                }
+            },
             VoucherCenter: true,
             voucherGroup: true,
         }
@@ -232,7 +251,7 @@ export const updatepaidValue = async (data: any) => {
 export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any) => {
     return db.voucher.findMany({
         where: {
-            ...(userId && { createdBy: userId }),
+            ...(userId && { user: userId }),
             voucherGroupId: voucherGroupId,
             date: {
                 gte: startDate,
@@ -246,7 +265,7 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
                     accountName: true,
                 }
             },
-            
+
             voucherProduct: {
                 select: {
                     MRP: true,
@@ -277,6 +296,7 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
             user: {
                 select: {
                     name: true,
+                    phoneNumber: true,
                 }
             },
             VoucherCenter: {
@@ -336,6 +356,7 @@ export const getVouchersByUserAndDateRange = async (userId: string, startDate?: 
             user: {
                 select: {
                     name: true,
+                    phoneNumber: true,
                 }
             },
             VoucherCenter: {

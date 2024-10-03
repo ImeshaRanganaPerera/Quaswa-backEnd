@@ -83,12 +83,12 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
         else {
             subAcc = await accSubCategory.getbyname("CURRENT ASSETS")
             accGroup = await accGrp.getbyname("Receivable")
-            if (data.visitingCustomer) {
-                partycategory = await partyCategoryService.getbyname('VISITING CUSTOMER')
-                partyCateId = partycategory?.id;
-            } else {
-                partyCateId = data.partyCategoryId
-            }
+            partyCateId = data.partyCategoryId
+            // if (data.visitingCustomer) {
+            //     partycategory = await partyCategoryService.getbyname('VISITING CUSTOMER')
+            //     partyCateId = partycategory?.id;
+            // } else {
+            // }
         }
 
         const partyGroup = await partyGroupService.getbyname(data.partyGroup)

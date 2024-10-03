@@ -104,26 +104,25 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 return dis; // Return the created OEM number
             });
 
-            const commissionLevelsPromises = data.commissionLevels.map(async (com: any) => {
-                const dis = await productcommissionRateService.create({
-                    productId: newProduct.id,
-                    commissionRateId: com.commissionRateId,
-                    commissionRate: com.commissionRate,
-                    createdBy: userId
-                });
-                if (!dis) {
-                    throw new Error("Failed to update Discount Rates");
-                }
-                return dis; // Return the created OEM number
-            });
+            // const commissionLevelsPromises = data.commissionLevels.map(async (com: any) => {
+            //     const dis = await productcommissionRateService.create({
+            //         productId: newProduct.id,
+            //         commissionRateId: com.commissionRateId,
+            //         commissionRate: com.commissionRate,
+            //         createdBy: userId
+            //     });
+            //     if (!dis) {
+            //         throw new Error("Failed to update Discount Rates");
+            //     }
+            //     return dis; // Return the created OEM number
+            // });
 
             try {
                 // Wait for all promises
-                const [inventoryResults, oemNumbers, discountList, commissionLevel] = await Promise.all([
+                const [inventoryResults, oemNumbers, discountList] = await Promise.all([
                     Promise.all(centerPromises), // Wait for all inventory updates
                     Promise.all(OEMnumberPromises), // Wait for all OEM numbers to be created
                     Promise.all(discountLevelsPromises),
-                    Promise.all(commissionLevelsPromises),
                 ]);
 
                 // Combine product and OEM numbers into a single data object
@@ -131,7 +130,6 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     ...newProduct,
                     OEMNumber: oemNumbers,
                     productDiscountLevel: discountList,
-                    productcommissionRate: commissionLevel
                 };
 
                 // Return the response including the combined data

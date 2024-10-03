@@ -8,6 +8,11 @@ export const list = async () => {
                     name: true
                 }
             },
+            partyCategory: {
+                select: {
+                    category: true
+                }
+            },
         }
     });
 }

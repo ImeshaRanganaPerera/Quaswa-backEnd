@@ -31,7 +31,12 @@ export const getbyGroup = async (id: any, condition: boolean) => {
                 select: {
                     category: true
                 }
-            }
+            },
+            user: {
+                select: {
+                    name: true
+                }
+            },
         }
     });
 }

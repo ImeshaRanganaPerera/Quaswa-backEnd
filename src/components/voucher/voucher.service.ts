@@ -1,3 +1,4 @@
+import { Role, InventoryMode } from "@prisma/client";
 import { db } from "../../utils/db.server";
 
 export const list = async () => {
@@ -406,15 +407,16 @@ export const getRefVoucherbyVoucherGrpid = async (data: any) => {
     });
 }
 
-export const getVouchersGroupedByAuthUser = async (month?: number, year?: number) => {
+export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, year?: number) => {
     const currentDate = new Date();
     const selectedMonth = month !== undefined ? month - 1 : currentDate.getMonth();
     const selectedYear = year !== undefined ? year : currentDate.getFullYear();
 
-    console.log("Selected month: ", selectedMonth, "Selected year: ", selectedYear)
-
     const startDate = new Date(selectedYear, selectedMonth, 1);
     const endDate = new Date(selectedYear, selectedMonth + 1, 0);
+
+    const todayStart = new Date(currentDate.setHours(0, 0, 0, 0));  // Start of the current day
+    const todayEnd = new Date(currentDate.setHours(23, 59, 59, 999));  // End of the current day
 
     // Fetch the voucherGroup IDs for SALES-RETURN and INVOICE
     const salesReturnGroup = await db.voucherGroup.findFirst({
@@ -431,42 +433,241 @@ export const getVouchersGroupedByAuthUser = async (month?: number, year?: number
         throw new Error("Unable to find specified voucher groups");
     }
 
-    const salesReturnVouchers = await db.voucher.groupBy({
+    // Group by authUser for monthly Sales-Return and Invoice
+    const salesReturnVouchersMonthly = await db.voucher.groupBy({
         by: ['authUser'],
         where: {
             date: {
                 gte: startDate,
                 lte: endDate,
             },
-            voucherGroupId: salesReturnGroup.id,  // Filter by SALES-RETURN group ID
+            voucherGroupId: salesReturnGroup.id,
         },
         _sum: {
             amount: true,
         },
         _count: {
-            id: true,  // Count the number of vouchers per authUser
+            id: true,
         },
     });
 
-    const invoiceVouchers = await db.voucher.groupBy({
+    const invoiceVouchersMonthly = await db.voucher.groupBy({
         by: ['authUser'],
         where: {
             date: {
                 gte: startDate,
                 lte: endDate,
             },
-            voucherGroupId: invoiceGroup.id,  // Filter by INVOICE group ID
+            voucherGroupId: invoiceGroup.id,
         },
         _sum: {
             amount: true,
         },
         _count: {
-            id: true,  // Count the number of vouchers per authUser
+            id: true,
         },
     });
 
-    return {
-        salesReturnVouchers,
-        invoiceVouchers,
-    };
+    // Group by authUser for daily Sales-Return and Invoice
+    const salesReturnVouchersDaily = await db.voucher.groupBy({
+        by: ['authUser'],
+        where: {
+            date: {
+                gte: todayStart,
+                lte: todayEnd,
+            },
+            voucherGroupId: salesReturnGroup.id,
+        },
+        _sum: {
+            amount: true,
+        },
+        _count: {
+            id: true,
+        },
+    });
+
+    const invoiceVouchersDaily = await db.voucher.groupBy({
+        by: ['authUser'],
+        where: {
+            date: {
+                gte: todayStart,
+                lte: todayEnd,
+            },
+            voucherGroupId: invoiceGroup.id,
+        },
+        _sum: {
+            amount: true,
+        },
+        _count: {
+            id: true,
+        },
+    });
+
+    // Create a map to combine the data for all users
+    const userVoucherMap: { [authUser: string]: any } = {};
+
+    // Process monthly sales return vouchers
+    salesReturnVouchersMonthly.forEach((voucher) => {
+        if (voucher.authUser !== null) {
+            if (!userVoucherMap[voucher.authUser]) {
+                userVoucherMap[voucher.authUser] = {
+                    totalSalesReturn: voucher._sum.amount || 0,
+                    totalSalesReturnCount: voucher._count.id || 0,
+                    totalInvoiceValue: 0,
+                    totalInvoices: 0,
+                    totalVisits: 0,
+                    daily: {
+                        totalSalesReturn: 0,
+                        totalSalesReturnCount: 0,
+                        totalInvoiceValue: 0,
+                        totalInvoices: 0,
+                        totalVisits: 0,
+                    }
+                };
+            } else {
+                userVoucherMap[voucher.authUser].totalSalesReturn += voucher._sum.amount || 0;
+                userVoucherMap[voucher.authUser].totalSalesReturnCount += voucher._count.id || 0;
+            }
+        }
+    });
+
+    // Process monthly invoice vouchers
+    invoiceVouchersMonthly.forEach((voucher) => {
+        if (voucher.authUser !== null) {
+            if (!userVoucherMap[voucher.authUser]) {
+                userVoucherMap[voucher.authUser] = {
+                    totalSalesReturn: 0,
+                    totalSalesReturnCount: 0,
+                    totalInvoiceValue: voucher._sum.amount || 0,
+                    totalInvoices: voucher._count.id || 0,
+                    totalVisits: 0,
+                    daily: {
+                        totalSalesReturn: 0,
+                        totalSalesReturnCount: 0,
+                        totalInvoiceValue: 0,
+                        totalInvoices: 0,
+                        totalVisits: 0,
+                    }
+                };
+            } else {
+                userVoucherMap[voucher.authUser].totalInvoiceValue += voucher._sum.amount || 0;
+                userVoucherMap[voucher.authUser].totalInvoices += voucher._count.id || 0;
+            }
+        }
+    });
+
+    // Process daily sales return vouchers
+    salesReturnVouchersDaily.forEach((voucher) => {
+        if (voucher.authUser !== null) {
+            if (userVoucherMap[voucher.authUser]) {
+                userVoucherMap[voucher.authUser].daily.totalSalesReturn += voucher._sum.amount || 0;
+                userVoucherMap[voucher.authUser].daily.totalSalesReturnCount += voucher._count.id || 0;
+            }
+        }
+    });
+
+    // Process daily invoice vouchers
+    invoiceVouchersDaily.forEach((voucher) => {
+        if (voucher.authUser !== null) {
+            if (userVoucherMap[voucher.authUser]) {
+                userVoucherMap[voucher.authUser].daily.totalInvoiceValue += voucher._sum.amount || 0;
+                userVoucherMap[voucher.authUser].daily.totalInvoices += voucher._count.id || 0;
+            }
+        }
+    });
+
+    // Fetch visiting customer data for each authUser
+    const visitCountsMonthly = await db.vistingCustomer.groupBy({
+        by: ['createdBy'],
+        where: {
+            createdAt: {
+                gte: startDate,
+                lte: endDate,
+            },
+        },
+        _count: {
+            id: true, // Count total visits for the month
+        },
+    });
+
+    const visitCountsDaily = await db.vistingCustomer.groupBy({
+        by: ['createdBy'],
+        where: {
+            createdAt: {
+                gte: todayStart,
+                lte: todayEnd,
+            },
+        },
+        _count: {
+            id: true, // Count total visits for today
+        },
+    });
+
+    // Map monthly visit counts to userVoucherMap
+    visitCountsMonthly.forEach((visit) => {
+        if (visit.createdBy && userVoucherMap[visit.createdBy]) {
+            userVoucherMap[visit.createdBy].totalVisits += visit._count.id || 0;
+        } else if (visit.createdBy) {
+            userVoucherMap[visit.createdBy] = {
+                totalVisits: visit._count.id || 0,
+                daily: {
+                    totalSalesReturn: 0,
+                    totalSalesReturnCount: 0,
+                    totalInvoiceValue: 0,
+                    totalInvoices: 0,
+                    totalVisits: 0,
+                },
+                totalSalesReturn: 0,
+                totalSalesReturnCount: 0,
+                totalInvoiceValue: 0,
+                totalInvoices: 0,
+            };
+        }
+    });
+
+    // Map daily visit counts to userVoucherMap
+    visitCountsDaily.forEach((visit) => {
+        if (visit.createdBy && userVoucherMap[visit.createdBy]) {
+            userVoucherMap[visit.createdBy].daily.totalVisits += visit._count.id || 0;
+        }
+    });
+
+    // Convert the map into an array and fetch user names along with target, filtering for SALESMEN
+    const userData = await Promise.all(Object.keys(userVoucherMap).map(async (authUser) => {
+        if (authUser) {
+            const user = await db.user.findFirst({
+                where: {
+                    id: authUser,
+                    role: Role.SALESMEN,  // Filter by role SALESMAN
+                },
+                select: { name: true, target: true },
+            });
+
+            if (user) {
+                return {
+                    username: user?.name || "Unknown User",
+                    target: user?.target || 0,
+                    totalVisits: userVoucherMap[authUser].totalVisits || 0,
+                    totalInvoices: userVoucherMap[authUser].totalInvoices,
+                    totalInvoiceValue: userVoucherMap[authUser].totalInvoiceValue,
+                    totalSalesReturn: userVoucherMap[authUser].totalSalesReturn,
+                    totalSalesReturnCount: userVoucherMap[authUser].totalSalesReturnCount,
+                    daily: {
+                        totalInvoices: userVoucherMap[authUser].daily.totalInvoices,
+                        totalInvoiceValue: userVoucherMap[authUser].daily.totalInvoiceValue,
+                        totalSalesReturn: userVoucherMap[authUser].daily.totalSalesReturn,
+                        totalSalesReturnCount: userVoucherMap[authUser].daily.totalSalesReturnCount,
+                        totalVisits: userVoucherMap[authUser].daily.totalVisits,
+                    }
+                };
+            }
+        }
+        return null;
+    }));
+
+    // Filter out null values in case any authUser is missing or doesn't have the SALESMAN role
+    return userData.filter(data => data !== null);
 };
+
+
+

@@ -96,9 +96,16 @@ voucherRouter.get("/refVoucher", async (request: Request, response: Response) =>
 
 voucherRouter.get("/vouchersByAuthUser", async (req: Request, res: Response) => {
     try {
-        const { month, year } = req.query;
+        let { month, year } = req.query;
 
-        const vouchersGroupedByAuthUser = await vocuherService.getVouchersGroupedByAuthUser(parseInt(month as string), parseInt(year as string));
+        // Get current month and year if not provided
+        if (!month || !year) {
+            const currentDate = new Date();
+            month = month || (currentDate.getMonth() + 1).toString(); // JavaScript months are 0-indexed, so add 1
+            year = year || currentDate.getFullYear().toString();
+        }
+
+        const vouchersGroupedByAuthUser = await vocuherService.getVouchersGroupedByAuthUserWithVisits(parseInt(month as string), parseInt(year as string));
 
         return res.status(200).json({ data: vouchersGroupedByAuthUser });
     } catch (error: any) {

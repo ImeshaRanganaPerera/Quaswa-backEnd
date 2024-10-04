@@ -121,7 +121,6 @@ export const upsert = async (data: any) => {
             }
         });
 
-
         let newQuantity: Decimal;
         if (existingInventory && existingInventory.quantity !== null) {
             newQuantity = new Decimal(existingInventory.quantity).plus(new Decimal(data.quantity));
@@ -144,118 +143,6 @@ export const upsert = async (data: any) => {
                 quantity: newQuantity, // Insert the original quantity on creation
             },
         });
-
-
-
-
-        // const invoice = await db.voucherGroup.findFirst({
-        //     where: {
-        //         voucherName: "INVOICE",
-
-        //     }
-        // })
-
-        // const allinvoiceQty = await db.voucherProduct.findMany({
-        //     where: {
-        //         productId: data.productId,
-
-        //     }
-        // })
-
-        // console.log(allinvoiceQty)
-
-        // const positiveContribution = await db.voucherProduct.aggregate({
-        //     _sum: {
-        //         quantity: true,
-        //     },
-        //     where: {
-        //         voucher: {
-        //             voucherGroup: {
-        //                 voucherName: {
-        //                     in: ["GRN", "SALES-RETURN"], // Voucher types that add to quantity
-        //                 },
-        //             },
-        //         },
-        //         productId: data.productId,
-        //         centerId: data.centerId,
-        //     },
-        // });
-
-        // const negativeContribution = await db.voucherProduct.aggregate({
-        //     _sum: {
-        //         quantity: true,
-        //     },
-        //     where: {
-        //         voucher: {
-        //             voucherGroup: {
-        //                 voucherName: {
-        //                     in: ["INVOICE", "PURCHASE-RETURN"], // Voucher types that subtract from quantity
-        //                 },
-        //             },
-        //         },
-        //         productId: data.productId,
-        //         centerId: data.centerId,
-        //     },
-        // });
-
-        // // Calculate total quantities
-        // const totalPositive = positiveContribution._sum.quantity || new Decimal(0);
-        // const totalNegative = negativeContribution._sum.quantity || new Decimal(0);
-        // const finalTotalQuantity = totalPositive.minus(totalNegative); // Net quantity
-
-        // console.log(finalTotalQuantity)
-
-        // const existingProduct = await db.product.findUnique({
-        //     where: {
-        //         id: data.productId,
-        //     },
-        // });
-
-        // let newQuantity: Decimal;
-        // if (existingInventory && existingInventory.quantity !== null) {
-        //     newQuantity = new Decimal(existingInventory.quantity).plus(finalTotalQuantity); // Add to existing quantity
-        // } else {
-        //     newQuantity = new Decimal(data.quantity); // Use the new quantity if no existing inventory
-        // }
-
-        // // Get old cost and calculate average cost
-        // const oldCost = existingProduct?.cost || new Decimal(0);
-
-        // // Calculation for new average cost
-        // const totalOldCost = finalTotalQuantity.mul(oldCost); // finalTotalQuantity * oldCost
-        // const totalNewCost = newQuantity.mul(new Decimal(data.cost)); // newQuantity * data.cost
-        // const avgCost = totalOldCost.plus(totalNewCost).div(finalTotalQuantity.plus(newQuantity)); // (old + new) / total
-
-        // // Update the product cost with the calculated avgCost
-        // await db.product.update({
-        //     where: {
-        //         id: data.productId,
-        //     },
-        //     data: {
-        //         cost: avgCost,
-        //         minPrice: data.minPrice,
-        //         MRP: data.MRP,
-        //         sellingPrice: data.sellingPrice,
-        //     },
-        // });
-
-        // // Upsert the inventory record with the calculated total quantity
-        // return db.inventory.upsert({
-        //     where: {
-        //         productId_centerId: {
-        //             productId: data.productId,
-        //             centerId: data.centerId,
-        //         },
-        //     },
-        //     update: {
-        //         quantity: newQuantity, // Update with the final calculated quantity
-        //     },
-        //     create: {
-        //         productId: data.productId,
-        //         centerId: data.centerId,
-        //         quantity: newQuantity, // Set the final calculated quantity on creation
-        //     },
-        // });
     }
     else {
         const existingInventory = await db.inventory.findUnique({

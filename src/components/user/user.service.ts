@@ -7,12 +7,29 @@ export const getlist = async () => {
     });
 }
 
+export const getbyId = async (id: any) => {
+    return db.user.findUnique({
+        where: {
+            id,
+        },
+        select: {
+            id: true,
+            name: true,
+            nic: true,
+            phoneNumber: true,
+            dateofbirth: true,
+            target: true,
+            role: true,
+            address: true,
+        }
+    });
+}
+
 export const get = async (id: any) => {
     return db.user.findUnique({
         where: {
             id,
-        }
-
+        },
     });
 }
 
@@ -43,7 +60,15 @@ export const create = async (userData: any) => {
 export const update = async (userData: any, id: any) => {
     return db.user.update({
         where: id,
-        data: userData
+        data: {
+            name: userData.name,
+            nic: userData.nic,
+            phoneNumber: userData.phoneNumber,
+            dateofbirth: userData.dateofbirth,
+            target: userData.target,
+            role: userData.role,
+            address: userData.address,
+        }
     });
 }
 
@@ -52,5 +77,12 @@ export const getAllCompanyDetails = async () => {
         where: {
             companyName: 'HITECH (PVT) LTD'
         }
+    });
+};
+
+export const updatePassword = async (userId: string, hashedPassword: string) => {
+    return db.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
     });
 };

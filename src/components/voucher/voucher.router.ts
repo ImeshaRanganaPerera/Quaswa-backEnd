@@ -5,7 +5,7 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 import { Prisma } from '@prisma/client';
 
 
-import * as vocuherService from './voucher.service'
+import * as voucherService from './voucher.service'
 import * as voucherGrpService from '../voucherGroup/vouchergrp.service'
 import * as voucherCenter from '../centerVoucher/centerVoucher.service'
 import * as productVoucherService from '../voucherProduct/voucherProduct.service'
@@ -26,7 +26,7 @@ export const voucherRouter = express.Router();
 //GET LIST
 voucherRouter.get("/", async (request: Request, response: Response) => {
     try {
-        const data = await vocuherService.list()
+        const data = await voucherService.list()
         if (data) {
             return response.status(200).json({ data: data });
         }
@@ -59,7 +59,7 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
             return response.status(400).json({ message: "Invalid date format." });
         }
 
-        const vouchers = await vocuherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId,);
+        const vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId,);
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });
@@ -72,16 +72,51 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
     }
 });
 
+voucherRouter.get("/outstanding", authenticate, async (request: ExpressRequest, response: Response) => {
+    try {
+        var { VoucherGrpName, partyId, userId } = request.query;
+
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        if (request.user.role !== "ADMIN") {
+            userId = request.user?.id;
+        }
+
+        if (!VoucherGrpName) {
+            return response.status(400).json({ message: "VoucherGrpName is required." });
+        }
+
+        const grpname = await voucherGrpService.getbyname(VoucherGrpName);
+
+        if (!grpname?.id) {
+            return response.status(404).json({ message: "Voucher group not found." });
+        }
+
+        const vouchers = await voucherService.getVouchersByPartyOutstanding(grpname.id as string, partyId, userId);
+
+        if (!vouchers || vouchers.length === 0) {
+            return response.status(404).json({ message: "No vouchers found for the specified Voucher group or party." });
+        }
+
+        return response.status(200).json({ data: vouchers });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
+
 voucherRouter.get("/refVoucher", async (request: Request, response: Response) => {
     try {
         const { VoucherGrpName, partyId } = request.query;
-
         if (!VoucherGrpName) {
             return response.status(400).json({ message: "VoucherGrpname is required." });
         }
         const grpname = await voucherGrpService.getbyname(VoucherGrpName)
 
-        const vouchers = await vocuherService.getRefVoucherbyVoucherGrpid({ voucherGroupId: grpname?.id, partyId: partyId });
+        const vouchers = await voucherService.getRefVoucherbyVoucherGrpid({ voucherGroupId: grpname?.id, partyId: partyId });
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });
@@ -105,7 +140,7 @@ voucherRouter.get("/vouchersByAuthUser", async (req: Request, res: Response) => 
             year = year || currentDate.getFullYear().toString();
         }
 
-        const vouchersGroupedByAuthUser = await vocuherService.getVouchersGroupedByAuthUserWithVisits(parseInt(month as string), parseInt(year as string));
+        const vouchersGroupedByAuthUser = await voucherService.getVouchersGroupedByAuthUserWithVisits(parseInt(month as string), parseInt(year as string));
 
         return res.status(200).json({ data: vouchersGroupedByAuthUser });
     } catch (error: any) {
@@ -114,11 +149,10 @@ voucherRouter.get("/vouchersByAuthUser", async (req: Request, res: Response) => 
     }
 });
 
-//GET 
 voucherRouter.get("/:id", async (request: Request, response: Response) => {
     const id: any = request.params.id;
     try {
-        const data = await vocuherService.get(id)
+        const data = await voucherService.get(id)
         if (data) {
             return response.status(200).json({ data: data });
         }
@@ -132,7 +166,7 @@ voucherRouter.get("/voucherNumber/:vouchername", async (request: Request, respon
     const vouchername: any = request.params.vouchername;
     try {
         const voucherGrpId = await voucherGrpService.getbyname(vouchername)
-        const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpId?.id)
+        const newVoucherNumber = await voucherService.generateVoucherNumber(voucherGrpId?.id)
         if (newVoucherNumber) {
             return response.status(200).json({ data: newVoucherNumber });
         }
@@ -146,7 +180,7 @@ voucherRouter.get("/group/:vouchername", async (request: Request, response: Resp
     const vouchername: any = request.params.vouchername;
     try {
         const voucherGrpId = await voucherGrpService.getbyname(vouchername)
-        const vouchersbyGrp = await vocuherService.getVoucherbyGrp(voucherGrpId?.id)
+        const vouchersbyGrp = await voucherService.getVoucherbyGrp(voucherGrpId?.id)
         if (vouchersbyGrp) {
             return response.status(200).json({ data: vouchersbyGrp });
         }
@@ -159,7 +193,7 @@ voucherRouter.get("/group/:vouchername", async (request: Request, response: Resp
 voucherRouter.get("/party/:partyId", async (request: Request, response: Response) => {
     const partyId: any = request.params.partyId;
     try {
-        const voucherbyParty = await vocuherService.getVoucherbyParty(partyId)
+        const voucherbyParty = await voucherService.getVoucherbyParty(partyId)
         if (voucherbyParty) {
             return response.status(200).json({ data: voucherbyParty });
         }
@@ -177,7 +211,7 @@ voucherRouter.post("/chartofAcc/condition/:chartofaccId", authenticate, async (r
             return response.status(401).json({ message: "User not authorized" });
         }
 
-        const voucherbyParty = await vocuherService.getVoucherbyChartofacc(chartofaccId, data.condition)
+        const voucherbyParty = await voucherService.getVoucherbyChartofacc(chartofaccId, data.condition)
         if (voucherbyParty) {
             return response.status(200).json({ data: voucherbyParty });
         }
@@ -195,7 +229,7 @@ voucherRouter.post("/party/condition/:partyId", authenticate, async (request: Ex
             return response.status(401).json({ message: "User not authorized" });
         }
 
-        const voucherbyParty = await vocuherService.getVoucherbyPartytrue(partyId, data.condition)
+        const voucherbyParty = await voucherService.getVoucherbyPartytrue(partyId, data.condition)
         if (voucherbyParty) {
             return response.status(200).json({ data: voucherbyParty });
         }
@@ -208,7 +242,7 @@ voucherRouter.post("/party/condition/:partyId", authenticate, async (request: Ex
 voucherRouter.get("/party/false/:partyId", async (request: Request, response: Response) => {
     const partyId: any = request.params.partyId;
     try {
-        const voucherbyParty = await vocuherService.getVoucherbyPartyfalse(partyId)
+        const voucherbyParty = await voucherService.getVoucherbyPartyfalse(partyId)
         if (voucherbyParty) {
             return response.status(200).json({ data: voucherbyParty });
         }
@@ -227,7 +261,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         }
         const userId = request.user.id;
         const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
-        const newVoucherNumber = await vocuherService.generateVoucherNumber(voucherGrpdetails?.id)
+        const newVoucherNumber = await voucherService.generateVoucherNumber(voucherGrpdetails?.id)
 
         var totalCost = 0;
         var partyAcc: any;
@@ -241,7 +275,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 return total + (product.cost * product.quantity);
             }, 0);
         }
-        const newVoucher = await vocuherService.create({
+        const newVoucher = await voucherService.create({
             ...data,
             authUser: data.authUser ? data.authUser : userId,
             voucherNumber: newVoucherNumber,
@@ -252,7 +286,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         console.log(newVoucher)
 
         if (data.refVoucherNumber) {
-            await vocuherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, isRef: data.isRef, voucherId: newVoucher.voucherNumber })
+            await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, isRef: data.isRef, voucherId: newVoucher.voucherNumber })
         }
 
         if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
@@ -343,7 +377,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
                 // Prepare payment vouchers
                 const paymentVouchers = [
-                    { voucherId: newVoucher.id, paymentId: onlineTransfer?.id, paymentType: onlineTransfer?.type, amount: data.payment.onlineTransfer },
+                    { voucherId: newVoucher.id, paymentId: onlineTransfer?.id, paymentType: onlineTransfer?.type, amount: data.payment.onlineTransfer, refNumber: data.payment.refNumber },
                     { voucherId: newVoucher.id, paymentId: cash?.id, paymentType: cash?.type, amount: data.payment.cash },
                     { voucherId: newVoucher.id, paymentId: Cheque?.id, paymentType: Cheque?.type, amount: data.payment.cheque },
                     { voucherId: newVoucher.id, paymentId: Credit?.id, paymentType: Credit?.type, amount: data.payment.credit }
@@ -384,7 +418,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             if (data.voucherGroupname !== "DIRECT PAYMENT") {
                 if (data.selectedVoucherIds && data.amount > 0) {
                     let remainingAmount = data.amount; // Amount to be paid
-                    const selectedVouchers = await vocuherService.findManyByIds(data.selectedVoucherIds.map((v: any) => v.voucherId));
+                    const selectedVouchers = await voucherService.findManyByIds(data.selectedVoucherIds.map((v: any) => v.voucherId));
 
                     for (const voucher of selectedVouchers) {
                         // Safely handle the voucher.amount and voucher.paidValue as Decimal or number
@@ -404,11 +438,11 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                             // Update the paidValue of the voucher
                             const updatedPaidValue = paidValue + payableAmount;
 
-                            await vocuherService.updatepaidValue({
+                            await voucherService.updatepaidValue({
                                 id: voucher.id,
                                 paidValue: updatedPaidValue
                             });
-                            var selectedVoucher = await vocuherService.getbyid(voucher.id)
+                            var selectedVoucher = await voucherService.getbyid(voucher.id)
                             await referVoucherService.create({
                                 refVoucherNumber: selectedVoucher?.voucherNumber,
                                 invoiceDate: selectedVoucher?.date,
@@ -532,7 +566,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     centerStatus: "IN"
                 })
                 if (!newVoucherCenter) {
-                    throw new Error("Failed to update Voucher Center to list association");
+                    throw new Error("Failed to update Vo    ucher Center to list association");
                 }
                 if (voucherGrpdetails?.isAccount === true) {
                     const inventoryPromise = data.productList.map(async (product: any) => {
@@ -614,7 +648,7 @@ voucherRouter.put("/:id", authenticate, async (request: ExpressRequest, response
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-        const updateVoucher = await vocuherService.update(data, id)
+        const updateVoucher = await voucherService.update(data, id)
 
         if (updateVoucher) {
             return response.status(201).json({ message: "Voucher Updated Successfully" });
@@ -632,7 +666,7 @@ voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, 
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-        const updateVoucher = await vocuherService.updateConform(data, id)
+        const updateVoucher = await voucherService.updateConform(data, id)
 
         if (updateVoucher) {
             return response.status(201).json({ message: "Voucher Conform Successfully" });

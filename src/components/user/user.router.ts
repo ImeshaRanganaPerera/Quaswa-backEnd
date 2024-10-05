@@ -4,6 +4,7 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 import { sign } from "jsonwebtoken";
 import { User } from "@prisma/client";
 import { compare } from "bcrypt";
+import { hash } from "bcrypt"
 
 import * as UserService from './user.service'
 import * as centerService from '../center/center.service'
@@ -25,16 +26,31 @@ userRouter.get("/", async (request: Request, res, next) => {
     }
 })
 
-//GET 
-userRouter.get("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
-    const id: any = request.params.id;
+userRouter.get("/role/:role", authenticate, async (request: ExpressRequest, response: Response) => {
+    const role: any = request.params.role;
     try {
         if (!request.user) {
             return response.status(401);
         }
-        const user = await UserService.get(id)
+        const user = await UserService.getbyRole(role)
         if (user) {
-            return response.status(200).json(user);
+            return response.status(200).json({ data: user });
+        }
+        return response.status(404).json("User could not be found");
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+
+//GET 
+userRouter.get("/details", authenticate, async (request: ExpressRequest, response: Response) => {
+    try {
+        if (!request.user) {
+            return response.status(401);
+        }
+        const user = await UserService.getbyId(request.user.id)
+        if (user) {
+            return response.status(200).json({ data: user });
         }
         return response.status(404).json("User could not be found");
     } catch (error: any) {
@@ -163,12 +179,46 @@ userRouter.post("/login", async (request: Request, response: Response) => {
             role: user.role,
             companyDetails: companyDetails
         }
-        
+
         return response.status(201).json({ message: 'Login Successfully', data: data });
     } catch (error: any) {
         return response.status(500).json(error.message);
     }
 })
+
+userRouter.put("/change-password", authenticate, async (request: ExpressRequest, response: Response) => {
+    const { oldPassword, newPassword } = request.body;
+    
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+        const userId = request.user.id;
+
+        // Fetch the user by ID
+        const user = await UserService.get(userId);
+        if (!user) {
+            return response.status(404).json({ message: "User not found" });
+        }
+
+        // Compare the old password with the stored password
+        const isOldPasswordCorrect = await compare(oldPassword, user.password);
+        if (!isOldPasswordCorrect) {
+            return response.status(400).json({ message: "Old password is incorrect" });
+        }
+
+        // Hash the new password
+        const hashedNewPassword = await hash(newPassword, 10);
+
+        // Update the password in the database
+        const updatedUser = await UserService.updatePassword(userId, hashedNewPassword);
+
+        return response.status(200).json({ message: "Password updated successfully", data: updatedUser });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});
+
 
 //UPDATE
 userRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
@@ -181,12 +231,15 @@ userRouter.put("/:id", authenticate, async (request: ExpressRequest, response: R
 
         const updateUser = await UserService.update(userData, id)
         if (updateUser) {
-            return response.status(201).json(updateUser);
+            return response.status(201).json({ data: updateUser });
         }
 
     } catch (error: any) {
-        return response.status(500).json(error.message);
+        return response.status(500).json({ data: error.message });
     }
 })
+
+// Change Password
+
 
 

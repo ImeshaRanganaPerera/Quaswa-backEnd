@@ -294,6 +294,7 @@ model PaymentVoucher {
   id          String   @id @default(uuid())
   amount      Decimal
   paymentType String?
+  refNumber   String?
   payment     Payment  @relation(fields: [paymentId], references: [id])
   paymentId   String
   voucher     Voucher  @relation(fields: [voucherId], references: [id])
@@ -325,7 +326,7 @@ model Product {
   id                    String                  @id @default(uuid())
   unit                  Unit                    @default(PCS)
   itemCode              String?                 @unique()
-  barcode               String?                 
+  barcode               String?
   productName           String
   printName             String?
   image                 String?
@@ -337,7 +338,7 @@ model Product {
   status                Boolean                 @default(true)
   type                  Type                    @relation(fields: [typeId], references: [id])
   typeId                String
-  brand                 Brand?                   @relation(fields: [brandId], references: [id])
+  brand                 Brand?                  @relation(fields: [brandId], references: [id])
   brandId               String?
   user                  User                    @relation(fields: [createdBy], references: [id])
   createdBy             String

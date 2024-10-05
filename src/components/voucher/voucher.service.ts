@@ -249,6 +249,69 @@ export const updatepaidValue = async (data: any) => {
     });
 };
 
+export const getVouchersByPartyOutstanding = async (voucherGroupId: string, partyId?: any, userId?: any,) => {
+    return db.voucher.findMany({
+        where: {
+            voucherGroupId: voucherGroupId,
+            ...(userId ? { authUser: userId } : {}), // Filter by authUser if userId is passed
+            ...(partyId ? { partyId: partyId } : {}), // Filter by partyId if partyId is passed
+            NOT: {
+                paidValue: {
+                    gte: db.voucher.fields.amount
+                }
+            },
+        },
+        include: {
+            party: true,
+            chartofacc: {
+                select: {
+                    accountName: true,
+                }
+            },
+            voucherProduct: {
+                select: {
+                    MRP: true,
+                    amount: true,
+                    centerId: true,
+                    cost: true,
+                    createdAt: true,
+                    id: true,
+                    isdisabale: true,
+                    minPrice: true,
+                    discount: true,
+                    productId: true,
+                    quantity: true,
+                    remainingQty: true,
+                    sellingPrice: true,
+                    updatedAt: true,
+                    voucherId: true,
+                    product: {
+                        select: {
+                            productName: true,
+                            printName: true
+                        }
+                    }
+                }
+            },
+            referVouchers: true,
+            PaymentVoucher: true,
+            user: {
+                select: {
+                    name: true,
+                    phoneNumber: true,
+                }
+            },
+            VoucherCenter: {
+                select: {
+                    center: true,
+                    centerStatus: true,
+                }
+            }
+        }
+    });
+};
+
+
 export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any) => {
     return db.voucher.findMany({
         where: {

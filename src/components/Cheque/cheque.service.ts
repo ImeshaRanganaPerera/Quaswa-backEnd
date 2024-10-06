@@ -92,3 +92,24 @@ export const getUnusedChequesByAccountId = async (chartofAccountId: string) => {
         },
     });
 };
+
+export const filterCheques = async (startDate: Date, endDate: Date) => {
+    console.log(startDate, endDate);
+    return await db.cheque.findMany({
+        where: {
+            used: false, // Filter by cheques that are not used
+            chequeBookId: null, // Filter by cheques where chequeBookId is null
+            OR: [
+                {
+                    releaseDate: {
+                        gte: new Date(startDate), // Greater than or equal to startDate
+                        lte: new Date(endDate), // Less than or equal to endDate
+                    },
+                },
+            ],
+        },
+        orderBy: {
+            releaseDate: 'asc', // Sort by issueDate, but you can change this to releaseDate if preferred
+        },
+    });
+};

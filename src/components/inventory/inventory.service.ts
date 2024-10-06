@@ -101,8 +101,21 @@ export const upsert = async (data: any) => {
             }
         });
 
+        const allInventory = await db.inventory.findMany({
+            where: {
+                productId: data.productId,
+            },
+        });
+        console.log(allInventory)
+
+        const totalQuantity = allInventory.reduce((acc, inventory) => {
+            return acc.plus(new Decimal(inventory.quantity || 0)); // Use Decimal for precise addition
+        }, new Decimal(0));
+
+        console.log(`Total quantity for product ${data.productId}:`, totalQuantity.toString());
+
         const oldCost = product?.cost || new Decimal(0);
-        const oldqty = existingInventory?.quantity || new Decimal(0);
+        const oldqty = totalQuantity || new Decimal(0);
 
         const newCost = new Decimal(data.cost);
         const newqty = new Decimal(data.quantity);

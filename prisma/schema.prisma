@@ -107,6 +107,9 @@ model Party {
   creditPeriod     String?
   creditValue      String?
   email            String?
+  shopImage        String?
+  BRimage          String?
+  nicImage         String?
   isVerified       Boolean?
   partyCategory    partyCategory?    @relation(fields: [partyCategoryId], references: [id])
   partyCategoryId  String?

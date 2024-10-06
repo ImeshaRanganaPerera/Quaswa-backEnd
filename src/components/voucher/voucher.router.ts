@@ -96,9 +96,9 @@ voucherRouter.get("/outstanding", authenticate, async (request: ExpressRequest, 
 
         const vouchers = await voucherService.getVouchersByPartyOutstanding(grpname.id as string, partyId, userId);
 
-        if (!vouchers || vouchers.length === 0) {
-            return response.status(404).json({ message: "No vouchers found for the specified Voucher group or party." });
-        }
+        // if (!vouchers || vouchers.length === 0) {
+        //     return response.status(404).json({ message: "No vouchers found for the specified Voucher group or party." });
+        // }
 
         return response.status(200).json({ data: vouchers });
     } catch (error: any) {
@@ -106,7 +106,6 @@ voucherRouter.get("/outstanding", authenticate, async (request: ExpressRequest, 
         return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
     }
 });
-
 
 voucherRouter.get("/refVoucher", async (request: Request, response: Response) => {
     try {
@@ -495,6 +494,22 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         var expencessacc = await chartofaccService.getbyname('SALES ACCOUNT')
                         chartofAccId = expencessacc?.id
                     }
+                    if (entry.accountId === "INVENTORY") {
+                        var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
+                        chartofAccId = inventoryAcc?.id
+                    }
+                    if (entry.accountId === "INVENTORY") {
+                        var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
+                        chartofAccId = inventoryAcc?.id
+                    }
+                    if (entry.accountId === "IMPORT") {
+                        var inventoryAcc = await chartofaccService.getbyname('IMPORT CONTROL ACCOUNT')
+                        chartofAccId = inventoryAcc?.id
+                    }
+                    if (entry.accountId === "COST") {
+                        var inventoryAcc = await chartofaccService.getbyname('COST OF SALES')
+                        chartofAccId = inventoryAcc?.id
+                    }
                     const journalLineData = {
                         voucherId: newVoucher.id, // Link to the created voucher
                         chartofAccountId: chartofAccId, // Account ID from the journal entry
@@ -666,6 +681,33 @@ voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, 
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
+
+        const userId = request.user.id;
+
+        if (data.journalEntries && data.journalEntries.length > 0) {
+            const journalEntries = data.journalEntries;
+
+            // Loop through each journal entry and create corresponding journalLine
+            for (let entry of journalEntries) {
+                var partyDetails = await partyService.get(entry.accountId)
+                var chartofAccId = partyDetails?.chartofAccountId
+
+                if (entry.accountId === "IMPORT") {
+                    var inventoryAcc = await chartofaccService.getbyname('IMPORT CONTROL ACCOUNT')
+                    chartofAccId = inventoryAcc?.id
+                }
+                const journalLineData = {
+                    chartofAccountId: chartofAccId, // Account ID from the journal entry
+                    debitAmount: entry.debit || 0, // Debit amount if present
+                    creditAmount: entry.credit || 0, // Credit amount if present
+                    ref: entry.ref, // Reference number from the voucher
+                    createdBy: userId, // Assuming `req.user.id` contains the user ID
+                };
+
+                await journalLineService.create(journalLineData);
+            }
+        }
+
         const updateVoucher = await voucherService.updateConform(data, id)
 
         if (updateVoucher) {

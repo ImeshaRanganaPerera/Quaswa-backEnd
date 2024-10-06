@@ -19,6 +19,32 @@ chequeRouter.get("/", async (request: Request, response: Response) => {
     }
 })
 
+chequeRouter.get("/filter", async (request: Request, response: Response) => {
+    const { startDate, endDate } = request.query;
+    console.log(startDate, endDate)
+
+    try {
+        if (!startDate || !endDate) {
+            return response.status(400).json({ message: "Start date and end date are required" });
+        }
+
+        const filterStartDate = startDate ? new Date(startDate as string) : new Date();
+        filterStartDate.setHours(0, 0, 0, 0); // Set the time to midnight
+
+        // if no endDate set end date as today's date
+        const filterEndDate = endDate ? new Date(endDate as string) : new Date();
+        filterEndDate.setHours(23, 59, 59, 999);
+
+
+        const cheques = await chequeservice.filterCheques(filterStartDate, filterEndDate);
+        return response.status(200).json({ data: cheques });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});
+
+
+
 chequeRouter.get("/unusedCheque/:id", async (request: Request, response: Response) => {
     const id = request.params.id;
     try {

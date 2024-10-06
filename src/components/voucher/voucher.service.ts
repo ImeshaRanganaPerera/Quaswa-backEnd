@@ -62,7 +62,6 @@ export const getVoucherbyGrp = async (id: any) => {
     });
 }
 
-
 export const getVoucherbyParty = async (id: any) => {
     return db.voucher.findMany({
         where: {
@@ -310,7 +309,6 @@ export const getVouchersByPartyOutstanding = async (voucherGroupId: string, part
         }
     });
 };
-
 
 export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any) => {
     return db.voucher.findMany({

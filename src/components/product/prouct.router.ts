@@ -26,6 +26,48 @@ productRouter.get("/", async (request: Request, response: Response) => {
     }
 })
 
+// product.router.ts
+productRouter.get("/discounts", async (request: Request, response: Response) => {
+    try {
+        const products = await productService.getAllProductsWithDynamicDiscounts();
+
+        // Get a unique list of all discount levels across products
+        const allDiscountLevels: Set<string> = new Set(); // Ensure the set is of type string
+        products.forEach((product) => {
+            product.productDiscountLevel.forEach((discountLevel) => {
+                allDiscountLevels.add(discountLevel.discountLevel.level);
+            });
+        });
+
+        // Convert set to array
+        const discountLevels: string[] = Array.from(allDiscountLevels); // Explicitly type the array as string[]
+
+        // Prepare the formatted data for table
+        const formattedData = products.map((product) => {
+            const productDiscounts: { [key: string]: string | number } = {}; // Define type for productDiscounts object
+
+            // Map discounts to the corresponding levels
+            discountLevels.forEach((level: string) => { // Explicitly type `level` as string
+                const discount = product.productDiscountLevel.find((d) => d.discountLevel.level === level);
+                productDiscounts[level] = discount ? discount.discountRate : '-'; // Add '-' if no discount available for that level
+            });
+
+            return {
+                productName: product.printName,
+                MRP: product.MRP,
+                ...productDiscounts, // Spread dynamic discount levels here
+            };
+        });
+
+        return response.status(200).json({ data: { level: discountLevels, product: formattedData } });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});
+
+
+
+
 //GET 
 productRouter.get("/:id", async (request: Request, response: Response) => {
     const id: any = request.params.id;
@@ -274,5 +316,7 @@ productRouter.put("/productPriceUpdate/:id", authenticate, async (request: Expre
         return response.status(500).json({ message: error.message });
     }
 })
+
+
 
 

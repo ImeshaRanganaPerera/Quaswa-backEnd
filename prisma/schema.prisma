@@ -110,6 +110,7 @@ model Party {
   shopImage        String?
   BRimage          String?
   nicImage         String?
+  location         String?
   isVerified       Boolean?
   partyCategory    partyCategory?    @relation(fields: [partyCategoryId], references: [id])
   partyCategoryId  String?
@@ -325,35 +326,6 @@ model Type {
   Product   Product[]
 }
 
-model Product {
-  id                    String                  @id @default(uuid())
-  unit                  Unit                    @default(PCS)
-  itemCode              String?                 @unique()
-  barcode               String?
-  productName           String
-  printName             String?
-  image                 String?
-  criticalLevel         Int?
-  cost                  Decimal?
-  minPrice              Decimal?
-  MRP                   Decimal?
-  sellingPrice          Decimal?
-  status                Boolean                 @default(true)
-  type                  Type                    @relation(fields: [typeId], references: [id])
-  typeId                String
-  brand                 Brand?                  @relation(fields: [brandId], references: [id])
-  brandId               String?
-  user                  User                    @relation(fields: [createdBy], references: [id])
-  createdBy             String
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  Inventory             Inventory[]
-  voucherProduct        voucherProduct[]
-  OEMNumber             OEMNumber[]
-  productDiscountLevel  productDiscountLevel[]
-  productcommissionRate productcommissionRate[]
-}
-
 model OEMNumber {
   product   Product @relation(fields: [productId], references: [id])
   productId String
@@ -386,6 +358,35 @@ model productcommissionRate {
   updatedAt DateTime @updatedAt
 
   @@id([productId, commissionRateId])
+}
+
+model Product {
+  id                    String                  @id @default(uuid())
+  unit                  Unit                    @default(PCS)
+  itemCode              String?                 @unique()
+  barcode               String?
+  productName           String
+  printName             String?
+  image                 String?
+  criticalLevel         Int?
+  cost                  Decimal?
+  minPrice              Decimal?
+  MRP                   Decimal?
+  sellingPrice          Decimal?
+  status                Boolean                 @default(true)
+  type                  Type                    @relation(fields: [typeId], references: [id])
+  typeId                String
+  brand                 Brand?                  @relation(fields: [brandId], references: [id])
+  brandId               String?
+  user                  User                    @relation(fields: [createdBy], references: [id])
+  createdBy             String
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  Inventory             Inventory[]
+  voucherProduct        voucherProduct[]
+  OEMNumber             OEMNumber[]
+  productDiscountLevel  productDiscountLevel[]
+  productcommissionRate productcommissionRate[]
 }
 
 model discountLevel {

@@ -10,7 +10,6 @@ import * as voucherGrpService from '../voucherGroup/vouchergrp.service'
 import * as voucherCenter from '../centerVoucher/centerVoucher.service'
 import * as productVoucherService from '../voucherProduct/voucherProduct.service'
 import * as inventoryService from '../inventory/inventory.service'
-import * as productService from '../product/product.service'
 import * as journalLineService from '../journalline/journalline.service'
 import * as chartofaccService from '../ChartofAccount/chartofaccount.service'
 import * as partyService from '../party/party.service'
@@ -31,6 +30,18 @@ voucherRouter.get("/", async (request: Request, response: Response) => {
             return response.status(200).json({ data: data });
         }
         return response.status(404).json({ message: "Voucher could not be found" });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+
+voucherRouter.get("/pendingVouchers", async (request: Request, response: Response) => {
+    try {
+        const pendingVoucher = await voucherService.getPendingVoucherCondition()
+        if (pendingVoucher) {
+            return response.status(200).json({ data: pendingVoucher });
+        }
+        return response.status(404).json({ message: "Voucher Group could not be found" });
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
     }
@@ -362,7 +373,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 }
             }
             if (newVoucher) {
-                return response.status(201).json({ message: "Voucher Created Successfully" });
+                return response.status(201).json({ message: "Transaction Saved Successfully" });
             }
         }
 
@@ -645,7 +656,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 }
             }
             if (newVoucher) {
-                return response.status(201).json({ message: "Voucher Created Successfully", data: newVoucher });
+                return response.status(201).json({ message: "Transaction Saved Successfully", data: newVoucher });
             }
         }
     } catch (error: any) {
@@ -653,6 +664,106 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         return response.status(500).json({ message: error.message });
     }
 })
+
+voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: ExpressRequest, response: Response) => {
+    const id: any = request.params;
+    const data: any = request.body;
+
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        const userId = request.user.id;
+
+        // Process journal entries if available
+        if (data.journalEntries && data.journalEntries.length > 0) {
+            const journalEntries = data.journalEntries;
+
+            // Loop through each journal entry and create corresponding journalLine
+            for (let entry of journalEntries) {
+                var chartofAccId = entry.accountId
+                if (entry.accountId === "CASH") {
+                    var cashchartofaccid = await chartofaccService.getbyname('CASH BOOK')
+                    chartofAccId = cashchartofaccid?.id
+                }
+                if (entry.accountId === "Check") {
+                    var pendingCheque = await chartofaccService.getbyname('PENDING CHEQUE')
+                    chartofAccId = pendingCheque?.id
+                }
+                if (entry.accountId === "Expencess") {
+                    var expencessacc = await chartofaccService.getbyname('EXPENCESS ACCOUNT')
+                    chartofAccId = expencessacc?.id
+                }
+                if (entry.accountId === "PettyCash") {
+                    var expencessacc = await chartofaccService.getbyname('PETTY CASH')
+                    chartofAccId = expencessacc?.id
+                }
+                if (entry.accountId === "UserExp") {
+                    var expencessacc = await chartofaccService.getbyname('USER EXPENCESS ACCOUNT')
+                    chartofAccId = expencessacc?.id
+                }
+                if (entry.accountId === "Sales") {
+                    var expencessacc = await chartofaccService.getbyname('SALES ACCOUNT')
+                    chartofAccId = expencessacc?.id
+                }
+                if (entry.accountId === "INVENTORY") {
+                    var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
+                    chartofAccId = inventoryAcc?.id
+                }
+                if (entry.accountId === "INVENTORY") {
+                    var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
+                    chartofAccId = inventoryAcc?.id
+                }
+                if (entry.accountId === "IMPORT") {
+                    var inventoryAcc = await chartofaccService.getbyname('IMPORT CONTROL ACCOUNT')
+                    chartofAccId = inventoryAcc?.id
+                }
+                if (entry.accountId === "COST") {
+                    var inventoryAcc = await chartofaccService.getbyname('COST OF SALES')
+                    chartofAccId = inventoryAcc?.id
+                }
+
+                const journalLineData = {
+                    chartofAccountId: chartofAccId, // Account ID from the journal entry
+                    debitAmount: entry.debit || 0, // Debit amount if present
+                    creditAmount: entry.credit || 0, // Credit amount if present
+                    ref: entry.ref, // Reference number from the voucher
+                    createdBy: userId, // Assuming `req.user.id` contains the user ID
+                };
+
+                await journalLineService.create(journalLineData);
+            }
+        }
+
+        // Process voucher product if available
+        if (data.voucherProduct && data.voucherProduct.length > 0) {
+            const voucherProducts = data.voucherProduct;
+
+            for (let product of voucherProducts) {
+                const existingProduct = await productVoucherService.getbyVoucherId(product.id);
+
+                if (existingProduct) {
+                    // Update existing voucherProduct
+                    await productVoucherService.updateVoucherProduct(product, product.id);
+                } else {
+                    // Optionally create new if it doesn't exist
+                    await productVoucherService.create(product);
+                }
+            }
+        }
+
+        // Update the voucher confirmation status
+        const updateVoucher = await voucherService.updatePendingVoucher(data, id);
+
+        if (updateVoucher) {
+            return response.status(201).json({ message: "Voucher Conformed Successfully" });
+        }
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});
+
 
 //PUT
 voucherRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
@@ -672,6 +783,7 @@ voucherRouter.put("/:id", authenticate, async (request: ExpressRequest, response
         return response.status(500).json({ message: error.message });
     }
 })
+
 
 voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;
@@ -703,7 +815,6 @@ voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, 
                     ref: entry.ref, // Reference number from the voucher
                     createdBy: userId, // Assuming `req.user.id` contains the user ID
                 };
-
                 await journalLineService.create(journalLineData);
             }
         }

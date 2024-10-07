@@ -25,64 +25,64 @@ export const getbyProductId = async (id: any) => {
     });
 }
 
-export const filterInventory = async (productId?: string, centerId?: string, date?: string) => {
-    const filterConditions: any = {
-        status: true,
-    };
+// export const filterInventory = async (productId?: string, centerId?: string, date?: string) => {
+//     const filterConditions: any = {
+//         status: true,
+//     };
 
-    // Filtering conditions based on productId and centerId
-    if (productId) {
-        filterConditions.productId = productId;
-    }
+//     // Filtering conditions based on productId and centerId
+//     if (productId) {
+//         filterConditions.productId = productId;
+//     }
 
-    if (centerId) {
-        filterConditions.centerId = centerId;
-    }
+//     if (centerId) {
+//         filterConditions.centerId = centerId;
+//     }
 
-    console.log("Filter Conditions:", filterConditions);
+//     console.log("Filter Conditions:", filterConditions);
 
-    // Fetch inventory list filtered by productId and/or centerId
-    const inventories = await db.inventory.findMany({
-        where: filterConditions,
-        include: {
-            product: true,
-            center: true,
-        },
-    });
+//     // Fetch inventory list filtered by productId and/or centerId
+//     const inventories = await db.inventory.findMany({
+//         where: filterConditions,
+//         include: {
+//             product: true,
+//             center: true,
+//         },
+//     });
 
-    console.log("Inventories fetched:", inventories);
+//     console.log("Inventories fetched:", inventories);
 
-    // Calculate total quantity for the specified date
-    const currentDate = new Date();
-    const filterDate = date ? new Date(date) : currentDate;
+//     // Calculate total quantity for the specified date
+//     const currentDate = new Date();
+//     const filterDate = date ? new Date(date) : currentDate;
 
-    const dateStart = new Date(filterDate.setHours(0, 0, 0, 0));
-    const dateEnd = new Date(filterDate.setHours(23, 59, 59, 999));
+//     const dateStart = new Date(filterDate.setHours(0, 0, 0, 0));
+//     const dateEnd = new Date(filterDate.setHours(23, 59, 59, 999));
 
-    const inventoriesOnDate = await db.inventory.findMany({
-        where: {
-            status: true,
-            updatedAt: {
-                gte: dateStart,
-                lt: dateEnd,
-            },
-        },
-    });
+//     const inventoriesOnDate = await db.inventory.findMany({
+//         where: {
+//             status: true,
+//             updatedAt: {
+//                 gte: dateStart,
+//                 lt: dateEnd,
+//             },
+//         },
+//     });
 
-    console.log("Inventories on date:", inventoriesOnDate);
+//     console.log("Inventories on date:", inventoriesOnDate);
 
-    let totalQuantity: Decimal = new Decimal(0);
-    inventoriesOnDate.forEach((inventory) => {
-        if (inventory.quantity) {
-            totalQuantity = totalQuantity.plus(new Decimal(inventory.quantity));
-        }
-    });
+//     let totalQuantity: Decimal = new Decimal(0);
+//     inventoriesOnDate.forEach((inventory) => {
+//         if (inventory.quantity) {
+//             totalQuantity = totalQuantity.plus(new Decimal(inventory.quantity));
+//         }
+//     });
 
-    return {
-        inventories,
-        totalQuantity,
-    };
-};
+//     return {
+//         inventories,
+//         totalQuantity,
+//     };
+// };
 
 export const upsert = async (data: any) => {
     if (data.cost) {
@@ -194,8 +194,6 @@ export const upsert = async (data: any) => {
 
 };
 
-
-
 export const create = async (data: any) => {
     return db.inventory.create({
         data: data
@@ -209,4 +207,106 @@ export const update = async (data: any, id: any) => {
     });
 }
 
+interface StockRecord {
+    productName: string;
+    centerName: string;
+    qty: Decimal;
+    totalCost: Decimal;
+    totalMRP: Decimal;
+  }
+  
+  export const getStock = async (productId?: string, centerId?: string, date?: string) => {
+      const filterConditions: any = {
+          status: true, // Only consider active products
+      };
+  
+      if (productId) {
+          filterConditions.productId = productId;
+      }
+  
+      if (centerId) {
+          filterConditions.centerId = centerId;
+        }
+        
+        const currentDate = new Date();
+        const filterDate = date ? new Date(date) : currentDate;
+        
+        const dateStart = new Date(filterDate.setHours(0, 0, 0, 0));
+        const dateEnd = new Date(filterDate.setHours(23, 59, 59, 999));
+        
+        console.log(dateStart)
+      // Fetch voucherProduct list with necessary relations
+      const voucherProducts = await db.voucherProduct.findMany({
+          where: {
+              voucher: {
+                  date: {
+                      gte: dateStart,
+                      lt: dateEnd,
+                  },
+                  voucherGroup: {
+                      shortname: {
+                          in: ['GRN', 'INV', 'SALES-RETURN', 'PURCHASE-RETURN', 'STOCK-TRANSFER'],
+                        }
+                    },
+              },
+          },
+          include: {
+              product: true, // Include product details
+              voucher: {
+                  include: {
+                      voucherGroup: true, // Include voucher group to filter by shortname
+                    }
+                },
+                center: true, // Include center details
+            },
+      });
+
+  
+      // Define stockData as a Record object
+      const stockData: Record<string, StockRecord> = {};
+  
+      // Iterate through each voucherProduct and calculate the totals
+      voucherProducts.forEach(vp => {
+          const productName = vp.product.printName || vp.product.productName;
+          const centerName = vp.center?.centerName || 'Unknown Center';
+  
+          const key = `${productName}-${centerName}`;
+  
+          // Initialize stock data for this product-center pair if not already initialized
+          if (!stockData[key]) {
+              stockData[key] = {
+                  productName,
+                  centerName,
+                  qty: new Decimal(0),
+                  totalCost: new Decimal(0),
+                  totalMRP: new Decimal(0),
+              };
+          }
+  
+          const stockRecord = stockData[key];
+  
+          // Handle quantity addition or subtraction based on voucherGroup
+          if (['GRN', 'SALES-RETURN'].includes(vp.voucher.voucherGroup.shortname)) {
+              stockRecord.qty = stockRecord.qty.plus(vp.quantity);
+          } else if (['INV', 'PURCHASE-RETURN'].includes(vp.voucher.voucherGroup.shortname)) {
+              stockRecord.qty = stockRecord.qty.minus(vp.quantity);
+          }
+  
+          // Add cost and MRP values for average calculation
+          stockRecord.totalCost = stockRecord.totalCost.plus(vp.cost.times(vp.quantity));
+          stockRecord.totalMRP = stockRecord.totalMRP.plus(vp.MRP.times(vp.quantity));
+      });
+  
+      // Calculate final average cost and MRP for each product-center pair
+      const result = Object.values(stockData).map((record: StockRecord) => ({
+          productName: record.productName,
+          centerName: record.centerName,
+          qty: record.qty.toNumber(),
+          avgCost: record.qty.gt(0) ? record.totalCost.div(record.qty).toNumber() : 0,
+          avgMRP: record.qty.gt(0) ? record.totalMRP.div(record.qty).toNumber() : 0,
+      }));
+  
+      return result;
+  };
+  
 

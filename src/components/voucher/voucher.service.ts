@@ -9,6 +9,7 @@ export const get = async (id: any) => {
     return db.voucher.findFirst({
         where: {
             id,
+            isconform: true
         },
         include: {
             party: true,
@@ -37,7 +38,7 @@ export const get = async (id: any) => {
 export const getbyid = async (id: any) => {
     return db.voucher.findFirst({
         where: {
-            id: id
+            id: id,
         },
         include: {
             user: {
@@ -50,6 +51,32 @@ export const getbyid = async (id: any) => {
     });
 }
 
+export const getPendingVoucherCondition = async () => {
+    return db.voucher.findMany({
+        where: {
+            OR: [
+                {
+                    voucherNumber: {
+                        startsWith: 'INV',
+                    },
+                },
+                {
+                    voucherNumber: {
+                        startsWith: 'SALES-R',
+                    },
+                },
+            ],
+            isconform: false, // Ensure the voucher is not confirmed
+        },
+        include: {
+            voucherProduct: true,
+            user: { select: { name: true } },
+            journalLine: true,
+            party: true, // Include related party details
+        },
+    });
+};
+
 export const getVoucherbyGrp = async (id: any) => {
     return db.voucher.findMany({
         where: {
@@ -58,7 +85,6 @@ export const getVoucherbyGrp = async (id: any) => {
         include: {
             party: true,
         }
-
     });
 }
 
@@ -165,6 +191,15 @@ export const update = async (data: any, id: any) => {
         data: data
     });
 }
+
+export const updatePendingVoucher = async (data: any, id: any) => {
+    return db.voucher.update({
+        where: id,
+        data: { amount: data.amount, isconform: true }
+    });
+}
+
+
 
 export const updateVoucherNumber = async (data: any) => {
     const voucher = await db.voucher.findFirst({
@@ -318,7 +353,8 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
             date: {
                 gte: startDate,
                 lte: endDate,
-            }
+            },
+            isconform: true
         },
         include: {
             party: true,
@@ -729,6 +765,8 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
     // Filter out null values in case any authUser is missing or doesn't have the SALESMAN role
     return userData.filter(data => data !== null);
 };
+
+
 
 
 

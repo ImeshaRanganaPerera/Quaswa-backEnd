@@ -36,6 +36,17 @@ export const create = async (data: any) => {
     });
 }
 
+export const updateVoucherProduct = async (data: any, id: any) => {
+    return db.voucherProduct.update({
+        where: {
+            id: id // Correctly pass the id as a string, not an object
+        },
+        data: {
+            discount: data.discount // Any fields to update go here
+        }
+    });
+};
+
 export const update = async (data: any, id: any) => {
     return db.voucherProduct.update({
         where: id,

@@ -1,6 +1,7 @@
 import { Decimal } from "@prisma/client/runtime/library";
 import { db } from "../../utils/db.server";
 
+
 export const getlist = async () => {
     return db.inventory.findMany();
 }
@@ -211,102 +212,125 @@ interface StockRecord {
     productName: string;
     centerName: string;
     qty: Decimal;
-    totalCost: Decimal;
-    totalMRP: Decimal;
-  }
-  
-  export const getStock = async (productId?: string, centerId?: string, date?: string) => {
-      const filterConditions: any = {
-          status: true, // Only consider active products
-      };
-  
-      if (productId) {
-          filterConditions.productId = productId;
-      }
-  
-      if (centerId) {
-          filterConditions.centerId = centerId;
-        }
-        
-        const currentDate = new Date();
-        const filterDate = date ? new Date(date) : currentDate;
-        
-        const dateStart = new Date(filterDate.setHours(0, 0, 0, 0));
-        const dateEnd = new Date(filterDate.setHours(23, 59, 59, 999));
-        
-        console.log(dateStart)
-      // Fetch voucherProduct list with necessary relations
-      const voucherProducts = await db.voucherProduct.findMany({
-          where: {
-              voucher: {
-                  date: {
-                      gte: dateStart,
-                      lt: dateEnd,
-                  },
-                  voucherGroup: {
-                      shortname: {
-                          in: ['GRN', 'INV', 'SALES-RETURN', 'PURCHASE-RETURN', 'STOCK-TRANSFER'],
-                        }
-                    },
-              },
-          },
-          include: {
-              product: true, // Include product details
-              voucher: {
-                  include: {
-                      voucherGroup: true, // Include voucher group to filter by shortname
-                    }
-                },
-                center: true, // Include center details
-            },
-      });
+    avgCost: number;
+    avgMRP: number;
+}
 
-  
-      // Define stockData as a Record object
-      const stockData: Record<string, StockRecord> = {};
-  
-      // Iterate through each voucherProduct and calculate the totals
-      voucherProducts.forEach(vp => {
-          const productName = vp.product.printName || vp.product.productName;
-          const centerName = vp.center?.centerName || 'Unknown Center';
-  
-          const key = `${productName}-${centerName}`;
-  
-          // Initialize stock data for this product-center pair if not already initialized
-          if (!stockData[key]) {
-              stockData[key] = {
-                  productName,
-                  centerName,
-                  qty: new Decimal(0),
-                  totalCost: new Decimal(0),
-                  totalMRP: new Decimal(0),
-              };
-          }
-  
-          const stockRecord = stockData[key];
-  
-          // Handle quantity addition or subtraction based on voucherGroup
-          if (['GRN', 'SALES-RETURN'].includes(vp.voucher.voucherGroup.shortname)) {
-              stockRecord.qty = stockRecord.qty.plus(vp.quantity);
-          } else if (['INV', 'PURCHASE-RETURN'].includes(vp.voucher.voucherGroup.shortname)) {
-              stockRecord.qty = stockRecord.qty.minus(vp.quantity);
-          }
-  
-          // Add cost and MRP values for average calculation
-          stockRecord.totalCost = stockRecord.totalCost.plus(vp.cost.times(vp.quantity));
-          stockRecord.totalMRP = stockRecord.totalMRP.plus(vp.MRP.times(vp.quantity));
-      });
-  
-      // Calculate final average cost and MRP for each product-center pair
-      const result = Object.values(stockData).map((record: StockRecord) => ({
-          productName: record.productName,
-          centerName: record.centerName,
-          qty: record.qty.toNumber(),
-          avgCost: record.qty.gt(0) ? record.totalCost.div(record.qty).toNumber() : 0,
-          avgMRP: record.qty.gt(0) ? record.totalMRP.div(record.qty).toNumber() : 0,
-      }));
-  
-      return result;
-  };
-  
+interface StockRecord {
+    productName: string;
+    centerName: string;
+    qty: Decimal;
+    avgCost: number;
+    avgMRP: number;
+}
+
+// Adjust the getStock function to refine filtering logic
+export const getStock = async (productId?: string, centerId?: string, date?: string) => {
+    const filterConditions: any = {};
+
+    if (productId) {
+        filterConditions.productId = productId;
+    }
+
+    if (centerId) {
+        filterConditions.centerId = centerId;
+    }
+
+    // Default to current date if no date is provided
+    const currentDate = new Date();
+    const filterDate = date ? new Date(date) : currentDate;
+
+    // Set the filter to include all vouchers up to the end of the specified date
+    const dateEnd = new Date(filterDate.setHours(23, 59, 59, 999));
+
+    // Fetch voucherProduct list with necessary relations
+    const voucherProducts = await db.voucherProduct.findMany({
+        where: {
+            voucher: {
+                date: {
+                    lte: dateEnd, // Consider vouchers up to the specified date
+                },
+                voucherGroup: {
+                    shortname: {
+                        in: ['GRN', 'INV', 'SALES-RETURN', 'PURCHASE-RETURN', 'STOCK-TRANSFER'],
+                    },
+                },
+            },
+            ...filterConditions, // Include productId and centerId conditions if provided
+        },
+        include: {
+            product: true, // Include product details
+            voucher: {
+                include: {
+                    voucherGroup: true, // Include voucher group to filter by shortname
+                },
+            },
+            center: true, // Include center details
+        },
+    });
+
+    // Define stockData as a Record object
+    const stockData: Record<string, StockRecord> = {};
+
+    // Iterate through each voucherProduct and calculate the totals
+    voucherProducts.forEach(vp => {
+        const productName = vp.product.printName || vp.product.productName;
+        const centerName = vp.center?.centerName || 'Unknown Center';
+
+        const key = `${productName}-${centerName}`;
+
+        // Initialize stock data for this product-center pair if not already initialized
+        if (!stockData[key]) {
+            stockData[key] = {
+                productName,
+                centerName,
+                qty: new Decimal(0),
+                avgCost: 0,
+                avgMRP: 0,
+            };
+        }
+
+        const stockRecord = stockData[key];
+
+        // Handle quantity addition or subtraction based on voucherGroup
+        if (['GRN', 'SALES-RETURN'].includes(vp.voucher.voucherGroup.shortname)) {
+            stockRecord.qty = stockRecord.qty.plus(new Decimal(vp.quantity));
+        } else if (['INV', 'PURCHASE-RETURN'].includes(vp.voucher.voucherGroup.shortname)) {
+            stockRecord.qty = stockRecord.qty.minus(new Decimal(vp.quantity));
+        }
+
+        // Add cost and MRP values for average calculation
+        stockRecord.avgCost = stockRecord.qty.gt(0) ? stockRecord.avgCost + new Decimal(vp.cost).times(vp.quantity).toNumber() : stockRecord.avgCost;
+        stockRecord.avgMRP = stockRecord.qty.gt(0) ? stockRecord.avgMRP + new Decimal(vp.MRP).times(vp.quantity).toNumber() : stockRecord.avgMRP;
+    });
+
+    // Prepare final result array with all products, including those with 0 quantity
+    const result: StockRecord[] = [];
+
+    // Iterate through stockData to include all products
+    Object.values(stockData).forEach(record => {
+        // Calculate average cost and MRP only if qty > 0
+        const avgCost = record.qty.gt(0) ? new Decimal(record.avgCost).div(record.qty).toNumber() : 0;
+        const avgMRP = record.qty.gt(0) ? new Decimal(record.avgMRP).div(record.qty).toNumber() : 0;
+
+        // Add the record to result array
+        result.push({
+            productName: record.productName,
+            centerName: record.centerName,
+            qty: record.qty,
+            avgCost,
+            avgMRP,
+        });
+    });
+
+    return result;
+};
+
+
+
+
+
+
+
+
 

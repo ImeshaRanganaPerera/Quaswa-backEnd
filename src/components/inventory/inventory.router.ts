@@ -7,24 +7,37 @@ import * as inventoryService from './inventory.service'
 export const inventoryRouter = express.Router();
 
 
-inventoryRouter.get("/stock", async (request: Request, response: Response) => {
-    const { productId, centerId, date } = request.query;
+// inventoryRouter.get("/stock", async (request: Request, response: Response) => {
+//     const { productId, centerId, date } = request.query;
   
+//     try {
+//       const stockData = await inventoryService.getStock(
+//         productId as string | undefined,
+//         centerId as string | undefined,
+//         date as string | undefined
+//       );
+  
+//       if (stockData && stockData.length > 0) {
+//         return response.status(200).json({ data: stockData });
+//       }
+//       return response.status(404).json({ message: "No stock found for the provided filters." });
+//     } catch (error: any) {
+//       return response.status(500).json({ message: error.message });
+//     }
+//   });
+
+inventoryRouter.get("/filter", async (request: Request, response: Response) => {
+    const { productId, centerId } = request.query;
     try {
-      const stockData = await inventoryService.getStock(
-        productId as string | undefined,
-        centerId as string | undefined,
-        date as string | undefined
-      );
-  
-      if (stockData && stockData.length > 0) {
-        return response.status(200).json({ data: stockData });
-      }
-      return response.status(404).json({ message: "No stock found for the provided filters." });
+        const filteredInventory = await inventoryService.filterInventory(
+            productId?.toString(), 
+            centerId?.toString()
+        );
+        return response.status(200).json({ data: filteredInventory });
     } catch (error: any) {
-      return response.status(500).json({ message: error.message });
+        return response.status(500).json({ message: error.message });
     }
-  });
+});
 
 
 //GET LIST

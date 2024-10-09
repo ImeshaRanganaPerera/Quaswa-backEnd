@@ -200,7 +200,6 @@ export const updatePendingVoucher = async (data: any, id: any) => {
 }
 
 
-
 export const updateVoucherNumber = async (data: any) => {
     const voucher = await db.voucher.findFirst({
         where: {
@@ -341,6 +340,9 @@ export const getVouchersByPartyOutstanding = async (voucherGroupId: string, part
                     centerStatus: true,
                 }
             }
+        },
+        orderBy: {
+            partyId: 'asc'
         }
     });
 };

@@ -27,9 +27,6 @@ inventoryRouter.get("/stock", async (request: Request, response: Response) => {
   });
 
 
-
-
-
 //GET LIST
 inventoryRouter.get("/:id", async (request: Request, response: Response) => {
     const id: any = request.params.id;

@@ -251,8 +251,8 @@ export const getStock = async (productId?: string, centerId?: string, date?: str
                     lte: dateEnd, // Consider vouchers up to the specified date
                 },
                 voucherGroup: {
-                    shortname: {
-                        in: ['GRN', 'INV', 'SALES-RETURN', 'PURCHASE-RETURN', 'STOCK-TRANSFER'],
+                    voucherName: {
+                        in: ['GRN', 'INVOICE', 'SALES-RETURN', 'PURCHASE-RETURN', 'STOCK-TRANSFER'],
                     },
                 },
             },
@@ -263,6 +263,7 @@ export const getStock = async (productId?: string, centerId?: string, date?: str
             voucher: {
                 include: {
                     voucherGroup: true, // Include voucher group to filter by shortname
+                    VoucherCenter: true, // Include VoucherCenter details for stock transfers
                 },
             },
             center: true, // Include center details
@@ -273,10 +274,9 @@ export const getStock = async (productId?: string, centerId?: string, date?: str
     const stockData: Record<string, StockRecord> = {};
 
     // Iterate through each voucherProduct and calculate the totals
-    voucherProducts.forEach(vp => {
+    for (const vp of voucherProducts) {
         const productName = vp.product.printName || vp.product.productName;
         const centerName = vp.center?.centerName || 'Unknown Center';
-
         const key = `${productName}-${centerName}`;
 
         // Initialize stock data for this product-center pair if not already initialized
@@ -292,22 +292,32 @@ export const getStock = async (productId?: string, centerId?: string, date?: str
 
         const stockRecord = stockData[key];
 
-        // Handle quantity addition or subtraction based on voucherGroup
-        if (['GRN', 'SALES-RETURN'].includes(vp.voucher.voucherGroup.shortname)) {
+        // Handle quantity based on voucherGroup and centerStatus (for stock transfers)
+        if (['GRN', 'SALES-RETURN'].includes(vp.voucher.voucherGroup.voucherName)) {
             stockRecord.qty = stockRecord.qty.plus(new Decimal(vp.quantity));
-        } else if (['INV', 'PURCHASE-RETURN'].includes(vp.voucher.voucherGroup.shortname)) {
+        } else if (['INVOICE', 'PURCHASE-RETURN'].includes(vp.voucher.voucherGroup.voucherName)) {
             stockRecord.qty = stockRecord.qty.minus(new Decimal(vp.quantity));
+        } else if (vp.voucher.voucherGroup.voucherName === 'STOCK-TRANSFER') {
+            // Handle stock transfers based on center status
+            for (const vc of vp.voucher.VoucherCenter) {
+                if (vc.centerId === vp.centerId) {
+                    if (vc.centerStatus === 'IN') {
+                        stockRecord.qty = stockRecord.qty.plus(new Decimal(vp.quantity));
+                    } else if (vc.centerStatus === 'OUT') {
+                        stockRecord.qty = stockRecord.qty.minus(new Decimal(vp.quantity));
+                    }
+                }
+            }
         }
 
         // Add cost and MRP values for average calculation
         stockRecord.avgCost = stockRecord.qty.gt(0) ? stockRecord.avgCost + new Decimal(vp.cost).times(vp.quantity).toNumber() : stockRecord.avgCost;
         stockRecord.avgMRP = stockRecord.qty.gt(0) ? stockRecord.avgMRP + new Decimal(vp.MRP).times(vp.quantity).toNumber() : stockRecord.avgMRP;
-    });
+    }
 
     // Prepare final result array with all products, including those with 0 quantity
     const result: StockRecord[] = [];
 
-    // Iterate through stockData to include all products
     Object.values(stockData).forEach(record => {
         // Calculate average cost and MRP only if qty > 0
         const avgCost = record.qty.gt(0) ? new Decimal(record.avgCost).div(record.qty).toNumber() : 0;

@@ -28,6 +28,7 @@ import { visitingCustomerRouter } from "./components/visitedCustomer/visitedCust
 import { commsissionRateRouter } from "./components/commissionRate/commissionRate.route";
 import { partyTypeRouter } from "./components/partyType/partyType.route";
 import { proofImageRouter } from "./components/proofImage/proofImage.router";
+import path from 'path';
 
 
 dotenv.config();
@@ -73,6 +74,8 @@ app.use("/api/voucherGrp", VoucherGrpRouter)
 app.use("/api/visitingCustomer", visitingCustomerRouter)
 app.use("/api/partyType", partyTypeRouter)
 app.use("/api/proofImage", proofImageRouter)
+
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

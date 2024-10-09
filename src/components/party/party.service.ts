@@ -75,3 +75,18 @@ export const update = async (data: any, id: any) => {
 
     });
 }
+
+export const updatewithImage = async (data: any, id: any) => {
+    return db.party.update({
+        where: {id},
+        data: data,
+        include: {
+            partyCategory: {
+                select: {
+                    category: true
+                }
+            }
+        }
+
+    });
+}

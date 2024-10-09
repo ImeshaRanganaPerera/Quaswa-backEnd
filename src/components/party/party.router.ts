@@ -10,8 +10,27 @@ import * as accSubCategory from '../accountSubCategory/accountSubCategory.servic
 import * as accGrp from '../accountGroup/accountGroup.service'
 import * as partyCategoryService from '../partyCategory/partyCategory.service'
 import * as visitingCustomerService from '../visitedCustomer/visitedCustomer.service'
+import multer from "multer";
+import path from 'path';
 
 export const partyRouter = express.Router();
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'src/uploads/'); // Ensure this matches the folder name
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname); // Give the file a unique name
+    }
+});
+
+// Initialize the multer middleware
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 100 * 1024 * 1024
+    }
+});
 
 //GET LIST
 partyRouter.get("/", async (request: Request, response: Response) => {
@@ -56,7 +75,6 @@ partyRouter.get("/partygroup/:name", async (request: Request, response: Response
     }
 })
 
-//POST
 partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     const data: any = request.body;
     try {
@@ -117,6 +135,104 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
         return response.status(500).json({ message: error.message });
     }
 })
+//POST
+partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage' }, { name: 'brImage' }, { name: 'nicImage' }]),
+    async (request: ExpressRequest, response: Response) => {
+        const data: any = request.body;
+        const files = request.files as { [fieldname: string]: Express.Multer.File[] }; // Type assertion
+
+        try {
+            if (!request.user) {
+                return response.status(401).json({ message: "User not authorized" });
+            }
+            const userId = request.user.id;
+            if (!data.partyGroup) {
+                return response.status(401).json({ message: "Party Group Undefined" });
+            }
+
+            console.log(files);  // This will show you the structure of files being uploaded
+
+            // Handle image URLs safely
+            const shopImageUrl = files.shopImage && files.shopImage[0] ? `/uploads/${files.shopImage[0].filename}` : null;
+            const BRimageUrl = files.brImage && files.brImage[0] ? `/uploads/${files.brImage[0].filename}` : null;
+            const nicImageUrl = files.nicImage && files.nicImage[0] ? `/uploads/${files.nicImage[0].filename}` : null;
+
+            console.log('Shop Image URL:', shopImageUrl);
+            console.log('BR Image URL:', BRimageUrl);
+            console.log('NIC Image URL:', nicImageUrl);
+
+            const subAcc =
+                data.partyGroup === "SUPPLIER"
+                    ? await accSubCategory.getbyname("CURRENT LIABILITIES")
+                    : await accSubCategory.getbyname("CURRENT ASSETS");
+            const accGroup =
+                data.partyGroup === "SUPPLIER"
+                    ? await accGrp.getbyname("Payable")
+                    : await accGrp.getbyname("Receivable");
+            const partyCateId =
+                data.partyGroup === "SUPPLIER"
+                    ? (await partyCategoryService.getbyname('COMMON SUPPLIER'))?.id
+                    : data.partyCategoryId;
+
+            const partyGroup = await partyGroupService.getbyname(data.partyGroup);
+            if (!partyGroup) {
+                return response.status(401).json({ message: "Party Group Invalid" });
+            }
+
+            const chartofacc = await chartOfAccService.create({
+                accountName: data.name,
+                accountSubCategoryId: subAcc?.id,
+                accountGroupId: accGroup?.id,
+                Opening_Balance: data.Opening_Balance,
+                createdBy: userId,
+            });
+
+            const newParty = await partyService.create({
+                name: data.name,
+                nic: data.nic,
+                phoneNumber: data.phoneNumber,
+                creditPeriod: data.creditPeriod,
+                creditValue: data.creditValue,
+                address1: data.address1,
+                city: data.city,
+                address2: data.address2,
+                email: data.email,
+                shopImage: shopImageUrl,
+                BRimage: BRimageUrl,
+                nicImage: nicImageUrl,
+                chartofAccountId: chartofacc.id,
+                isVerified: data.partyGroup === "SUPPLIER",
+                partyCategoryId: partyCateId,
+                partyTypeId: data.partyTypeId,
+                partyGroupId: partyGroup.id,
+                createdBy: userId,
+            });
+
+            if (data.visitingCustomer) {
+                const visitingdata = {
+                    partyId: newParty.id,
+                    note: data.visitingCustomer.note,
+                    status: data.visitingCustomer.status,
+                    createdBy: userId,
+                };
+                await visitingCustomerService.create(visitingdata);
+            }
+
+            if (newParty) {
+                return response.status(201).json({ message: `${data.partyGroup} Created Successfully`, data: newParty });
+            }
+        } catch (error: any) {
+            return response.status(500).json({ message: error.message });
+        }
+    }, (error: any, req: any, res: any, next: any) => {
+        if (error instanceof multer.MulterError) {
+            return res.status(400).json({ message: error.message });
+        } else if (error) {
+            return res.status(500).json({ message: error.message });
+        }
+        next();
+    }
+);
 
 partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;
@@ -148,5 +264,83 @@ partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
         return response.status(500).json({ message: error.message });
     }
 })
+
+partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopImage' }, { name: 'brImage' }, { name: 'nicImage' }]),
+    async (request: ExpressRequest, response: Response) => {
+        const id: any = request.params.id;
+        const data: any = request.body;
+        const files = request.files as { [fieldname: string]: Express.Multer.File[] }; // Type assertion
+
+        try {
+            if (!request.user) {
+                return response.status(401).json({ message: "User not authorized" });
+            }
+
+            // Get the existing party data
+            const existingParty = await partyService.get(id);
+            if (!existingParty) {
+                return response.status(404).json({ message: "Party not found" });
+            }
+
+            // Define partyCategoryId based on partyGroup
+            let partyCateId;
+            if (data.partyGroup === "SUPPLIER") {
+                const partyCategory = await partyCategoryService.getbyname('COMMON SUPPLIER');
+                partyCateId = partyCategory?.id;
+            } else {
+                partyCateId = data.partyCategoryId;
+            }
+
+            // Handle uploaded images
+            const shopImageUrl = files.shopImage && files.shopImage[0] ? `/uploads/${files.shopImage[0].filename}` : existingParty.shopImage;
+            const BRimageUrl = files.brImage && files.brImage[0] ? `/uploads/${files.brImage[0].filename}` : existingParty.BRimage;
+            const nicImageUrl = files.nicImage && files.nicImage[0] ? `/uploads/${files.nicImage[0].filename}` : existingParty.nicImage;
+
+            console.log('Shop Image URL:', shopImageUrl);
+            console.log('BR Image URL:', BRimageUrl);
+            console.log('NIC Image URL:', nicImageUrl);
+
+            // Update the party details
+            const updatedParty = await partyService.updatewithImage({
+                name: data.name,
+                nic: data.nic,
+                phoneNumber: data.phoneNumber,
+                creditPeriod: data.creditPeriod,
+                creditValue: data.creditValue,
+                address1: data.address1,
+                address2: data.address2,
+                city: data.city,
+                email: data.email,
+                shopImage: shopImageUrl,
+                BRimage: BRimageUrl,
+                nicImage: nicImageUrl,
+                isVerified: data?.isVerified === 'true' ? true : false,
+                partyCategoryId: partyCateId,
+                partyGroupId: data.partyGroupId,
+                partyTypeId: data.partyTypeId
+            }, id);
+
+            // Update the associated chart of accounts
+            const chartOfAccount = await chartOfAccService.updates({
+                accountName: data.name
+            }, updatedParty.chartofAccountId);
+
+            if (updatedParty && chartOfAccount) {
+                return response.status(200).json({ message: "Party updated successfully", data: updatedParty });
+            }
+        } catch (error: any) {
+            return response.status(500).json({ message: error.message });
+        }
+    },
+    (error: any, req: any, res: any, next: any) => {
+        if (error instanceof multer.MulterError) {
+            return res.status(400).json({ message: error.message });
+        } else if (error) {
+            return res.status(500).json({ message: error.message });
+        }
+        next();
+    }
+);
+
 
 

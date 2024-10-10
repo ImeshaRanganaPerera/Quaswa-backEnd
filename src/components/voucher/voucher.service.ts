@@ -9,7 +9,6 @@ export const get = async (id: any) => {
     return db.voucher.findFirst({
         where: {
             id,
-            isconform: true
         },
         include: {
             party: true,
@@ -143,7 +142,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
         include: {
             party: true,
             voucherProduct: {
@@ -217,6 +216,7 @@ export const updateVoucherNumber = async (data: any) => {
         data: {
             isRef: data.isRef,
             refVoucherNumber: data.voucherId,
+            status: data?.status
         },
     });
 }
@@ -347,7 +347,70 @@ export const getVouchersByPartyOutstanding = async (voucherGroupId: string, part
     });
 };
 
-export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any) => {
+export const getVouchersByPartySettlement = async (voucherGroupId: string, partyId?: any, userId?: any,) => {
+    return db.voucher.findMany({
+        where: {
+            voucherGroupId: voucherGroupId,
+            ...(userId ? { authUser: userId } : {}), // Filter by authUser if userId is passed
+            ...(partyId ? { partyId: partyId } : {}), // Filter by partyId if partyId is passed
+            paidValue: {
+                gte: db.voucher.fields.amount
+            }
+        },
+        include: {
+            party: true,
+            chartofacc: {
+                select: {
+                    accountName: true,
+                }
+            },
+            voucherProduct: {
+                select: {
+                    MRP: true,
+                    amount: true,
+                    centerId: true,
+                    cost: true,
+                    createdAt: true,
+                    id: true,
+                    isdisabale: true,
+                    minPrice: true,
+                    discount: true,
+                    productId: true,
+                    quantity: true,
+                    remainingQty: true,
+                    sellingPrice: true,
+                    updatedAt: true,
+                    voucherId: true,
+                    product: {
+                        select: {
+                            productName: true,
+                            printName: true
+                        }
+                    }
+                }
+            },
+            referVouchers: true,
+            PaymentVoucher: true,
+            user: {
+                select: {
+                    name: true,
+                    phoneNumber: true,
+                }
+            },
+            VoucherCenter: {
+                select: {
+                    center: true,
+                    centerStatus: true,
+                }
+            }
+        },
+        orderBy: {
+            partyId: 'asc'
+        }
+    });
+};
+
+export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any, status?: any) => {
     return db.voucher.findMany({
         where: {
             ...(userId && { user: userId }),
@@ -356,7 +419,8 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
                 gte: startDate,
                 lte: endDate,
             },
-            isconform: true
+            isconform: true,
+            ...(status && { status: status })
         },
         include: {
             party: true,
@@ -535,7 +599,8 @@ export const getRefVoucherbyVoucherGrpid = async (data: any) => {
         where: {
             voucherGroupId: data.voucherGroupId,
             partyId: data.partyId,
-            isRef: false
+            isRef: false,
+            NOT: { status: { startsWith: 'CANCELLED' } }
         },
         include: {
             voucherProduct: {

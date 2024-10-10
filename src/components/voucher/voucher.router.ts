@@ -47,35 +47,38 @@ voucherRouter.get("/pendingVouchers", async (request: Request, response: Respons
     }
 })
 
-voucherRouter.get("/filter", async (request: Request, response: Response) => {
+voucherRouter.get("/filter", authenticate, async (request: ExpressRequest, response: Response) => {
     try {
-        const { VoucherGrpName, startDate, endDate, userId } = request.query;
+        var { VoucherGrpName, startDate, endDate, userId, status } = request.query;
+
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
 
         if (!VoucherGrpName) {
-            return response.status(400).json({ message: "VoucherGrpname is required." });
+            return response.status(400).json({ message: "VoucherGrpName is required." });
         }
-        const grpname = await voucherGrpService.getbyname(VoucherGrpName)
-
+        
+        const grpname = await voucherGrpService.getbyname(VoucherGrpName);
         const filterStartDate = startDate ? new Date(startDate as string) : new Date();
         filterStartDate.setHours(0, 0, 0, 0);
-
+        
         const filterEndDate = endDate ? new Date(endDate as string) : new Date();
         filterEndDate.setHours(23, 59, 59, 999);
 
-        console.log(`VoucherGrpName=${VoucherGrpName} between ${filterStartDate} and ${filterEndDate}`);
         if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
             return response.status(400).json({ message: "Invalid date format." });
         }
 
         var vouchers;
-        if (VoucherGrpName === 'GRN') {
-            vouchers = await voucherService.getVouchersByPartyByUserAndDateRangeall(grpname?.id as string, filterStartDate, filterEndDate, userId,);
+        if (VoucherGrpName === 'GRN' || VoucherGrpName === 'PURCHASE-ORDER' || VoucherGrpName === 'PURCHASE-RETURN' || VoucherGrpName === 'STOCK-TRANSFER') {
+            vouchers = await voucherService.getVouchersByPartyByUserAndDateRangeall(grpname?.id as string, filterStartDate, filterEndDate, userId);
         } else {
-            vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId,);
+            vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId, status);
         }
 
         if (!vouchers || vouchers.length === 0) {
-            return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });
+            return response.status(404).json({ message: "No vouchers found for the specified Voucher group and date range." });
         }
 
         return response.status(200).json({ data: vouchers });
@@ -84,6 +87,7 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
         return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
     }
 });
+
 
 voucherRouter.get("/outstanding", authenticate, async (request: ExpressRequest, response: Response) => {
     try {
@@ -108,6 +112,41 @@ voucherRouter.get("/outstanding", authenticate, async (request: ExpressRequest, 
         }
 
         const vouchers = await voucherService.getVouchersByPartyOutstanding(grpname.id as string, partyId, userId);
+
+        // if (!vouchers || vouchers.length === 0) {
+        //     return response.status(404).json({ message: "No vouchers found for the specified Voucher group or party." });
+        // }
+
+        return response.status(200).json({ data: vouchers });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
+voucherRouter.get("/settlement", authenticate, async (request: ExpressRequest, response: Response) => {
+    try {
+        var { VoucherGrpName, partyId, userId } = request.query;
+
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        if (request.user.role !== "ADMIN") {
+            userId = request.user?.id;
+        }
+
+        if (!VoucherGrpName) {
+            return response.status(400).json({ message: "VoucherGrpName is required." });
+        }
+
+        const grpname = await voucherGrpService.getbyname(VoucherGrpName);
+
+        if (!grpname?.id) {
+            return response.status(404).json({ message: "Voucher group not found." });
+        }
+
+        const vouchers = await voucherService.getVouchersByPartySettlement(grpname.id as string, partyId, userId);
 
         // if (!vouchers || vouchers.length === 0) {
         //     return response.status(404).json({ message: "No vouchers found for the specified Voucher group or party." });
@@ -294,13 +333,10 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             voucherGroupId: voucherGrpdetails?.id,
             createdBy: userId
         })
-
-        console.log(newVoucher)
-
         if (data.refVoucherNumber) {
-            await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, isRef: data.isRef, voucherId: newVoucher.voucherNumber })
+            await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, isRef: data.isRef, voucherId: newVoucher.voucherNumber, status: data?.status })
         }
-
+        console.log(data)
         if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
             const centerPromises = data.productList.map(async (product: any) => {
                 const voucherProduct = await productVoucherService.create({
@@ -313,8 +349,10 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     amount: product.amount,
                     voucherId: newVoucher.id,
                     productId: product.productId,
-                    centerId: product.toCenterId
+                    centerId: data.fromCenterId,
+                    toCenterId: data.toCenterId
                 });
+                console.log(voucherProduct)
                 if (!voucherProduct) {
                     throw new Error("Failed to update product to list association");
                 }
@@ -765,7 +803,6 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
         return response.status(500).json({ message: error.message });
     }
 });
-
 
 //PUT
 voucherRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {

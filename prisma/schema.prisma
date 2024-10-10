@@ -76,6 +76,7 @@ model User {
   partyType             partyType[]
   userAuth              Voucher[]               @relation("UserAuth")
   createdbyUserVoucher  Voucher[]               @relation("CreatedByUserVoucher")
+  apporvelUser          Voucher[]               @relation("apporvelUser")
 }
 
 model userCenter {
@@ -207,6 +208,7 @@ model Voucher {
   refVoucherNumber String?
   isRef            Boolean          @default(false)
   note             String?
+  status           String?
   dueDays          Int?
   isconform        Boolean          @default(true)
   party            Party?           @relation(fields: [partyId], references: [id])
@@ -219,6 +221,8 @@ model Voucher {
   authUser         String?
   createdByUser    User             @relation("CreatedByUserVoucher", fields: [createdBy], references: [id])
   createdBy        String
+  apporvelUser     User?            @relation("apporvelUser", fields: [appovedBy], references: [id])
+  appovedBy        String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   PaymentVoucher   PaymentVoucher[]
@@ -228,6 +232,28 @@ model Voucher {
   Cheque           Cheque[]
   referVouchers    referVouchers[]
   pettycashIOU     pettycashIOU[]
+}
+
+model voucherProduct {
+  id           String   @id @default(uuid())
+  cost         Decimal
+  quantity     Decimal
+  discount     String
+  MRP          Decimal
+  minPrice     Decimal?
+  sellingPrice Decimal
+  amount       Decimal
+  remainingQty Decimal?
+  isdisabale   Boolean  @default(false)
+  voucher      Voucher  @relation(fields: [voucherId], references: [id])
+  voucherId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    String
+  center       Center?  @relation(fields: [centerId], references: [id])
+  centerId     String?
+  toCenterId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model pettycashIOU {
@@ -413,27 +439,6 @@ model productDiscountLevel {
   updatedAt DateTime @updatedAt
 
   @@id([productId, discountLevelId])
-}
-
-model voucherProduct {
-  id           String   @id @default(uuid())
-  cost         Decimal
-  quantity     Decimal
-  discount     String
-  MRP          Decimal
-  minPrice     Decimal?
-  sellingPrice Decimal
-  amount       Decimal
-  remainingQty Decimal?
-  isdisabale   Boolean  @default(false)
-  voucher      Voucher  @relation(fields: [voucherId], references: [id])
-  voucherId    String
-  product      Product  @relation(fields: [productId], references: [id])
-  productId    String
-  center       Center?  @relation(fields: [centerId], references: [id])
-  centerId     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
 }
 
 model Inventory {

@@ -56,21 +56,23 @@ voucherRouter.get("/filter", async (request: Request, response: Response) => {
         }
         const grpname = await voucherGrpService.getbyname(VoucherGrpName)
 
-        // startDate format and if no end date set today's date
         const filterStartDate = startDate ? new Date(startDate as string) : new Date();
-        filterStartDate.setHours(0, 0, 0, 0); // Set the time to midnight
+        filterStartDate.setHours(0, 0, 0, 0);
 
-        // if no endDate set end date as today's date
         const filterEndDate = endDate ? new Date(endDate as string) : new Date();
         filterEndDate.setHours(23, 59, 59, 999);
-
 
         console.log(`VoucherGrpName=${VoucherGrpName} between ${filterStartDate} and ${filterEndDate}`);
         if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
             return response.status(400).json({ message: "Invalid date format." });
         }
 
-        const vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId,);
+        var vouchers;
+        if (VoucherGrpName === 'GRN') {
+            vouchers = await voucherService.getVouchersByPartyByUserAndDateRangeall(grpname?.id as string, filterStartDate, filterEndDate, userId,);
+        } else {
+            vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId,);
+        }
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });

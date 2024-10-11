@@ -600,7 +600,7 @@ export const getRefVoucherbyVoucherGrpid = async (data: any) => {
             voucherGroupId: data.voucherGroupId,
             partyId: data.partyId,
             isRef: false,
-            NOT: { status: { startsWith: 'CANCELLED' } }
+            // status: 'PENDING' 
         },
         include: {
             voucherProduct: {

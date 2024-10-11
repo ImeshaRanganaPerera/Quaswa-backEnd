@@ -29,7 +29,17 @@ export const get = async (id: any) => {
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true
+            PaymentVoucher: true,
+            VoucherCenter: {
+                select: {
+                    center: {
+                        select: {
+                            centerName: true
+                        }
+                    },
+                    centerStatus: true
+                },
+            },
         }
     });
 }
@@ -46,6 +56,7 @@ export const getbyid = async (id: any) => {
                     phoneNumber: true,
                 }
             },
+            VoucherCenter: true
         }
     });
 }
@@ -194,7 +205,7 @@ export const update = async (data: any, id: any) => {
 export const updatePendingVoucher = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
-        data: { amount: data.amount, isconform: true }
+        data: { amount: data.amount, appovedBy: data.appovedBy, isconform: true }
     });
 }
 

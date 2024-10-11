@@ -58,11 +58,11 @@ voucherRouter.get("/filter", authenticate, async (request: ExpressRequest, respo
         if (!VoucherGrpName) {
             return response.status(400).json({ message: "VoucherGrpName is required." });
         }
-        
+
         const grpname = await voucherGrpService.getbyname(VoucherGrpName);
         const filterStartDate = startDate ? new Date(startDate as string) : new Date();
         filterStartDate.setHours(0, 0, 0, 0);
-        
+
         const filterEndDate = endDate ? new Date(endDate as string) : new Date();
         filterEndDate.setHours(23, 59, 59, 999);
 
@@ -412,11 +412,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     return response.status(500).json({ message: error.message });
                 }
             }
-            if (newVoucher) {
-                return response.status(201).json({ message: "Transaction Saved Successfully" });
-            }
         }
-
         else {
             console.log(data)
             if (data.payment) {
@@ -695,9 +691,9 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     return response.status(500).json({ message: error.message });
                 }
             }
-            if (newVoucher) {
-                return response.status(201).json({ message: "Transaction Saved Successfully", data: newVoucher });
-            }
+        }
+        if (newVoucher) {
+            return response.status(201).json({ message: "Transaction Saved Successfully", data: newVoucher });
         }
     } catch (error: any) {
         console.error("Error creating voucher:", error);  // Add more detailed logging
@@ -707,7 +703,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
 voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;
-    const data: any = request.body;
+    var data: any = request.body;
 
     try {
         if (!request.user) {
@@ -792,12 +788,16 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                 }
             }
         }
-
+        data = {
+            ...data,
+            appovedBy: userId
+        }
         // Update the voucher confirmation status
         const updateVoucher = await voucherService.updatePendingVoucher(data, id);
+        console.log(updateVoucher)
 
         if (updateVoucher) {
-            return response.status(201).json({ message: "Voucher Conformed Successfully" });
+            return response.status(201).json({ message: "Voucher Conformed Successfully", data: updateVoucher });
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });

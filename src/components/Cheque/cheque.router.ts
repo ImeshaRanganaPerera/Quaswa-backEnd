@@ -58,6 +58,19 @@ chequeRouter.get("/unusedCheque/:id", async (request: Request, response: Respons
     }
 })
 
+chequeRouter.get("/chequebyVoucher/:id", async (request: Request, response: Response) => {
+    const id = request.params.id;
+    try {
+        const data = await chequeservice.getbyVoucherId(id)
+        if (data) {
+            return response.status(200).json({ data: data });
+        }
+        return response.status(404).json({ message: "Cheque could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
+
 //GET
 chequeRouter.get("/:id", async (request: Request, response: Response) => {
     const id = request.params.id;

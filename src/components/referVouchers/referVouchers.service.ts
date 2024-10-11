@@ -8,6 +8,18 @@ export const getbyvoucher = async (id: any) => {
     return db.referVouchers.findMany({
         where: {
             voucherId: id,
+        },
+        include: {
+            voucher: {
+                select: {
+                    voucherNumber: true,
+                    party: {
+                        select: {
+                            name: true,
+                        }
+                    }
+                }
+            }
         }
     });
 }

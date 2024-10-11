@@ -12,6 +12,14 @@ export const get = async (id: string) => {
     });
 }
 
+export const getbyVoucherId = async (id: string) => {
+    return db.cheque.findFirst({
+        where: {
+            voucherId: id,
+        }
+    });
+}
+
 export const create = async (data: any) => {
     return db.cheque.create({
         data: data

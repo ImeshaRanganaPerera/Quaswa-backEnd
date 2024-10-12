@@ -2,7 +2,7 @@ import express from "express";
 import type { Request, Response } from "express";
 import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 
 
 import * as voucherService from './voucher.service'
@@ -49,10 +49,15 @@ voucherRouter.get("/pendingVouchers", async (request: Request, response: Respons
 
 voucherRouter.get("/filter", authenticate, async (request: ExpressRequest, response: Response) => {
     try {
-        var { VoucherGrpName, startDate, endDate, userId, status } = request.query;
+        var { VoucherGrpName, startDate, endDate, userId } = request.query;
 
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
+        }
+
+        if (request.user.role === Role.SALESMEN) {
+            userId = request.user?.id;
+            console.log(userId)
         }
 
         if (!VoucherGrpName) {
@@ -74,11 +79,43 @@ voucherRouter.get("/filter", authenticate, async (request: ExpressRequest, respo
         if (VoucherGrpName === 'GRN' || VoucherGrpName === 'PURCHASE-ORDER' || VoucherGrpName === 'PURCHASE-RETURN' || VoucherGrpName === 'STOCK-TRANSFER') {
             vouchers = await voucherService.getVouchersByPartyByUserAndDateRangeall(grpname?.id as string, filterStartDate, filterEndDate, userId);
         } else {
-            vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId, status);
+            vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId);
         }
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher group and date range." });
+        }
+
+        return response.status(200).json({ data: vouchers });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
+voucherRouter.get("/filter/status", authenticate, async (request: ExpressRequest, response: Response) => {
+    try {
+        var { VoucherGrpName, status } = request.query;
+        console.log(status)
+
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+        var userId;
+        if (request.user.role === Role.SALESMEN) {
+            userId = request.user?.id;
+            console.log(userId)
+        }
+
+        if (!VoucherGrpName) {
+            return response.status(400).json({ message: "VoucherGrpName is required." });
+        }
+
+        const grpname = await voucherGrpService.getbyname(VoucherGrpName);
+        const vouchers = await voucherService.getVouchersByStatusByUser(grpname?.id, status, userId);
+
+        if (!vouchers || vouchers.length === 0) {
+            return response.status(404).json({ message: "No vouchers found." });
         }
 
         return response.status(200).json({ data: vouchers });
@@ -97,8 +134,9 @@ voucherRouter.get("/outstanding", authenticate, async (request: ExpressRequest, 
             return response.status(401).json({ message: "User not authorized" });
         }
 
-        if (request.user.role !== "ADMIN") {
+        if (request.user.role === Role.SALESMEN) {
             userId = request.user?.id;
+            console.log(userId)
         }
 
         if (!VoucherGrpName) {

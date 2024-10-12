@@ -424,7 +424,7 @@ export const getVouchersByPartySettlement = async (voucherGroupId: string, party
 export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any, status?: any) => {
     return db.voucher.findMany({
         where: {
-            ...(userId && { user: userId }),
+            ...(userId && { authUser: userId }),
             voucherGroupId: voucherGroupId,
             date: {
                 gte: startDate,
@@ -480,14 +480,15 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
                     centerStatus: true,
                 }
             }
-        }
+        },
+        orderBy: { date: 'desc' }
     });
 };
 
 export const getVouchersByPartyByUserAndDateRangeall = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any) => {
     return db.voucher.findMany({
         where: {
-            ...(userId && { user: userId }),
+            ...(userId && { authUser: userId }),
             voucherGroupId: voucherGroupId,
             date: {
                 gte: startDate,
@@ -541,9 +542,77 @@ export const getVouchersByPartyByUserAndDateRangeall = async (voucherGroupId: st
                     centerStatus: true,
                 }
             }
-        }
+        },
+        orderBy: { date: 'desc' }
     });
 };
+
+export const getVouchersByStatusByUser = async (voucherGroupId: any, status?: any, userId?: any) => {
+    return db.voucher.findMany({
+        where: {
+            ...(userId && { authUser: userId }),
+            voucherGroupId: voucherGroupId,
+            ...(status && {
+                OR: status === 'PENDING' ? [
+                    { status: 'PENDING' },
+                    { status: null }
+                ] : [
+                    { status: status }
+                ]
+            }),
+        },
+        include: {
+            party: true,
+            chartofacc: {
+                select: {
+                    accountName: true,
+                }
+            },
+            voucherProduct: {
+                select: {
+                    MRP: true,
+                    amount: true,
+                    centerId: true,
+                    cost: true,
+                    createdAt: true,
+                    id: true,
+                    isdisabale: true,
+                    minPrice: true,
+                    discount: true,
+                    productId: true,
+                    quantity: true,
+                    remainingQty: true,
+                    sellingPrice: true,
+                    updatedAt: true,
+                    voucherId: true,
+                    product: {
+                        select: {
+                            productName: true,
+                            printName: true
+                        }
+                    }
+                }
+            },
+            referVouchers: true,
+            PaymentVoucher: true,
+            user: {
+                select: {
+                    name: true,
+                    phoneNumber: true,
+                }
+            },
+            VoucherCenter: {
+                select: {
+                    center: true,
+                    centerStatus: true,
+                }
+            }
+        },
+        orderBy: { date: 'desc' }
+    });
+};
+
+
 
 export const getVouchersByUserAndDateRange = async (userId: string, startDate?: Date, endDate?: Date) => {
     return db.voucher.findMany({
@@ -601,7 +670,8 @@ export const getVouchersByUserAndDateRange = async (userId: string, startDate?: 
                     centerStatus: true,
                 }
             }
-        }
+        },
+        orderBy: { date: 'desc' }
     });
 };
 

@@ -4,19 +4,21 @@ import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as inventoryService from './inventory.service'
+import * as usercenterService from '../userCenter/userCenter.service'
+import { Role } from '@prisma/client';
 export const inventoryRouter = express.Router();
 
 
 // inventoryRouter.get("/stock", async (request: Request, response: Response) => {
 //     const { productId, centerId, date } = request.query;
-  
+
 //     try {
 //       const stockData = await inventoryService.getStock(
 //         productId as string | undefined,
 //         centerId as string | undefined,
 //         date as string | undefined
 //       );
-  
+
 //       if (stockData && stockData.length > 0) {
 //         return response.status(200).json({ data: stockData });
 //       }
@@ -26,11 +28,22 @@ export const inventoryRouter = express.Router();
 //     }
 //   });
 
-inventoryRouter.get("/filter", async (request: Request, response: Response) => {
-    const { productId, centerId } = request.query;
+inventoryRouter.get("/filter", authenticate, async (request: ExpressRequest, response: Response) => {
+    var { productId, centerId } = request.query;
+    console.log(centerId)
     try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+        if (request.user.role === Role.SALESMEN) {
+            const center = await usercenterService.getbyId(request.user.id);
+            if (centerId === undefined) {
+                centerId = center?.centerId;
+            }
+        }
+
         const filteredInventory = await inventoryService.filterInventory(
-            productId?.toString(), 
+            productId?.toString(),
             centerId?.toString()
         );
         return response.status(200).json({ data: filteredInventory });

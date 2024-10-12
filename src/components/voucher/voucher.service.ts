@@ -209,7 +209,6 @@ export const updatePendingVoucher = async (data: any, id: any) => {
     });
 }
 
-
 export const updateVoucherNumber = async (data: any) => {
     const voucher = await db.voucher.findFirst({
         where: {
@@ -270,6 +269,13 @@ export const updateConform = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
         data: { isconform: data.isconform }
+    });
+}
+
+export const voucherCancel = async (data: any, id: any) => {
+    return db.voucher.update({
+        where: id,
+        data: { status: data.status }
     });
 }
 
@@ -612,8 +618,6 @@ export const getVouchersByStatusByUser = async (voucherGroupId: any, status?: an
     });
 };
 
-
-
 export const getVouchersByUserAndDateRange = async (userId: string, startDate?: Date, endDate?: Date) => {
     return db.voucher.findMany({
         where: {
@@ -681,7 +685,10 @@ export const getRefVoucherbyVoucherGrpid = async (data: any) => {
             voucherGroupId: data.voucherGroupId,
             partyId: data.partyId,
             isRef: false,
-            // status: 'PENDING' 
+            OR: [
+                { status: 'PENDING' },
+                { status: null },
+            ],
         },
         include: {
             voucherProduct: {

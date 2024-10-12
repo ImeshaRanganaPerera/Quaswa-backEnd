@@ -906,3 +906,22 @@ voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, 
     }
 })
 
+voucherRouter.put("/cancel/:id", authenticate, async (request: ExpressRequest, response: Response) => {
+    const id: any = request.params;
+    const data: any = request.body;
+
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        const updateVoucher = await voucherService.voucherCancel(data, id)
+
+        if (updateVoucher) {
+            return response.status(201).json({ message: data.voucherGrpName + " Cancelled Successfully", data: updateVoucher });
+        }
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+

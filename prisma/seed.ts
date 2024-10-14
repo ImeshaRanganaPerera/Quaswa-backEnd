@@ -167,6 +167,9 @@ async function seed() {
             { accountName: "PETTY CASH", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "BANK BOOK", accountSubCategoryId: currentassets.id, accountGroupId: bank.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "PENDING CHEQUE", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "INVENTORY ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: inventory.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "IMPORT CONTROL ACCOUNT", accountSubCategoryId: currentLiabilites.id, accountGroupId: payable.id, Opening_Balance: 0, createdBy: userid },
+            { accountName: "COST OF SALES", accountSubCategoryId: Expencess.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
         ]
     })
 

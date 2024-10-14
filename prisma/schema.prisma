@@ -204,6 +204,7 @@ model Voucher {
   amount           Decimal?
   location         String?
   paidValue        Decimal?
+  returnValue      Decimal?
   refNumber        String?
   refVoucherNumber String?
   isRef            Boolean          @default(false)

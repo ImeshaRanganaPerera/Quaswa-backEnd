@@ -35,13 +35,14 @@ inventoryRouter.get("/filter", authenticate, async (request: ExpressRequest, res
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
+
         if (request.user.role === Role.SALESMEN) {
             const center = await usercenterService.getbyId(request.user.id);
             if (centerId === undefined) {
                 centerId = center?.centerId;
             }
         }
-
+        
         const filteredInventory = await inventoryService.filterInventory(
             productId?.toString(),
             centerId?.toString()

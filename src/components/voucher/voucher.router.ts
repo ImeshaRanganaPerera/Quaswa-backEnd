@@ -125,7 +125,6 @@ voucherRouter.get("/filter/status", authenticate, async (request: ExpressRequest
     }
 });
 
-
 voucherRouter.get("/outstanding", authenticate, async (request: ExpressRequest, response: Response) => {
     try {
         var { VoucherGrpName, partyId, userId } = request.query;
@@ -372,7 +371,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             createdBy: userId
         })
         if (data.refVoucherNumber) {
-            await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, isRef: data.isRef, voucherId: newVoucher.voucherNumber, status: data?.status })
+            await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data.amount, isRef: data.isRef, voucherId: newVoucher.voucherNumber, status: data?.status })
         }
         console.log(data)
         if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
@@ -666,7 +665,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     centerStatus: "IN"
                 })
                 if (!newVoucherCenter) {
-                    throw new Error("Failed to update Vo    ucher Center to list association");
+                    throw new Error("Failed to update Voucher Center to list association");
                 }
                 if (voucherGrpdetails?.isAccount === true) {
                     const inventoryPromise = data.productList.map(async (product: any) => {

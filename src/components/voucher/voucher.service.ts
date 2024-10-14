@@ -1,5 +1,6 @@
 import { Role, InventoryMode } from "@prisma/client";
 import { db } from "../../utils/db.server";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export const list = async () => {
     return db.voucher.findMany();
@@ -107,21 +108,27 @@ export const getVoucherbyParty = async (id: any) => {
 }
 
 export const getVoucherbyPartytrue = async (id: any, condition: any) => {
-    return db.voucher.findMany({
+    const vouchers =  await db.voucher.findMany({
         where: {
             partyId: id,
             isconform: condition,
-            NOT: {
-                paidValue: {
-                    gte: db.voucher.fields.amount
-                }
-            },
             OR: [
                 { voucherNumber: { startsWith: 'GRN' } },
                 { voucherNumber: { startsWith: 'INV' } },
             ],
         }
     });
+
+    const filteredVouchers = vouchers.filter(voucher => {
+        const paidValue = new Decimal(voucher.paidValue ?? 0); // Handle possible 'null' and convert to Decimal
+        const returnValue = new Decimal(voucher.returnValue ?? 0); // Handle possible 'null' and convert to Decimal
+        const totalPaid = paidValue.plus(returnValue); // Add using Decimal.js
+        const amount = new Decimal(voucher.amount || 0); // Ensure amount is treated as Decimal
+
+        return totalPaid.lessThan(amount); // Filter those with outstanding amounts
+    });
+
+    return filteredVouchers;
 }
 
 export const getVoucherbyChartofacc = async (id: any, condition: any) => {
@@ -153,7 +160,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
         include: {
             party: true,
             voucherProduct: {
@@ -225,6 +232,7 @@ export const updateVoucherNumber = async (data: any) => {
         },
         data: {
             isRef: data.isRef,
+            returnValue: data.returnValue,
             refVoucherNumber: data.voucherId,
             status: data?.status
         },
@@ -299,17 +307,78 @@ export const updatepaidValue = async (data: any) => {
     });
 };
 
-export const getVouchersByPartyOutstanding = async (voucherGroupId: string, partyId?: any, userId?: any,) => {
-    return db.voucher.findMany({
+// export const getVouchersByPartyOutstanding = async (voucherGroupId: string, partyId?: any, userId?: any,) => {
+//     return db.voucher.findMany({
+//         where: {
+//             voucherGroupId: voucherGroupId,
+//             ...(userId ? { authUser: userId } : {}), // Filter by authUser if userId is passed
+//             ...(partyId ? { partyId: partyId } : {}), // Filter by partyId if partyId is passed
+//             NOT: {
+//                 paidValue: {
+//                     gte: db.voucher.fields.amount
+//                 }
+//             },
+//         },
+//         include: {
+//             party: true,
+//             chartofacc: {
+//                 select: {
+//                     accountName: true,
+//                 }
+//             },
+//             voucherProduct: {
+//                 select: {
+//                     MRP: true,
+//                     amount: true,
+//                     centerId: true,
+//                     cost: true,
+//                     createdAt: true,
+//                     id: true,
+//                     isdisabale: true,
+//                     minPrice: true,
+//                     discount: true,
+//                     productId: true,
+//                     quantity: true,
+//                     remainingQty: true,
+//                     sellingPrice: true,
+//                     updatedAt: true,
+//                     voucherId: true,
+//                     product: {
+//                         select: {
+//                             productName: true,
+//                             printName: true
+//                         }
+//                     }
+//                 }
+//             },
+//             referVouchers: true,
+//             PaymentVoucher: true,
+//             user: {
+//                 select: {
+//                     name: true,
+//                     phoneNumber: true,
+//                 }
+//             },
+//             VoucherCenter: {
+//                 select: {
+//                     center: true,
+//                     centerStatus: true,
+//                 }
+//             }
+//         },
+//         orderBy: {
+//             partyId: 'asc'
+//         }
+//     });
+// };
+
+export const getVouchersByPartyOutstanding = async (voucherGroupId: string, partyId?: any, userId?: any) => {
+    // Fetch vouchers without applying the complex condition (paidValue + returnValue)
+    const vouchers = await db.voucher.findMany({
         where: {
             voucherGroupId: voucherGroupId,
             ...(userId ? { authUser: userId } : {}), // Filter by authUser if userId is passed
             ...(partyId ? { partyId: partyId } : {}), // Filter by partyId if partyId is passed
-            NOT: {
-                paidValue: {
-                    gte: db.voucher.fields.amount
-                }
-            },
         },
         include: {
             party: true,
@@ -362,7 +431,20 @@ export const getVouchersByPartyOutstanding = async (voucherGroupId: string, part
             partyId: 'asc'
         }
     });
+
+    // Filter vouchers in the application logic where paidValue + returnValue >= amount
+    const filteredVouchers = vouchers.filter(voucher => {
+        const paidValue = new Decimal(voucher.paidValue ?? 0); // Handle possible 'null' and convert to Decimal
+        const returnValue = new Decimal(voucher.returnValue ?? 0); // Handle possible 'null' and convert to Decimal
+        const totalPaid = paidValue.plus(returnValue); // Add using Decimal.js
+        const amount = new Decimal(voucher.amount || 0); // Ensure amount is treated as Decimal
+
+        return totalPaid.lessThan(amount); // Filter those with outstanding amounts
+    });
+
+    return filteredVouchers;
 };
+
 
 export const getVouchersByPartySettlement = async (voucherGroupId: string, partyId?: any, userId?: any,) => {
     return db.voucher.findMany({
@@ -487,7 +569,7 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
                 }
             }
         },
-        orderBy: { date: 'desc' }
+        orderBy: { voucherNumber: 'desc' }
     });
 };
 
@@ -549,7 +631,7 @@ export const getVouchersByPartyByUserAndDateRangeall = async (voucherGroupId: st
                 }
             }
         },
-        orderBy: { date: 'desc' }
+        orderBy: { voucherNumber: 'desc' }
     });
 };
 

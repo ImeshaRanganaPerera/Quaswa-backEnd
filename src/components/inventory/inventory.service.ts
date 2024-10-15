@@ -27,46 +27,6 @@ export const getbyProductId = async (id: any) => {
 }
 
 // Filter inventory based on productId, centerId, and date
-export const filterInventory = async (productId?: string, centerId?: string) => {
-    const filterConditions: any = { status: true };
-
-    // Apply filters based on productId and centerId
-    if (productId) filterConditions.productId = productId;
-    if (centerId) filterConditions.centerId = centerId;
-
-    // Fetch inventory list filtered by productId and/or centerId
-    const inventories = await db.inventory.findMany({
-        where: filterConditions,
-        include: {
-            product: true,
-            center: true,
-        },
-    });
-
-    // Prepare the formatted result excluding inventories with 0 quantity
-    const formattedInventory = inventories
-        .filter((inventory) => new Decimal(inventory.quantity || 0).greaterThan(0)) // Filter out 0 quantity
-        .map((inventory) => ({
-            printName: inventory.product.printName || inventory.product.productName, // Use printName if available, otherwise productName
-            qty: new Decimal(inventory.quantity || 0).toNumber(), // Quantity as a number
-            mrp: new Decimal(inventory.product.MRP || 0).toNumber(), // MRP as a number
-            cost: new Decimal(inventory.product.cost || 0).toNumber(), // Cost as a number
-            centerName: inventory.center.centerName, // Center name
-        }));
-
-    // Calculate the total quantity across inventories
-    let totalQuantity: Decimal = new Decimal(0);
-    formattedInventory.forEach((inventory) => {
-        totalQuantity = totalQuantity.plus(new Decimal(inventory.qty));
-    });
-
-    return {
-        inventories: formattedInventory,
-        totalQuantity: totalQuantity.toNumber(),
-    };
-};
-
-// Filter inventory based on productId, centerId, and date with 0 qty
 // export const filterInventory = async (productId?: string, centerId?: string) => {
 //     const filterConditions: any = { status: true };
 
@@ -83,14 +43,16 @@ export const filterInventory = async (productId?: string, centerId?: string) => 
 //         },
 //     });
 
-//     // Prepare the formatted result
-//     const formattedInventory = inventories.map((inventory) => ({
-//         printName: inventory.product.printName || inventory.product.productName, // Use printName if available, otherwise productName
-//         qty: new Decimal(inventory.quantity || 0).toNumber(), // Quantity as a number
-//         mrp: new Decimal(inventory.product.MRP || 0).toNumber(), // MRP as a number
-//         cost: new Decimal(inventory.product.cost || 0).toNumber(), // Cost as a number
-//         centerName: inventory.center.centerName, // Center name
-//     }));
+//     // Prepare the formatted result excluding inventories with 0 quantity
+//     const formattedInventory = inventories
+//         .filter((inventory) => new Decimal(inventory.quantity || 0).greaterThan(0)) // Filter out 0 quantity
+//         .map((inventory) => ({
+//             printName: inventory.product.printName || inventory.product.productName, // Use printName if available, otherwise productName
+//             qty: new Decimal(inventory.quantity || 0).toNumber(), // Quantity as a number
+//             mrp: new Decimal(inventory.product.MRP || 0).toNumber(), // MRP as a number
+//             cost: new Decimal(inventory.product.cost || 0).toNumber(), // Cost as a number
+//             centerName: inventory.center.centerName, // Center name
+//         }));
 
 //     // Calculate the total quantity across inventories
 //     let totalQuantity: Decimal = new Decimal(0);
@@ -103,6 +65,44 @@ export const filterInventory = async (productId?: string, centerId?: string) => 
 //         totalQuantity: totalQuantity.toNumber(),
 //     };
 // };
+
+// Filter inventory based on productId, centerId, and date with 0 qty
+export const filterInventory = async (productId?: string, centerId?: string) => {
+    const filterConditions: any = { status: true };
+
+    // Apply filters based on productId and centerId
+    if (productId) filterConditions.productId = productId;
+    if (centerId) filterConditions.centerId = centerId;
+
+    // Fetch inventory list filtered by productId and/or centerId
+    const inventories = await db.inventory.findMany({
+        where: filterConditions,
+        include: {
+            product: true,
+            center: true,
+        },
+    });
+
+    // Prepare the formatted result
+    const formattedInventory = inventories.map((inventory) => ({
+        printName: inventory.product.printName || inventory.product.productName, // Use printName if available, otherwise productName
+        qty: new Decimal(inventory.quantity || 0).toNumber(), // Quantity as a number
+        mrp: new Decimal(inventory.product.MRP || 0).toNumber(), // MRP as a number
+        cost: new Decimal(inventory.product.cost || 0).toNumber(), // Cost as a number
+        centerName: inventory.center.centerName, // Center name
+    }));
+
+    // Calculate the total quantity across inventories
+    let totalQuantity: Decimal = new Decimal(0);
+    formattedInventory.forEach((inventory) => {
+        totalQuantity = totalQuantity.plus(new Decimal(inventory.qty));
+    });
+
+    return {
+        inventories: formattedInventory,
+        totalQuantity: totalQuantity.toNumber(),
+    };
+};
 
 // export const filterInventory = async (productId?: string, centerId?: string, date?: string) => {
 //     const filterConditions: any = {

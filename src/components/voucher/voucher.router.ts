@@ -578,10 +578,10 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         var expencessacc = await chartofaccService.getbyname('SALES ACCOUNT')
                         chartofAccId = expencessacc?.id
                     }
-                    if (entry.accountId === "INVENTORY") {
-                        var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
-                        chartofAccId = inventoryAcc?.id
-                    }
+                    // if (entry.accountId === "INVENTORY") {
+                    //     var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
+                    //     chartofAccId = inventoryAcc?.id
+                    // }
                     if (entry.accountId === "INVENTORY") {
                         var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
                         chartofAccId = inventoryAcc?.id

@@ -452,7 +452,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             }
         }
         else {
-            console.log(data)
+
             if (data.payment) {
                 const onlineTransfer = await paymentService.getbyname('Online Transfer');
                 const cash = await paymentService.getbyname('Cash');
@@ -798,8 +798,6 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                     chartofAccId = inventoryAcc?.id
                 }
 
-                console.log(id)
-
                 const journalLineData = {
                     voucherId: id.id,
                     chartofAccountId: chartofAccId, // Account ID from the journal entry
@@ -808,10 +806,54 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                     ref: entry.ref, // Reference number from the voucher
                     createdBy: userId, // Assuming `req.user.id` contains the user ID
                 };
-
-                console.log(journalLineData)
-
                 await journalLineService.create(journalLineData);
+            }
+        }
+
+        if (data.payment) {
+            const onlineTransfer = await paymentService.getbyname('Online Transfer');
+            const cash = await paymentService.getbyname('Cash');
+            const Cheque = await paymentService.getbyname('Cheque');
+            const Credit = await paymentService.getbyname('Credit');
+
+            // Prepare payment vouchers
+            const paymentVouchers = [
+                { voucherId: id.id, paymentId: onlineTransfer?.id, paymentType: onlineTransfer?.type, amount: data.payment.onlineTransfer, refNumber: data.payment.refNumber },
+                { voucherId: id.id, paymentId: cash?.id, paymentType: cash?.type, amount: data.payment.cash },
+                { voucherId: id.id, paymentId: Cheque?.id, paymentType: Cheque?.type, amount: data.payment.cheque },
+                { voucherId: id.id, paymentId: Credit?.id, paymentType: Credit?.type, amount: data.payment.credit }
+            ].filter(record => record.paymentId && record.amount > 0);
+
+            let chequePaymentVoucher = null;
+
+            // Loop to create each payment voucher and capture the cheque payment voucher
+            for (const voucher of paymentVouchers) {
+                const createdVoucher = await paymentVoucherService.create(voucher);
+                console.log(createdVoucher)
+                // Check if this is the cheque voucher
+                if (voucher.paymentId === Cheque?.id) {
+                    chequePaymentVoucher = createdVoucher;
+                }
+                console.log("Cheqpayemnt" + chequePaymentVoucher)
+            }
+            // Now handle the cheque creation if applicable
+            if (data.payment.cheque > 0 && chequePaymentVoucher) {
+                console.log(data.payment.chequeBookId);
+                const cheque = await chequeService.create({
+                    chequeNumber: data.payment.chequenumber.toString(),
+                    chequeBankName: data.payment.chequeBankName,
+                    issueDate: data.date,
+                    releaseDate: data.payment.releaseDate,
+                    amount: data.payment.cheque,
+                    chequeBookId: data.payment?.chequeBookId,
+                    voucherId: id.id,
+                    paymentVoucherId: chequePaymentVoucher.id,
+                    creditDebit: data.payment.creditDebit,
+                    createdBy: userId
+                });
+                if (data.payment?.chequeBookId !== undefined) {
+                    await chequebookService.updatechequeRemaning(data.payment?.chequeBookId);
+                }
             }
         }
 
@@ -864,7 +906,6 @@ voucherRouter.put("/:id", authenticate, async (request: ExpressRequest, response
         return response.status(500).json({ message: error.message });
     }
 })
-
 
 voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;

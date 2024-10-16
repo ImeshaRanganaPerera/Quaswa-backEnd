@@ -344,16 +344,17 @@ voucherRouter.get("/party/false/:partyId", async (request: Request, response: Re
 voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     var data: any = request.body;
     try {
+
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
+
         const userId = request.user.id;
         const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
         const newVoucherNumber = await voucherService.generateVoucherNumber(voucherGrpdetails?.id)
 
         var totalCost = 0;
         var partyAcc: any;
-
 
         if (data?.partyId) {
             partyAcc = await partyService.get(data?.partyId)
@@ -797,13 +798,18 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                     chartofAccId = inventoryAcc?.id
                 }
 
+                console.log(id)
+
                 const journalLineData = {
+                    voucherId: id.id,
                     chartofAccountId: chartofAccId, // Account ID from the journal entry
                     debitAmount: entry.debit || 0, // Debit amount if present
                     creditAmount: entry.credit || 0, // Credit amount if present
                     ref: entry.ref, // Reference number from the voucher
                     createdBy: userId, // Assuming `req.user.id` contains the user ID
                 };
+
+                console.log(journalLineData)
 
                 await journalLineService.create(journalLineData);
             }
@@ -831,7 +837,6 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
         }
         // Update the voucher confirmation status
         const updateVoucher = await voucherService.updatePendingVoucher(data, id);
-        console.log(updateVoucher)
 
         if (updateVoucher) {
             return response.status(201).json({ message: "Voucher Conformed Successfully", data: updateVoucher });

@@ -211,6 +211,7 @@ model Voucher {
   note             String?
   status           String?
   dueDays          Int?
+  // isPayment        Boolean          @default(true)
   isconform        Boolean          @default(true)
   party            Party?           @relation(fields: [partyId], references: [id])
   partyId          String?

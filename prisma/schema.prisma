@@ -111,6 +111,7 @@ model Party {
   shopImage        String?
   BRimage          String?
   nicImage         String?
+  nicBackImage     String?
   location         String?
   isVerified       Boolean?
   partyCategory    partyCategory?    @relation(fields: [partyCategoryId], references: [id])
@@ -211,7 +212,7 @@ model Voucher {
   note             String?
   status           String?
   dueDays          Int?
-  // isPayment        Boolean          @default(true)
+  isPayment        Boolean          @default(true)
   isconform        Boolean          @default(true)
   party            Party?           @relation(fields: [partyId], references: [id])
   partyId          String?

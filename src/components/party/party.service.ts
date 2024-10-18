@@ -1,7 +1,10 @@
 import { db } from "../../utils/db.server";
 
-export const list = async () => {
+export const list = async (id: any) => {
     return db.party.findMany({
+        where: {
+            partyGroupId: id,
+        },
         include: {
             user: {
                 select: {
@@ -39,10 +42,8 @@ export const getbyGroup = async (id: any, condition: boolean) => {
             },
             user: {
                 select: {
-                    name: true,  // Original name
+                    name: true,
                 },
-                // Change 'name' to 'userName' in the result
-                // You can map the result afterwards to create the desired structure.
             },
         }
     }).then(parties => {
@@ -78,15 +79,25 @@ export const update = async (data: any, id: any) => {
 
 export const updatewithImage = async (data: any, id: any) => {
     return db.party.update({
-        where: {id},
+        where: { id },
         data: data,
         include: {
             partyCategory: {
                 select: {
                     category: true
                 }
-            }
+            },
+            user: {
+                select: {
+                    name: true,
+                },
+            },
         }
-
+    }).then(party => {
+        return {
+            ...party,
+            userName: party.user?.name,  // Rename 'name' to 'userName'
+            user: undefined  // Optionally remove the original user object if not needed
+        };
     });
-}
+};

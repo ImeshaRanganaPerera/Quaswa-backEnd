@@ -41,7 +41,22 @@ voucherRouter.get("/pendingVouchers", async (request: Request, response: Respons
         if (pendingVoucher) {
             return response.status(200).json({ data: pendingVoucher });
         }
-        return response.status(404).json({ message: "Voucher Group could not be found" });
+        return response.status(404).json({ message: "Vouchers could not be found" });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+
+voucherRouter.get("/approvedVouchers", authenticate, async (request: ExpressRequest, response: Response) => {
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+        const approvedVochers = await voucherService.getApprovedVoucher(request.user.id)
+        if (approvedVochers) {
+            return response.status(200).json({ data: approvedVochers });
+        }
+        return response.status(404).json({ message: "Vouchers could not be found" });
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
     }
@@ -829,16 +844,16 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
             // Loop to create each payment voucher and capture the cheque payment voucher
             for (const voucher of paymentVouchers) {
                 const createdVoucher = await paymentVoucherService.create(voucher);
-                console.log(createdVoucher)
+       
                 // Check if this is the cheque voucher
                 if (voucher.paymentId === Cheque?.id) {
                     chequePaymentVoucher = createdVoucher;
                 }
-                console.log("Cheqpayemnt" + chequePaymentVoucher)
+       
             }
             // Now handle the cheque creation if applicable
             if (data.payment.cheque > 0 && chequePaymentVoucher) {
-                console.log(data.payment.chequeBookId);
+                
                 const cheque = await chequeService.create({
                     chequeNumber: data.payment.chequenumber.toString(),
                     chequeBankName: data.payment.chequeBankName,
@@ -873,10 +888,13 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                 }
             }
         }
+
         data = {
             ...data,
-            appovedBy: userId
+            appovedBy: data.appovedBy ? data.appovedBy : userId
         }
+
+        console.log(data)
         // Update the voucher confirmation status
         const updateVoucher = await voucherService.updatePendingVoucher(data, id);
 

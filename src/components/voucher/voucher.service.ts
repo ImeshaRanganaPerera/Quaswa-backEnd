@@ -62,6 +62,25 @@ export const getbyid = async (id: any) => {
     });
 }
 
+export const getApprovedVoucher = async (userid: any) => {
+    return db.voucher.findMany({
+        where: {
+            authUser: userid,
+            voucherNumber: {
+                startsWith: 'INV',
+            },
+            isconform: true,
+            isPayment: false,
+        },
+        include: {
+            voucherProduct: true,
+            user: { select: { name: true } },
+            journalLine: true,
+            party: true, // Include related party details
+        },
+    });
+};
+
 export const getPendingVoucherCondition = async () => {
     return db.voucher.findMany({
         where: {
@@ -108,7 +127,7 @@ export const getVoucherbyParty = async (id: any) => {
 }
 
 export const getVoucherbyPartytrue = async (id: any, condition: any) => {
-    const vouchers =  await db.voucher.findMany({
+    const vouchers = await db.voucher.findMany({
         where: {
             partyId: id,
             isconform: condition,
@@ -160,7 +179,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status,voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
         include: {
             party: true,
             voucherProduct: {
@@ -212,7 +231,7 @@ export const update = async (data: any, id: any) => {
 export const updatePendingVoucher = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
-        data: { amount: data.amount, appovedBy: data.appovedBy, isconform: true }
+        data: { amount: data.amount, appovedBy: data.appovedBy, isconform: data.isconform, isPayment: data.isPayment }
     });
 }
 

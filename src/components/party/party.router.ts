@@ -35,7 +35,8 @@ const upload = multer({
 //GET LIST
 partyRouter.get("/", async (request: Request, response: Response) => {
     try {
-        const party = await partyService.list()
+        const partyGroup = await partyGroupService.getbyname('CUSTOMER')
+        const party = await partyService.list(partyGroup?.id)
         if (party) {
             return response.status(200).json({ data: party });
         }
@@ -136,7 +137,7 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
     }
 })
 //POST
-partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage' }, { name: 'brImage' }, { name: 'nicImage' }]),
+partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage' }, { name: 'brImage' }, { name: 'nicImage' }, { name: 'nicBackImage' }]),
     async (request: ExpressRequest, response: Response) => {
         const data: any = request.body;
         const files = request.files as { [fieldname: string]: Express.Multer.File[] }; // Type assertion
@@ -156,10 +157,12 @@ partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage
             const shopImageUrl = files.shopImage && files.shopImage[0] ? `/uploads/${files.shopImage[0].filename}` : null;
             const BRimageUrl = files.brImage && files.brImage[0] ? `/uploads/${files.brImage[0].filename}` : null;
             const nicImageUrl = files.nicImage && files.nicImage[0] ? `/uploads/${files.nicImage[0].filename}` : null;
+            const nicBackImageUrl = files.nicBackImage && files.nicBackImage[0] ? `/uploads/${files.nicBackImage[0].filename}` : null;
 
             console.log('Shop Image URL:', shopImageUrl);
             console.log('BR Image URL:', BRimageUrl);
             console.log('NIC Image URL:', nicImageUrl);
+            console.log('NIC Back Image URL:', nicBackImageUrl);
 
             const subAcc =
                 data.partyGroup === "SUPPLIER"
@@ -200,6 +203,7 @@ partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage
                 shopImage: shopImageUrl,
                 BRimage: BRimageUrl,
                 nicImage: nicImageUrl,
+                nicBackImage: nicBackImageUrl,
                 chartofAccountId: chartofacc.id,
                 isVerified: data.partyGroup === "SUPPLIER",
                 partyCategoryId: partyCateId,
@@ -209,14 +213,17 @@ partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage
             });
 
             if (data.visitingCustomer) {
+                const visitingCustomer = JSON.parse(data.visitingCustomer); // Parse the JSON string
                 const visitingdata = {
                     partyId: newParty.id,
-                    note: data.visitingCustomer.note,
-                    status: data.visitingCustomer.status,
+                    note: visitingCustomer.note,
+                    status: visitingCustomer.status,
                     createdBy: userId,
                 };
                 await visitingCustomerService.create(visitingdata);
             }
+
+            console.log(data)
 
             if (newParty) {
                 return response.status(201).json({ message: `${data.partyGroup} Created Successfully`, data: newParty });
@@ -265,7 +272,7 @@ partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
     }
 })
 
-partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopImage' }, { name: 'brImage' }, { name: 'nicImage' }]),
+partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopImage' }, { name: 'brImage' }, { name: 'nicImage' }, { name: 'nicBackImage' }]),
     async (request: ExpressRequest, response: Response) => {
         const id: any = request.params.id;
         const data: any = request.body;
@@ -295,10 +302,12 @@ partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopIm
             const shopImageUrl = files.shopImage && files.shopImage[0] ? `/uploads/${files.shopImage[0].filename}` : existingParty.shopImage;
             const BRimageUrl = files.brImage && files.brImage[0] ? `/uploads/${files.brImage[0].filename}` : existingParty.BRimage;
             const nicImageUrl = files.nicImage && files.nicImage[0] ? `/uploads/${files.nicImage[0].filename}` : existingParty.nicImage;
+            const nicBackImageUrl = files.nicBackImage && files.nicBackImage[0] ? `/uploads/${files.nicBackImage[0].filename}` :  existingParty.nicBackImage;
 
             console.log('Shop Image URL:', shopImageUrl);
             console.log('BR Image URL:', BRimageUrl);
             console.log('NIC Image URL:', nicImageUrl);
+            console.log('NIC Back Image URL:', nicBackImageUrl);
 
             // Update the party details
             const updatedParty = await partyService.updatewithImage({
@@ -314,6 +323,7 @@ partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopIm
                 shopImage: shopImageUrl,
                 BRimage: BRimageUrl,
                 nicImage: nicImageUrl,
+                nicBackImage: nicBackImageUrl,
                 isVerified: data?.isVerified === 'true' ? true : false,
                 partyCategoryId: partyCateId,
                 partyGroupId: data.partyGroupId,
@@ -326,7 +336,7 @@ partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopIm
             }, updatedParty.chartofAccountId);
 
             if (updatedParty && chartOfAccount) {
-                return response.status(200).json({ message: "Party updated successfully", data: updatedParty });
+                return response.status(200).json({ message: "Customer Updated Successfully", data: updatedParty });
             }
         } catch (error: any) {
             return response.status(500).json({ message: error.message });

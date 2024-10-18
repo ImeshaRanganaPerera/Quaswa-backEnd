@@ -899,7 +899,7 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
         const updateVoucher = await voucherService.updatePendingVoucher(data, id);
 
         if (updateVoucher) {
-            return response.status(201).json({ message: "Voucher Conformed Successfully", data: updateVoucher });
+            return response.status(201).json({ message: "Transaction Conformed Successfully", data: updateVoucher });
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });

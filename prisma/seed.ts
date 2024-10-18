@@ -52,21 +52,21 @@ async function seed() {
         data: { level: 'Cash Discount', createdBy: userid }
     })
 
-    // await db.brand.createMany({
-    //     data: [
-    //         { brandName: "BMW", createdBy: userid },
-    //         { brandName: "TATA", createdBy: userid },
-    //         { brandName: "TOYOTA", createdBy: userid },
-    //     ]
-    // });
+    await db.brand.createMany({
+        data: [
+            { brandName: "BMW", createdBy: userid },
+            { brandName: "TATA", createdBy: userid },
+            { brandName: "TOYOTA", createdBy: userid },
+        ]
+    });
 
-    // await db.type.createMany({
-    //     data: [
-    //         { typeName: "OIL FILTER", createdBy: userid },
-    //         { typeName: "RIM", createdBy: userid },
-    //         { typeName: "BUFFER", createdBy: userid },
-    //     ]
-    // });
+    await db.type.createMany({
+        data: [
+            { typeName: "OIL FILTER", createdBy: userid },
+            { typeName: "RIM", createdBy: userid },
+            { typeName: "BUFFER", createdBy: userid },
+        ]
+    });
 
     await db.payment.createMany({
         data: [

@@ -8,26 +8,6 @@ import * as usercenterService from '../userCenter/userCenter.service'
 import { Role } from '@prisma/client';
 export const inventoryRouter = express.Router();
 
-
-// inventoryRouter.get("/stock", async (request: Request, response: Response) => {
-//     const { productId, centerId, date } = request.query;
-
-//     try {
-//       const stockData = await inventoryService.getStock(
-//         productId as string | undefined,
-//         centerId as string | undefined,
-//         date as string | undefined
-//       );
-
-//       if (stockData && stockData.length > 0) {
-//         return response.status(200).json({ data: stockData });
-//       }
-//       return response.status(404).json({ message: "No stock found for the provided filters." });
-//     } catch (error: any) {
-//       return response.status(500).json({ message: error.message });
-//     }
-//   });
-
 inventoryRouter.get("/filter", authenticate, async (request: ExpressRequest, response: Response) => {
     var { productId, centerId } = request.query;
     console.log(centerId)
@@ -46,6 +26,30 @@ inventoryRouter.get("/filter", authenticate, async (request: ExpressRequest, res
         const filteredInventory = await inventoryService.filterInventory(
             productId?.toString(),
             centerId?.toString()
+        );
+        return response.status(200).json({ data: filteredInventory });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});
+
+inventoryRouter.get("/stock", authenticate, async (request: ExpressRequest, response: Response) => {
+    var { productId, centerId, date } = request.query;
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        if (request.user.role === Role.SALESMEN) {
+            const center = await usercenterService.getbyId(request.user.id);
+            if (!centerId) {
+                centerId = center?.centerId;
+            }
+        }
+        const filteredInventory = await inventoryService.filterVoucherProduct(
+            productId?.toString(),
+            centerId?.toString(),
+            date ? new Date(date.toString()) : new Date()
         );
         return response.status(200).json({ data: filteredInventory });
     } catch (error: any) {

@@ -26,46 +26,6 @@ export const getbyProductId = async (id: any) => {
     });
 }
 
-// Filter inventory based on productId, centerId, and date
-// export const filterInventory = async (productId?: string, centerId?: string) => {
-//     const filterConditions: any = { status: true };
-
-//     // Apply filters based on productId and centerId
-//     if (productId) filterConditions.productId = productId;
-//     if (centerId) filterConditions.centerId = centerId;
-
-//     // Fetch inventory list filtered by productId and/or centerId
-//     const inventories = await db.inventory.findMany({
-//         where: filterConditions,
-//         include: {
-//             product: true,
-//             center: true,
-//         },
-//     });
-
-//     // Prepare the formatted result excluding inventories with 0 quantity
-//     const formattedInventory = inventories
-//         .filter((inventory) => new Decimal(inventory.quantity || 0).greaterThan(0)) // Filter out 0 quantity
-//         .map((inventory) => ({
-//             printName: inventory.product.printName || inventory.product.productName, // Use printName if available, otherwise productName
-//             qty: new Decimal(inventory.quantity || 0).toNumber(), // Quantity as a number
-//             mrp: new Decimal(inventory.product.MRP || 0).toNumber(), // MRP as a number
-//             cost: new Decimal(inventory.product.cost || 0).toNumber(), // Cost as a number
-//             centerName: inventory.center.centerName, // Center name
-//         }));
-
-//     // Calculate the total quantity across inventories
-//     let totalQuantity: Decimal = new Decimal(0);
-//     formattedInventory.forEach((inventory) => {
-//         totalQuantity = totalQuantity.plus(new Decimal(inventory.qty));
-//     });
-
-//     return {
-//         inventories: formattedInventory,
-//         totalQuantity: totalQuantity.toNumber(),
-//     };
-// };
-
 // Filter inventory based on productId, centerId, and date with 0 qty
 export const filterInventory = async (productId?: string, centerId?: string) => {
     const filterConditions: any = { status: true };
@@ -103,65 +63,6 @@ export const filterInventory = async (productId?: string, centerId?: string) => 
         totalQuantity: totalQuantity.toNumber(),
     };
 };
-
-// export const filterInventory = async (productId?: string, centerId?: string, date?: string) => {
-//     const filterConditions: any = {
-//         status: true,
-//     };
-
-//     // Filtering conditions based on productId and centerId
-//     if (productId) {
-//         filterConditions.productId = productId;
-//     }
-
-//     if (centerId) {
-//         filterConditions.centerId = centerId;
-//     }
-
-//     console.log("Filter Conditions:", filterConditions);
-
-//     // Fetch inventory list filtered by productId and/or centerId
-//     const inventories = await db.inventory.findMany({
-//         where: filterConditions,
-//         include: {
-//             product: true,
-//             center: true,
-//         },
-//     });
-
-//     console.log("Inventories fetched:", inventories);
-
-//     // Calculate total quantity for the specified date
-//     const currentDate = new Date();
-//     const filterDate = date ? new Date(date) : currentDate;
-
-//     const dateStart = new Date(filterDate.setHours(0, 0, 0, 0));
-//     const dateEnd = new Date(filterDate.setHours(23, 59, 59, 999));
-
-//     const inventoriesOnDate = await db.inventory.findMany({
-//         where: {
-//             status: true,
-//             updatedAt: {
-//                 gte: dateStart,
-//                 lt: dateEnd,
-//             },
-//         },
-//     });
-
-//     console.log("Inventories on date:", inventoriesOnDate);
-
-//     let totalQuantity: Decimal = new Decimal(0);
-//     inventoriesOnDate.forEach((inventory) => {
-//         if (inventory.quantity) {
-//             totalQuantity = totalQuantity.plus(new Decimal(inventory.quantity));
-//         }
-//     });
-
-//     return {
-//         inventories,
-//         totalQuantity,
-//     };
-// };
 
 export const upsert = async (data: any) => {
     if (data.cost) {
@@ -286,128 +187,126 @@ export const update = async (data: any, id: any) => {
     });
 }
 
-// interface StockRecord {
-//     productName: string;
-//     centerName: string;
-//     qty: Decimal;
-//     avgCost: number;
-//     avgMRP: number;
-// }
 
-// // Adjust the getStock function to refine filtering logic
-// export const getStock = async (productId?: string, centerId?: string, date?: string) => {
-//     const filterConditions: any = {};
+export const filterVoucherProduct = async (
+    productId?: string,
+    centerId?: string,
+    date: Date = new Date()
+) => {
+    const filterConditions: any = {
+        createdAt: {
+            lte: date, // Get vouchers created up to the specified date
+        },
+    };
 
-//     if (productId) {
-//         filterConditions.productId = productId;
-//     }
+    if (productId) filterConditions.productId = productId;
+    // Remove the direct centerId filter here; instead, we'll filter later
+    console.log('Filter Conditions:', filterConditions);
 
-//     if (centerId) {
-//         filterConditions.centerId = centerId;
-//     }
+    const voucherProducts = await db.voucherProduct.findMany({
+        where: filterConditions,
+        include: {
+            voucher: {
+                include: {
+                    voucherGroup: true,
+                    VoucherCenter: true,
+                },
+            },
+            product: true,
+            center: true,
+        },
+    });
 
-//     // Default to current date if no date is provided
-//     const currentDate = new Date();
-//     const filterDate = date ? new Date(date) : currentDate;
+    console.log('Fetched Voucher Products:', voucherProducts);
 
-//     // Set the filter to include all vouchers up to the end of the specified date
-//     const dateEnd = new Date(filterDate.setHours(23, 59, 59, 999));
+    const result: Record<string, any[]> = {};
 
-//     // Fetch voucherProduct list with necessary relations
-//     const voucherProducts = await db.voucherProduct.findMany({
-//         where: {
-//             voucher: {
-//                 date: {
-//                     lte: dateEnd, // Consider vouchers up to the specified date
-//                 },
-//                 voucherGroup: {
-//                     voucherName: {
-//                         in: ['GRN', 'INVOICE', 'SALES-RETURN', 'PURCHASE-RETURN', 'STOCK-TRANSFER'],
-//                     },
-//                 },
-//             },
-//             ...filterConditions, // Include productId and centerId conditions if provided
-//         },
-//         include: {
-//             product: true, // Include product details
-//             voucher: {
-//                 include: {
-//                     voucherGroup: true, // Include voucher group to filter by shortname
-//                     VoucherCenter: true, // Include VoucherCenter details for stock transfers
-//                 },
-//             },
-//             center: true, // Include center details
-//         },
-//     });
+    // Fetch centers for lookup by their IDs
+    const centerIds = [...new Set(voucherProducts.map(vp => vp.toCenterId).filter(id => id !== null))]; // Get unique toCenterIds
+    const centers = await db.center.findMany({
+        where: {
+            id: { in: centerIds },
+        },
+    });
+    const centerMap = new Map(centers.map(center => [center.id, center.centerName]));
+    console.log('Center Map:', Array.from(centerMap.entries()));
 
-//     // Define stockData as a Record object
-//     const stockData: Record<string, StockRecord> = {};
+    // Calculate quantities for each voucher product
+    voucherProducts.forEach((voucherProduct) => {
+        const voucherGroup = voucherProduct.voucher.voucherGroup.voucherName;
+        const centerName = voucherProduct.center?.centerName || 'Unknown';
+        const productName = voucherProduct.product.printName || 'Unknown Product'; // Ensure productName is always a string
 
-//     // Iterate through each voucherProduct and calculate the totals
-//     for (const vp of voucherProducts) {
-//         const productName = vp.product.printName || vp.product.productName;
-//         const centerName = vp.center?.centerName || 'Unknown Center';
-//         const key = `${productName}-${centerName}`;
+        // Ensure quantity is treated as Decimal
+        let quantity = new Decimal(voucherProduct.quantity);
 
-//         // Initialize stock data for this product-center pair if not already initialized
-//         if (!stockData[key]) {
-//             stockData[key] = {
-//                 productName,
-//                 centerName,
-//                 qty: new Decimal(0),
-//                 avgCost: 0,
-//                 avgMRP: 0,
-//             };
-//         }
+        // Handle stock transfer
+        if (voucherGroup === 'STOCK-TRANSFER') {
+            // Deduct quantity from the source center
+            if (voucherProduct.centerId) {
+                if (!result[centerName]) {
+                    result[centerName] = [];
+                }
+                addOrUpdateProduct(result[centerName], productName, quantity.neg(), voucherProduct);
+            }
+            // Add quantity to the destination center
+            if (voucherProduct.toCenterId) {
+                const toCenterName = centerMap.get(voucherProduct.toCenterId) || 'Unknown'; // Get destination center name
+                if (!result[toCenterName]) {
+                    result[toCenterName] = [];
+                }
+                addOrUpdateProduct(result[toCenterName], productName, quantity, voucherProduct);
+            }
+        } else {
+            if (['INVOICE', 'PURCHASE-RETURN', 'GRN', 'SALES-RETURN'].includes(voucherGroup)) {
+                if (!result[centerName]) {
+                    result[centerName] = [];
+                }
+                const adjustedQuantity = ['INVOICE', 'PURCHASE-RETURN'].includes(voucherGroup) ? quantity.neg() : quantity;
+                addOrUpdateProduct(result[centerName], productName, adjustedQuantity, voucherProduct);
+            }
+        }
+    });
 
-//         const stockRecord = stockData[key];
+    console.log('Result before filtering:', result);
 
-//         // Handle quantity based on voucherGroup and centerStatus (for stock transfers)
-//         if (['GRN', 'SALES-RETURN'].includes(vp.voucher.voucherGroup.voucherName)) {
-//             stockRecord.qty = stockRecord.qty.plus(new Decimal(vp.quantity));
-//         } else if (['INVOICE', 'PURCHASE-RETURN'].includes(vp.voucher.voucherGroup.voucherName)) {
-//             stockRecord.qty = stockRecord.qty.minus(new Decimal(vp.quantity));
-//         } else if (vp.voucher.voucherGroup.voucherName === 'STOCK-TRANSFER') {
-//             // Handle stock transfers based on center status
-//             for (const vc of vp.voucher.VoucherCenter) {
-//                 if (vc.centerId === vp.centerId) {
-//                     if (vc.centerStatus === 'IN') {
-//                         stockRecord.qty = stockRecord.qty.plus(new Decimal(vp.quantity));
-//                     } else if (vc.centerStatus === 'OUT') {
-//                         stockRecord.qty = stockRecord.qty.minus(new Decimal(vp.quantity));
-//                     }
-//                 }
-//             }
-//         }
+    // Filter the result to return only the specified center if centerId is provided
+    if (centerId) {
+        const centerName = centerMap.get(centerId);
+        if (centerName) {
+            return { [centerName]: result[centerName] || [] }; // Only return the specific center
+        } else {
+            console.warn('No center found for centerId:', centerId);
+            return {}; // Return empty if the centerId does not exist in the map
+        }
+    }
 
-//         // Add cost and MRP values for average calculation
-//         stockRecord.avgCost = stockRecord.qty.gt(0) ? stockRecord.avgCost + new Decimal(vp.cost).times(vp.quantity).toNumber() : stockRecord.avgCost;
-//         stockRecord.avgMRP = stockRecord.qty.gt(0) ? stockRecord.avgMRP + new Decimal(vp.MRP).times(vp.quantity).toNumber() : stockRecord.avgMRP;
-//     }
+    return result;
+};
 
-//     // Prepare final result array with all products, including those with 0 quantity
-//     const result: StockRecord[] = [];
+// Helper function to add or update product in the result array
+const addOrUpdateProduct = (
+    centerProducts: any[],
+    productName: string,
+    quantity: Decimal,
+    voucherProduct: any
+) => {
+    const existingProductIndex = centerProducts.findIndex((item: any) => item.productName === productName);
 
-//     Object.values(stockData).forEach(record => {
-//         // Calculate average cost and MRP only if qty > 0
-//         const avgCost = record.qty.gt(0) ? new Decimal(record.avgCost).div(record.qty).toNumber() : 0;
-//         const avgMRP = record.qty.gt(0) ? new Decimal(record.avgMRP).div(record.qty).toNumber() : 0;
-
-//         // Add the record to result array
-//         result.push({
-//             productName: record.productName,
-//             centerName: record.centerName,
-//             qty: record.qty,
-//             avgCost,
-//             avgMRP,
-//         });
-//     });
-
-//     return result;
-// };
-
-
-
+    if (existingProductIndex > -1) {
+        const existingProduct = centerProducts[existingProductIndex];
+        existingProduct.quantity = new Decimal(existingProduct.quantity).plus(quantity);
+        existingProduct.cost = new Decimal(voucherProduct.product.cost || 0);
+        existingProduct.MRP = new Decimal(voucherProduct.product.MRP || 0);
+    } else {
+        centerProducts.push({
+            productName: productName,
+            MRP: new Decimal(voucherProduct.product.MRP || 0),
+            cost: new Decimal(voucherProduct.product.cost || 0),
+            quantity: quantity,
+        });
+    }
+};
 
 
 

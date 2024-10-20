@@ -191,6 +191,8 @@ async function seed() {
             { voucherName: "PETTY-CASH-IOU", shortname: "PC-IOU", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Petty Cash IOU" },
             { voucherName: "SUPPLIER-BILL", shortname: "SUPPLIER-BC", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Supplier Bill" },
             { voucherName: "JOURNAL-ENTRY", shortname: "JE", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Journal Entry" },
+            { voucherName: "MAKE-DEPOSIT", shortname: "MD", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Make Deposit" },
+            { voucherName: "ADVANCE-PAYMENT", shortname: "ADPAY", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Make Deposit" },
         ]
     });
 

@@ -92,7 +92,7 @@ export const getPendingVoucherCondition = async () => {
                 },
                 {
                     voucherNumber: {
-                        startsWith: 'SALES-R',
+                        startsWith: 'SRET',
                     },
                 },
             ],

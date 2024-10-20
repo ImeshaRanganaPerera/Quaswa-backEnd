@@ -21,6 +21,22 @@ chartofAccRouter.get("/", async (request: Request, response: Response) => {
     }
 })
 
+chartofAccRouter.get("/makeDepositacc", async (request: Request, response: Response) => {
+    const name: any = request.params.name;
+    try {
+        
+        const data = await chartofaccService.getdepositAcc()
+        console.log(data)
+        if (data) {
+            return response.status(200).json({ data: data });
+        }
+        return response.status(404).json({ message: "Chart of Account could not be found" });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+
+
 chartofAccRouter.get("/chartofaccSum/:name", async (request: Request, response: Response) => {
     const name: any = request.params.name;
     try {

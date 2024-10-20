@@ -187,6 +187,20 @@ export const update = async (data: any, id: any) => {
     });
 }
 
+export const updates = async (data: any, productId: any, centerId: any) => {
+    return db.inventory.update({
+        where: {
+            productId_centerId: {
+                productId: productId,
+                centerId: centerId,
+            },
+        },
+        data: {
+            quantity: data.quantity,
+        },
+    });
+}
+
 
 export const filterVoucherProduct = async (
     productId?: string,
@@ -200,8 +214,6 @@ export const filterVoucherProduct = async (
     };
 
     if (productId) filterConditions.productId = productId;
-    // Remove the direct centerId filter here; instead, we'll filter later
-    console.log('Filter Conditions:', filterConditions);
 
     const voucherProducts = await db.voucherProduct.findMany({
         where: filterConditions,
@@ -217,8 +229,6 @@ export const filterVoucherProduct = async (
         },
     });
 
-    console.log('Fetched Voucher Products:', voucherProducts);
-
     const result: Record<string, any[]> = {};
 
     // Fetch centers for lookup by their IDs
@@ -229,7 +239,6 @@ export const filterVoucherProduct = async (
         },
     });
     const centerMap = new Map(centers.map(center => [center.id, center.centerName]));
-    console.log('Center Map:', Array.from(centerMap.entries()));
 
     // Calculate quantities for each voucher product
     voucherProducts.forEach((voucherProduct) => {
@@ -267,8 +276,6 @@ export const filterVoucherProduct = async (
             }
         }
     });
-
-    console.log('Result before filtering:', result);
 
     // Filter the result to return only the specified center if centerId is provided
     if (centerId) {

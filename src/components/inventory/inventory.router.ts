@@ -22,7 +22,7 @@ inventoryRouter.get("/filter", authenticate, async (request: ExpressRequest, res
                 centerId = center?.centerId;
             }
         }
-        
+
         const filteredInventory = await inventoryService.filterInventory(
             productId?.toString(),
             centerId?.toString()
@@ -35,11 +35,11 @@ inventoryRouter.get("/filter", authenticate, async (request: ExpressRequest, res
 
 inventoryRouter.get("/stock", authenticate, async (request: ExpressRequest, response: Response) => {
     var { productId, centerId, date } = request.query;
+    console.log(productId, centerId, date)
     try {
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-
         if (request.user.role === Role.SALESMEN) {
             const center = await usercenterService.getbyId(request.user.id);
             if (!centerId) {
@@ -71,6 +71,25 @@ inventoryRouter.get("/:id", async (request: Request, response: Response) => {
         return response.status(500).json({ message: error.message });
     }
 })
+
+inventoryRouter.put("/", authenticate, async (request: ExpressRequest, response: Response) => {
+    const data: any = request.body;
+    console.log(data)
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+        const inventoryUpdate = await inventoryService.updates(data, data.productId, data.centerId)
+
+        if (inventoryUpdate) {
+            return response.status(201).json({ message: "Inventory Updated Successfully", data: inventoryUpdate });
+        }
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
+
+
 
 
 

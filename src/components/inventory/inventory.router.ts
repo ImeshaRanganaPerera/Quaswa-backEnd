@@ -72,22 +72,22 @@ inventoryRouter.get("/:id", async (request: Request, response: Response) => {
     }
 })
 
-inventoryRouter.put("/", authenticate, async (request: ExpressRequest, response: Response) => {
-    const data: any = request.body;
-    console.log(data)
-    try {
-        if (!request.user) {
-            return response.status(401).json({ message: "User not authorized" });
-        }
-        const inventoryUpdate = await inventoryService.updates(data, data.productId, data.centerId)
+// inventoryRouter.put("/", authenticate, async (request: ExpressRequest, response: Response) => {
+//     const data: any = request.body;
+//     console.log(data)
+//     try {
+//         if (!request.user) {
+//             return response.status(401).json({ message: "User not authorized" });
+//         }
+//         const inventoryUpdate = await inventoryService.updates(data, data.productId, data.centerId)
 
-        if (inventoryUpdate) {
-            return response.status(201).json({ message: "Inventory Updated Successfully", data: inventoryUpdate });
-        }
-    } catch (error: any) {
-        return response.status(500).json(error.message);
-    }
-})
+//         if (inventoryUpdate) {
+//             return response.status(201).json({ message: "Inventory Updated Successfully", data: inventoryUpdate });
+//         }
+//     } catch (error: any) {
+//         return response.status(500).json(error.message);
+//     }
+// })
 
 
 

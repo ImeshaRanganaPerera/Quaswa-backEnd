@@ -1,7 +1,14 @@
 import { db } from "../../utils/db.server";
 
-export const list = async () => {
+export const list = async (startdate: any, enddate: any, userId?: any) => {
     return db.vistingCustomer.findMany({
+        where: {
+            ...(userId && {createdBy: userId }),
+            createdAt: {
+                gte: startdate,
+                lte: enddate,
+            },
+        },
         include: {
             party: {
                 select: {

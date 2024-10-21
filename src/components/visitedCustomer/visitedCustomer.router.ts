@@ -4,18 +4,39 @@ import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as visitingCustomerService from './visitedCustomer.service'
+import { Role } from "@prisma/client";
 
 export const visitingCustomerRouter = express.Router();
 
 //GET LIST
-visitingCustomerRouter.get("/", async (request: Request, response: Response) => {
+visitingCustomerRouter.get("/",authenticate, async (request: ExpressRequest, response: Response) => {
+    var { startDate, endDate, userId } = request.query;
+    console.log(startDate, endDate, userId)
     try {
-        const data = await visitingCustomerService.list()
+
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        if (request.user.role === Role.SALESMEN) {
+            userId = request.user?.id;
+        }
+
+        const filterStartDate = startDate ? new Date(startDate as string) : new Date();
+        filterStartDate.setHours(0, 0, 0, 0); // Set start of the day
+        const filterEndDate = endDate ? new Date(endDate as string) : new Date();
+        filterEndDate.setHours(23, 59, 59, 999); // Set end of the day
+
+        if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
+            return response.status(400).json({ message: "Invalid date format." });
+        }
+
+        const data = await visitingCustomerService.list(filterStartDate, filterEndDate, userId);
         return response.status(200).json({ data: data });
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
     }
-})
+});
 
 //GET 
 visitingCustomerRouter.get("/:id", async (request: Request, response: Response) => {

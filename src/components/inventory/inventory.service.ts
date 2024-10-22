@@ -209,7 +209,7 @@ export const filterVoucherProduct = async (
 ) => {
     const filterConditions: any = {
         createdAt: {
-            lte: date, // Get vouchers created up to the specified date
+            lte: date, 
         },
     };
 
@@ -287,7 +287,6 @@ export const filterVoucherProduct = async (
             return {}; // Return empty if the centerId does not exist in the map
         }
     }
-
     return result;
 };
 
@@ -313,6 +312,67 @@ const addOrUpdateProduct = (
             quantity: quantity,
         });
     }
+};
+
+export const filterStockMovement = async (
+    productId: string,
+    centerId: string,
+    date: Date = new Date()
+) => {
+    const filterConditions: any = {
+        createdAt: {
+            lte: date, 
+        },
+    };
+
+    if (productId) filterConditions.productId = productId;
+    if (centerId) filterConditions.centerId = centerId;
+
+    const voucherProducts = await db.voucherProduct.findMany({
+        where: filterConditions,
+        include: {
+            voucher: {
+                include: {
+                    voucherGroup: true, // Fetch voucherGroup for voucherName
+                },
+            },
+            product: true, // Fetch product details
+            center: true,  // Fetch center details
+        },
+        orderBy: {
+            createdAt: 'asc', // Order by createdAt in ascending order (oldest first). You can use 'desc' for descending.
+        },
+    });
+
+    if (!voucherProducts.length) {
+        return { message: 'No records found for the given criteria.' };
+    }
+
+    // Calculate average cost and MRP and organize the result
+    const result = voucherProducts.map(voucherProduct => {
+        const {
+            voucher: { voucherNumber, voucherGroup },
+            quantity,
+            cost,
+            MRP,
+            createdAt,
+        } = voucherProduct;
+
+        const averageCost = cost.div(quantity);  // Average cost calculation
+        const averageMRP = MRP.div(quantity);    // Average MRP calculation
+        const voucherName = voucherGroup.voucherName; // Voucher Group Name
+
+        return {
+            date: createdAt,
+            voucherName,
+            voucherNumber,
+            averageCost: averageCost.toFixed(2),
+            averageMRP: averageMRP.toFixed(2),
+            quantity: quantity.toFixed(2), // Convert Decimal to string
+        };
+    });
+
+    return result;
 };
 
 

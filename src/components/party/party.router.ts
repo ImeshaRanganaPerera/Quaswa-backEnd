@@ -87,6 +87,11 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
             return response.status(401).json({ message: "Party Group Undefined" });
         }
 
+        const phoneNumber = await partyService.phoneNumberCheck(data.phoneNumber)
+        if (phoneNumber?.phoneNumber === data.phoneNumber) {
+            return response.status(401).json({ message: "Phone Number Already Exists" });
+        }
+
         var subAcc;
         var accGroup
         var isverified = false
@@ -149,6 +154,11 @@ partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage
             const userId = request.user.id;
             if (!data.partyGroup) {
                 return response.status(401).json({ message: "Party Group Undefined" });
+            }
+
+            const phoneNumber = await partyService.phoneNumberCheck(data.phoneNumber)
+            if (phoneNumber?.phoneNumber === data.phoneNumber) {
+                return response.status(401).json({ message: "Phone Number Already Exists" });
             }
 
             console.log(files);  // This will show you the structure of files being uploaded
@@ -249,6 +259,16 @@ partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: 
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
+
+        const oldphoneNumber = await partyService.get(id)
+        if (oldphoneNumber?.phoneNumber !== data.phoneNumber) {
+            const phoneNumber = await partyService.phoneNumberCheck(data.phoneNumber)
+            if (phoneNumber?.phoneNumber === data.phoneNumber) {
+                return response.status(401).json({ message: "Phone Number Already Exists" });
+            }
+        }
+
+
         var partyCateId;
         var partycategory;
         if (data.partyGroup === "SUPPLIER") {
@@ -283,6 +303,14 @@ partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopIm
                 return response.status(401).json({ message: "User not authorized" });
             }
 
+            const oldphoneNumber = await partyService.get(id)
+            if (oldphoneNumber?.phoneNumber !== data.phoneNumber) {
+                const phoneNumber = await partyService.phoneNumberCheck(data.phoneNumber)
+                if (phoneNumber?.phoneNumber === data.phoneNumber) {
+                    return response.status(401).json({ message: "Phone Number Already Exists" });
+                }
+            }
+
             // Get the existing party data
             const existingParty = await partyService.get(id);
             if (!existingParty) {
@@ -302,7 +330,7 @@ partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopIm
             const shopImageUrl = files.shopImage && files.shopImage[0] ? `/uploads/${files.shopImage[0].filename}` : existingParty.shopImage;
             const BRimageUrl = files.brImage && files.brImage[0] ? `/uploads/${files.brImage[0].filename}` : existingParty.BRimage;
             const nicImageUrl = files.nicImage && files.nicImage[0] ? `/uploads/${files.nicImage[0].filename}` : existingParty.nicImage;
-            const nicBackImageUrl = files.nicBackImage && files.nicBackImage[0] ? `/uploads/${files.nicBackImage[0].filename}` :  existingParty.nicBackImage;
+            const nicBackImageUrl = files.nicBackImage && files.nicBackImage[0] ? `/uploads/${files.nicBackImage[0].filename}` : existingParty.nicBackImage;
 
             console.log('Shop Image URL:', shopImageUrl);
             console.log('BR Image URL:', BRimageUrl);

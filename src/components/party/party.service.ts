@@ -28,6 +28,14 @@ export const get = async (id: any) => {
     });
 }
 
+export const phoneNumberCheck = async (phoneNumber: any) => {
+    return db.party.findFirst({
+        where: {
+            phoneNumber,
+        },
+    })
+}
+
 export const getbyGroup = async (id: any, condition: boolean) => {
     return db.party.findMany({
         where: {

@@ -467,7 +467,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             }
         }
         else {
-
             if (data.payment) {
                 const onlineTransfer = await paymentService.getbyname('Online Transfer');
                 const cash = await paymentService.getbyname('Cash');

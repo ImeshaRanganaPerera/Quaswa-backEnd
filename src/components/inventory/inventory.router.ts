@@ -57,6 +57,37 @@ inventoryRouter.get("/stock", authenticate, async (request: ExpressRequest, resp
     }
 });
 
+inventoryRouter.get("/stockMovement", authenticate, async (request: Request, response: Response) => {
+    let { productId, centerId, date } = request.query;
+
+    try {
+        // Parse the date from query or use the current date
+        const parsedDate = date ? new Date(date.toString()) : new Date();
+
+        // Ensure productId and centerId are strings (or empty strings if undefined)
+        const productIdStr = productId?.toString() || "";
+        const centerIdStr = centerId?.toString() || "";
+
+        // Fetch stock movement based on productId, centerId, and date
+        const stockMovement = await inventoryService.filterStockMovement(
+            productIdStr,
+            centerIdStr,
+            parsedDate
+        );
+
+        // If no records found, return a message
+        if (Array.isArray(stockMovement) && !stockMovement.length) {
+            return response.status(404).json({ message: "No records found for the given criteria." });
+        }
+
+        // Return stock movement data
+        return response.status(200).json({ data: stockMovement });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});
+
+
 
 //GET LIST
 inventoryRouter.get("/:id", async (request: Request, response: Response) => {

@@ -232,6 +232,28 @@ voucherRouter.get("/refVoucher", async (request: Request, response: Response) =>
     }
 });
 
+voucherRouter.get("/refVoucherbyChartofacc", async (request: Request, response: Response) => {
+    try {
+        const { VoucherGrpName, partyId } = request.query;
+        console.log(partyId)
+        if (!VoucherGrpName) {
+            return response.status(400).json({ message: "VoucherGrpname is required." });
+        }
+        const grpname = await voucherGrpService.getbyname(VoucherGrpName)
+        const party = await partyService.get(partyId)
+        const vouchers = await voucherService.getRefVoucherbychartofacc({ voucherGroupId: grpname?.id, partyId: party?.chartofAccountId });
+
+        if (!vouchers || vouchers.length === 0) {
+            return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });
+        }
+
+        return response.status(200).json({ data: vouchers });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
 voucherRouter.get("/vouchersByAuthUser", async (req: Request, res: Response) => {
     try {
         let { month, year } = req.query;
@@ -386,10 +408,11 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             voucherGroupId: voucherGrpdetails?.id,
             createdBy: userId
         })
+
         if (data.refVoucherNumber) {
             await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data.amount, isRef: data.isRef, voucherId: newVoucher.voucherNumber, status: data?.status })
         }
-        console.log(data)
+
         if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
             const centerPromises = data.productList.map(async (product: any) => {
                 const voucherProduct = await productVoucherService.create({
@@ -839,16 +862,16 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
             // Loop to create each payment voucher and capture the cheque payment voucher
             for (const voucher of paymentVouchers) {
                 const createdVoucher = await paymentVoucherService.create(voucher);
-       
+
                 // Check if this is the cheque voucher
                 if (voucher.paymentId === Cheque?.id) {
                     chequePaymentVoucher = createdVoucher;
                 }
-       
+
             }
             // Now handle the cheque creation if applicable
             if (data.payment.cheque > 0 && chequePaymentVoucher) {
-                
+
                 const cheque = await chequeService.create({
                     chequeNumber: data.payment.chequenumber.toString(),
                     chequeBankName: data.payment.chequeBankName,

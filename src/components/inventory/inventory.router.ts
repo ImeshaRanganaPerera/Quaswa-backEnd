@@ -57,36 +57,32 @@ inventoryRouter.get("/stock", authenticate, async (request: ExpressRequest, resp
     }
 });
 
-inventoryRouter.get("/stockMovement", authenticate, async (request: Request, response: Response) => {
-    let { productId, centerId, date } = request.query;
-
+inventoryRouter.get("/stockMovement", authenticate, async (request: ExpressRequest, response: Response) => {
+    // Extract query parameters
+    const productId = request.query.productId?.toString();
+    const centerId = request.query.centerId?.toString();
+    const date = request.query.date ? new Date(request.query.date.toString()) : new Date();
+    console.log(productId, centerId, date)
     try {
-        // Parse the date from query or use the current date
-        const parsedDate = date ? new Date(date.toString()) : new Date();
-
-        // Ensure productId and centerId are strings (or empty strings if undefined)
-        const productIdStr = productId?.toString() || "";
-        const centerIdStr = centerId?.toString() || "";
-
-        // Fetch stock movement based on productId, centerId, and date
-        const stockMovement = await inventoryService.filterStockMovement(
-            productIdStr,
-            centerIdStr,
-            parsedDate
-        );
-
-        // If no records found, return a message
-        if (Array.isArray(stockMovement) && !stockMovement.length) {
-            return response.status(404).json({ message: "No records found for the given criteria." });
+        // Check for user authentication
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
         }
 
-        // Return stock movement data
-        return response.status(200).json({ data: stockMovement });
+        // Call the service function to get stock movement data
+        const stockMovementData = await inventoryService.getStockMovement(
+            productId || '',  // or handle as needed if productId is required
+            centerId || '',   // or handle as needed if centerId is required
+            date
+        );
+
+        // Respond with the retrieved data
+        return response.status(200).json({ data: stockMovementData });
     } catch (error: any) {
+        // Handle any errors that occur during the process
         return response.status(500).json({ message: error.message });
     }
 });
-
 
 
 //GET LIST
@@ -102,6 +98,9 @@ inventoryRouter.get("/:id", async (request: Request, response: Response) => {
         return response.status(500).json({ message: error.message });
     }
 })
+
+
+
 
 // inventoryRouter.put("/", authenticate, async (request: ExpressRequest, response: Response) => {
 //     const data: any = request.body;

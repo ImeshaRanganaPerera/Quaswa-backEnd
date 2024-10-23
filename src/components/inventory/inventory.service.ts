@@ -209,7 +209,7 @@ export const filterVoucherProduct = async (
 ) => {
     const filterConditions: any = {
         createdAt: {
-            lte: date, 
+            lte: date,
         },
     };
 
@@ -256,7 +256,7 @@ export const filterVoucherProduct = async (
                 if (!result[centerName]) {
                     result[centerName] = [];
                 }
-                addOrUpdateProduct(result[centerName], productName, quantity.neg(), voucherProduct);
+                addOrUpdateProduct(result[centerName], productName, quantity.neg(), voucherProduct, voucherProduct.centerId as string); // Cast to string
             }
             // Add quantity to the destination center
             if (voucherProduct.toCenterId) {
@@ -264,7 +264,7 @@ export const filterVoucherProduct = async (
                 if (!result[toCenterName]) {
                     result[toCenterName] = [];
                 }
-                addOrUpdateProduct(result[toCenterName], productName, quantity, voucherProduct);
+                addOrUpdateProduct(result[toCenterName], productName, quantity, voucherProduct, voucherProduct.toCenterId as string); // Cast to string
             }
         } else {
             if (['INVOICE', 'PURCHASE-RETURN', 'GRN', 'SALES-RETURN'].includes(voucherGroup)) {
@@ -272,7 +272,11 @@ export const filterVoucherProduct = async (
                     result[centerName] = [];
                 }
                 const adjustedQuantity = ['INVOICE', 'PURCHASE-RETURN'].includes(voucherGroup) ? quantity.neg() : quantity;
-                addOrUpdateProduct(result[centerName], productName, adjustedQuantity, voucherProduct);
+
+                // Ensure centerId is not null
+                if (voucherProduct.centerId) {
+                    addOrUpdateProduct(result[centerName], productName, adjustedQuantity, voucherProduct, voucherProduct.centerId as string); // Cast to string
+                }
             }
         }
     });
@@ -295,7 +299,8 @@ const addOrUpdateProduct = (
     centerProducts: any[],
     productName: string,
     quantity: Decimal,
-    voucherProduct: any
+    voucherProduct: any,
+    centerId: string // centerId should be a string
 ) => {
     const existingProductIndex = centerProducts.findIndex((item: any) => item.productName === productName);
 
@@ -310,70 +315,100 @@ const addOrUpdateProduct = (
             MRP: new Decimal(voucherProduct.product.MRP || 0),
             cost: new Decimal(voucherProduct.product.cost || 0),
             quantity: quantity,
+            centerId: centerId,  // Add centerId to the response
+            productId: voucherProduct.product.id, // Add productId to the response
         });
     }
 };
 
-export const filterStockMovement = async (
-    productId: string,
-    centerId: string,
-    date: Date = new Date()
-) => {
-    const filterConditions: any = {
-        createdAt: {
-            lte: date, 
+export const getStockMovement = async (productId: string, centerId: string, date: Date) => {
+    // Fetch stock movement based on the criteria
+    console.log(productId, centerId, date);
+
+    const stockMovements = await db.voucherProduct.findMany({
+        where: {
+            productId: productId,
+            createdAt: { lte: date },
+            voucher: {
+                voucherGroup: {
+                    voucherName: {
+                        in: ['INVOICE', 'PURCHASE-RETURN', 'GRN', 'SALES-RETURN', 'STOCK-TRANSFER'],
+                    },
+                },
+                VoucherCenter: {
+                    some: {
+                        centerId: centerId
+                    }
+                }
+            }
         },
-    };
-
-    if (productId) filterConditions.productId = productId;
-    if (centerId) filterConditions.centerId = centerId;
-
-    const voucherProducts = await db.voucherProduct.findMany({
-        where: filterConditions,
         include: {
+            product: true,
             voucher: {
                 include: {
-                    voucherGroup: true, // Fetch voucherGroup for voucherName
-                },
+                    voucherGroup: true,
+                    party: true,
+                    VoucherCenter: true,
+                }
             },
-            product: true, // Fetch product details
-            center: true,  // Fetch center details
         },
         orderBy: {
-            createdAt: 'asc', // Order by createdAt in ascending order (oldest first). You can use 'desc' for descending.
-        },
+            createdAt: 'asc'
+        }
     });
 
-    if (!voucherProducts.length) {
-        return { message: 'No records found for the given criteria.' };
-    }
+    // Prepare the result based on your criteria
+    const result: any[] = [];
 
-    // Calculate average cost and MRP and organize the result
-    const result = voucherProducts.map(voucherProduct => {
-        const {
-            voucher: { voucherNumber, voucherGroup },
-            quantity,
-            cost,
-            MRP,
-            createdAt,
-        } = voucherProduct;
+    stockMovements.forEach((voucherProduct) => {
+        const voucherGroup = voucherProduct.voucher.voucherGroup.voucherName;
+        const date = voucherProduct.voucher.date;
 
-        const averageCost = cost.div(quantity);  // Average cost calculation
-        const averageMRP = MRP.div(quantity);    // Average MRP calculation
-        const voucherName = voucherGroup.voucherName; // Voucher Group Name
+        // Check if VoucherCenter has a center and retrieve its name
+        const productName = voucherProduct.product.printName || 'Unknown Product';
 
-        return {
-            date: createdAt,
-            voucherName,
-            voucherNumber,
-            averageCost: averageCost.toFixed(2),
-            averageMRP: averageMRP.toFixed(2),
-            quantity: quantity.toFixed(2), // Convert Decimal to string
-        };
+        let qtyIn = new Decimal(0);
+        let qtyOut = new Decimal(0);
+        const mrp = new Decimal(voucherProduct.product.MRP || 0);
+        const cost = new Decimal(voucherProduct.product.cost || 0);
+        const voucherNumber = voucherProduct.voucher.voucherNumber;
+        const partyName = voucherProduct.voucher.party?.name || '-';
+
+        // Determine qty In and qty Out based on the voucherGroup
+        if (['GRN', 'SALES-RETURN'].includes(voucherGroup)) {
+            qtyIn = qtyIn.plus(voucherProduct.quantity);
+        } else if (['INVOICE', 'PURCHASE-RETURN'].includes(voucherGroup)) {
+            qtyOut = qtyOut.plus(voucherProduct.quantity);
+        } else if (voucherGroup === 'STOCK-TRANSFER') {
+            // Check if the centerId matches
+            if (voucherProduct.centerId === centerId) {
+                qtyOut = qtyOut.plus(voucherProduct.quantity);
+            }
+            // Check if the toCenterId matches
+            if (voucherProduct.toCenterId === centerId) {
+                qtyIn = qtyIn.plus(voucherProduct.quantity);
+            }
+        }
+
+        // Add the record to the result array
+        result.push({
+            date: date,
+            printName: productName,
+            voucherName: voucherGroup,
+            voucherNumber: voucherNumber,
+            partyName: partyName,
+            qtyIn: qtyIn.toNumber(), // Convert Decimal to number for the response
+            qtyOut: qtyOut.toNumber(), // Convert Decimal to number for the response
+            mrp: mrp.toNumber(), // Convert Decimal to number for the response
+            cost: cost.toNumber(), // Convert Decimal to number for the response
+            centerId: centerId
+        });
     });
 
     return result;
 };
+
+
 
 
 

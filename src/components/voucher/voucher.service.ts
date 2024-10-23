@@ -780,6 +780,47 @@ export const getVouchersByUserAndDateRange = async (userId: string, startDate?: 
     });
 };
 
+export const getRefVoucherbychartofacc = async (data: any) => {
+    return db.voucher.findMany({
+        where: {
+            voucherGroupId: data.voucherGroupId,
+            chartofAccountId: data.chartofAccountId,
+            isRef: false,
+            OR: [
+                { status: 'PENDING' },
+                { status: null },
+            ],
+        },
+        include: {
+            voucherProduct: {
+                select: {
+                    MRP: true,
+                    amount: true,
+                    centerId: true,
+                    cost: true,
+                    createdAt: true,
+                    id: true,
+                    isdisabale: true,
+                    minPrice: true,
+                    discount: true,
+                    productId: true,
+                    quantity: true,
+                    remainingQty: true,
+                    sellingPrice: true,
+                    updatedAt: true,
+                    voucherId: true,
+                    product: {
+                        select: {
+                            productName: true,
+                            printName: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 export const getRefVoucherbyVoucherGrpid = async (data: any) => {
     return db.voucher.findMany({
         where: {

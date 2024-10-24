@@ -71,10 +71,7 @@ journalLineRouter.get("/trialBalance", async (request: Request, response: Respon
         // Parse the endDate, set it to the end of the day if provided, or use today's date
         const filterEndDate = endDate ? new Date(endDate as string) : new Date();
         filterEndDate.setHours(23, 59, 59, 999); // Set the time to the end of the day
-
-        // Log the parameters for debugging
-        console.log(`Filtering journal lines for chartofAccountId=${chartofAccountId || "ALL"} between ${filterStartDate} and ${filterEndDate}`);
-
+        
         // Validate the parsed dates
         if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
             return response.status(400).json({ message: "Invalid date format." });

@@ -65,8 +65,7 @@ export const getTrialBalance = async (chartofAccountId: string | null, startDate
     const accBalances = await db.journalLine.findMany({
         where: {
             ...(chartofAccountId && { chartofAccountId }), 
-            createdAt: {
-                gte: startDate, 
+            createdAt: { 
                 lte: endDate, 
             },
             account: {

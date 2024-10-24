@@ -410,7 +410,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         })
 
         if (data.refVoucherNumber) {
-            await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data.amount, isRef: data.isRef, voucherId: newVoucher.voucherNumber, status: data?.status })
+            await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data.amount, isRef: true, voucherId: newVoucher.voucherNumber, status: data?.status })
         }
 
         if (voucherGrpdetails?.inventoryMode === "DOUBLE") {

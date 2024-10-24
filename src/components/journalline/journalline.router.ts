@@ -71,7 +71,7 @@ journalLineRouter.get("/trialBalance", async (request: Request, response: Respon
         // Parse the endDate, set it to the end of the day if provided, or use today's date
         const filterEndDate = endDate ? new Date(endDate as string) : new Date();
         filterEndDate.setHours(23, 59, 59, 999); // Set the time to the end of the day
-        
+
         // Validate the parsed dates
         if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
             return response.status(400).json({ message: "Invalid date format." });
@@ -84,10 +84,10 @@ journalLineRouter.get("/trialBalance", async (request: Request, response: Respon
             filterEndDate
         );
 
-        // If no journal lines are found, return a 404
-        if (!journalLines || journalLines.length === 0) {
-            return response.status(404).json({ message: "No journal lines found for the specified criteria." });
-        }
+        // // If no journal lines are found, return a 404
+        // if (!journalLines || journalLines.length === 0) {
+        //     return response.status(404).json({ message: "No journal lines found for the specified criteria." });
+        // }
 
         // Return the filtered journal lines
         return response.status(200).json({ data: journalLines });

@@ -61,84 +61,64 @@ export const update = async (data: any, id: any) => {
     });
 }
 
-export const getTrialBalance = async (chartofAccountId: string | null, startDate: Date, endDate: Date) => {
-    const accBalances = await db.journalLine.findMany({
+interface TrialBalanceEntry {
+    accountName: string;
+    debit: number;
+    credit: number;
+}
+
+export const getTrialBalance = async (chartofAccountId: string | null, startDate: Date, endDate: Date): Promise<TrialBalanceEntry[]> => {
+    const accounts = await db.chartofAccount.findMany({
         where: {
-            ...(chartofAccountId && { chartofAccountId }), 
-            createdAt: { 
-                lte: endDate, 
-            },
-            account: {
-                AccountSubCategory: {
-                    AccountCategory: {
-                        accCategory: {
-                            in: ['EQUITY', 'EXPENCESS', 'LIABILITIES', 'INCOME', 'ASSETS'],
-                        }
+            journalLine: {
+                some: {
+                    createdAt: {
+                        lte: endDate,
                     }
                 }
             }
         },
         include: {
-            account: {
+            accGroup: true,
+            AccountSubCategory: {
                 select: {
-                    accountName: true,
-                    AccountSubCategory: {
-                        select: {
-                            AccountCategory: {
-                                select: {
-                                    accCategory: true,
-                                },
-                            },
-                        },
-                    },
-                },
+                    AccountCategory: true,
+                }
             },
-        },
-    });
-
-    // Define the result type explicitly
-    type TrialBalanceResult = {
-        [accountName: string]: {
-            debit: number;
-            credit: number;
-        };
-    };
-
-    const result: TrialBalanceResult = {};
-
-    // Loop through all journal lines and group by account
-    accBalances.forEach(journal => {
-        const accountName = journal.account.accountName;
-        const subCategory = journal.account?.AccountSubCategory;
-        const category = subCategory?.AccountCategory?.accCategory;
-        
-        // Convert Decimal to number
-        const debit = journal.debitAmount?.toNumber() || 0;
-        const credit = journal.creditAmount?.toNumber() || 0;
-
-        // Ensure that accountName and category are valid before processing
-        if (!accountName || !category) return;
-
-        if (!result[accountName]) {
-            result[accountName] = { debit: 0, credit: 0 };
-        }
-
-        // If the category is 'ASSETS' or 'EXPENSES', calculate debit-dominant balance
-        if (['ASSETS', 'EXPENCESS'].includes(category)) {
-            result[accountName].debit += debit - credit;
-        }
-        // If the category is 'EQUITY', 'LIABILITIES', or 'INCOME', calculate credit-dominant balance
-        else if (['EQUITY', 'LIABILITIES', 'INCOME'].includes(category)) {
-            result[accountName].credit += credit - debit;
+            journalLine: true,
         }
     });
 
-    // Format the result as an array
-    const formattedResult = Object.keys(result).map(accountName => ({
-        accountName,
-        debit: result[accountName].debit > 0 ? result[accountName].debit : 0,
-        credit: result[accountName].credit > 0 ? result[accountName].credit : 0,
-    }));
+    // Specify the type of trialBalance as an array of TrialBalanceEntry
+    const trialBalance: TrialBalanceEntry[] = [];
 
-    return formattedResult;
+    accounts.forEach(account => {
+        const accountCategory = account.AccountSubCategory?.AccountCategory?.accCategory;
+        const openingBalance = account.Opening_Balance;
+
+        let totalDebit: number = 0;
+        let totalCredit: number = 0;
+
+        account.journalLine.forEach(journal => {
+            totalDebit += (journal.debitAmount ? journal.debitAmount.toNumber() : 0);
+            totalCredit += (journal.creditAmount ? journal.creditAmount.toNumber() : 0);
+        });
+
+        let debit = 0;
+        let credit = 0;
+
+        if (accountCategory === 'ASSETS' || accountCategory === 'EXPENCESS') {
+            debit = (openingBalance ? openingBalance.toNumber() : 0) + (totalDebit - totalCredit);
+        } else if (accountCategory === 'EQUITY' || accountCategory === 'LIABILITIES' || accountCategory === 'INCOME') {
+            credit = (openingBalance ? openingBalance.toNumber() : 0) + (totalCredit - totalDebit);
+        }
+
+        trialBalance.push({
+            accountName: account.accountName,
+            debit: debit,
+            credit: credit
+        });
+    });
+
+    return trialBalance;
 };

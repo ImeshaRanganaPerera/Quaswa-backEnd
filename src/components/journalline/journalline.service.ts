@@ -19,17 +19,32 @@ export const getByAccountAndDateRange = async (chartofAccountId: string | null, 
                     accountName: true, // This will retrieve the account name
                 },
             },
+            journal: {
+                select: {
+                    voucherNumber: true,
+                }
+            },
         },
+        orderBy: {
+            createdAt: 'desc'
+        }
     });
 };
 
 
 
 export const get = async (id: any) => {
-    return db.journalLine.findUnique({
+    return db.journalLine.findMany({
         where: {
-            id,
+            voucherId: id,
         },
+        include: {
+            account: {
+                select: {
+                    accountName: true
+                }
+            }
+        }
     });
 }
 
@@ -63,11 +78,16 @@ export const update = async (data: any, id: any) => {
 
 interface TrialBalanceEntry {
     accountName: string;
+    groupName: string;
     debit: number;
     credit: number;
 }
 
-export const getTrialBalance = async (chartofAccountId: string | null, startDate: Date, endDate: Date): Promise<TrialBalanceEntry[]> => {
+export const getTrialBalance = async (
+    chartofAccountId: string | null,
+    startDate: Date,
+    endDate: Date
+): Promise<TrialBalanceEntry[]> => {
     const accounts = await db.chartofAccount.findMany({
         where: {
             journalLine: {
@@ -89,36 +109,74 @@ export const getTrialBalance = async (chartofAccountId: string | null, startDate
         }
     });
 
-    // Specify the type of trialBalance as an array of TrialBalanceEntry
     const trialBalance: TrialBalanceEntry[] = [];
+    let totalDebit = 0;
+    let totalCredit = 0;
+    let receivableDebit = 0;
+    let receivableCredit = 0;
+    let payableDebit = 0;
+    let payableCredit = 0;
 
     accounts.forEach(account => {
         const accountCategory = account.AccountSubCategory?.AccountCategory?.accCategory;
         const openingBalance = account.Opening_Balance;
+        const accGroup = account.accGroup?.accountGroupName || "";
 
-        let totalDebit: number = 0;
-        let totalCredit: number = 0;
+        let accountDebit = 0;
+        let accountCredit = 0;
 
         account.journalLine.forEach(journal => {
-            totalDebit += (journal.debitAmount ? journal.debitAmount.toNumber() : 0);
-            totalCredit += (journal.creditAmount ? journal.creditAmount.toNumber() : 0);
+            accountDebit += (journal.debitAmount ? journal.debitAmount.toNumber() : 0);
+            accountCredit += (journal.creditAmount ? journal.creditAmount.toNumber() : 0);
         });
 
-        let debit = 0;
-        let credit = 0;
+        let calculatedDebit = 0;
+        let calculatedCredit = 0;
 
         if (accountCategory === 'ASSETS' || accountCategory === 'EXPENCESS') {
-            debit = (openingBalance ? openingBalance.toNumber() : 0) + (totalDebit - totalCredit);
+            calculatedDebit = (openingBalance ? openingBalance.toNumber() : 0) + (accountDebit - accountCredit);
         } else if (accountCategory === 'EQUITY' || accountCategory === 'LIABILITIES' || accountCategory === 'INCOME') {
-            credit = (openingBalance ? openingBalance.toNumber() : 0) + (totalCredit - totalDebit);
+            calculatedCredit = (openingBalance ? openingBalance.toNumber() : 0) + (accountCredit - accountDebit);
         }
 
-        trialBalance.push({
-            accountName: account.accountName,
-            debit: debit,
-            credit: credit
-        });
+        if (accGroup === "Receivable") {
+            receivableDebit += calculatedDebit;
+            receivableCredit += calculatedCredit;
+        } else if (accGroup === "Payable") {
+            payableDebit += calculatedDebit;
+            payableCredit += calculatedCredit;
+        } else {
+            trialBalance.push({
+                accountName: account.accountName,
+                groupName: accGroup,
+                debit: calculatedDebit,
+                credit: calculatedCredit
+            });
+        }
+
+        totalDebit += calculatedDebit;
+        totalCredit += calculatedCredit;
     });
+
+    // Add summarized Receivable and Payable accounts
+    if (receivableDebit || receivableCredit) {
+        trialBalance.push({
+            accountName: "Accounts Receivable",
+            groupName: "Receivable",
+            debit: receivableDebit,
+            credit: receivableCredit
+        });
+    }
+
+    if (payableDebit || payableCredit) {
+        trialBalance.push({
+            accountName: "Accounts Payable",
+            groupName: "Payable",
+            debit: payableDebit,
+            credit: payableCredit
+        });
+    }
+
 
     return trialBalance;
 };

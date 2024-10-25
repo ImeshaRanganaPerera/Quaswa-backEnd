@@ -23,6 +23,7 @@ journalLineRouter.get("/", async (request: Request, response: Response) => {
 journalLineRouter.get("/filter", async (request: Request, response: Response) => {
     try {
         const { chartofAccountId, startDate, endDate } = request.query;
+        console.log(chartofAccountId, startDate, endDate)
 
         // Parse the startDate, set it to midnight if provided, or use today's date
         const filterStartDate = startDate ? new Date(startDate as string) : new Date();
@@ -42,8 +43,8 @@ journalLineRouter.get("/filter", async (request: Request, response: Response) =>
 
         // Fetch filtered journal lines from the service
         const journalLines = await jornalLineService.getByAccountAndDateRange(
-            chartofAccountId ? (chartofAccountId as string) : null, 
-            filterStartDate, 
+            chartofAccountId ? (chartofAccountId as string) : null,
+            filterStartDate,
             filterEndDate
         );
 
@@ -79,8 +80,8 @@ journalLineRouter.get("/trialBalance", async (request: Request, response: Respon
 
         // Fetch filtered journal lines from the service
         const journalLines = await jornalLineService.getTrialBalance(
-            chartofAccountId ? (chartofAccountId as string) : null, 
-            filterStartDate, 
+            chartofAccountId ? (chartofAccountId as string) : null,
+            filterStartDate,
             filterEndDate
         );
 

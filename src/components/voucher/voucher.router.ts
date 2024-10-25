@@ -818,10 +818,6 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                     var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
                     chartofAccId = inventoryAcc?.id
                 }
-                if (entry.accountId === "INVENTORY") {
-                    var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
-                    chartofAccId = inventoryAcc?.id
-                }
                 if (entry.accountId === "IMPORT") {
                     var inventoryAcc = await chartofaccService.getbyname('IMPORT CONTROL ACCOUNT')
                     chartofAccId = inventoryAcc?.id

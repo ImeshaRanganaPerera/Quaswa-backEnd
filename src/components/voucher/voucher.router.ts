@@ -568,6 +568,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                                 refVoucherNumber: selectedVoucher?.voucherNumber,
                                 invoiceDate: selectedVoucher?.date,
                                 invoiceAmount: selectedVoucher?.amount,
+                                value: selectedVoucher?.value,
                                 settledAmount: updatedPaidValue,
                                 paidAmount: updatedPaidValue - paidValue,
                                 voucherId: newVoucher.id,
@@ -963,6 +964,7 @@ voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, 
                     chartofAccId = inventoryAcc?.id
                 }
                 const journalLineData = {
+                    voucherId: id.id,
                     chartofAccountId: chartofAccId, // Account ID from the journal entry
                     debitAmount: entry.debit || 0, // Debit amount if present
                     creditAmount: entry.credit || 0, // Credit amount if present

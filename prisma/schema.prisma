@@ -202,6 +202,7 @@ model Voucher {
   date             DateTime?
   totalDebit       Decimal?
   totalCredit      Decimal?
+  value            Decimal?
   amount           Decimal?
   location         String?
   paidValue        Decimal?
@@ -296,6 +297,7 @@ model referVouchers {
   refVoucherNumber String
   invoiceDate      DateTime
   invoiceAmount    Decimal
+  value            Decimal?
   settledAmount    Decimal
   paidAmount       Decimal
   voucher          Voucher  @relation(fields: [voucherId], references: [id])

@@ -137,14 +137,14 @@ export const getVoucherbyPartytrue = async (id: any, condition: any) => {
             ],
         }
     });
-
     const filteredVouchers = vouchers.filter(voucher => {
         const paidValue = new Decimal(voucher.paidValue ?? 0); // Handle possible 'null' and convert to Decimal
         const returnValue = new Decimal(voucher.returnValue ?? 0); // Handle possible 'null' and convert to Decimal
-        const totalPaid = paidValue.plus(returnValue); // Add using Decimal.js
+        const value = new Decimal(voucher.value || 0); // Ensure value is treated as Decimal
         const amount = new Decimal(voucher.amount || 0); // Ensure amount is treated as Decimal
+        const totalPaid = paidValue.plus(returnValue); // Add using Decimal.js
 
-        return totalPaid.lessThan(amount); // Filter those with outstanding amounts
+        return voucher.voucherNumber.startsWith('GRN') ? (voucher.isconform === false ? totalPaid.lessThan(amount) : totalPaid.lessThan(value)) : totalPaid.lessThan(amount); // Filter those with outstanding amounts
     });
 
     return filteredVouchers;
@@ -179,7 +179,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
         include: {
             party: true,
             voucherProduct: {
@@ -295,7 +295,7 @@ export const generateVoucherNumber = async (voucherGroupId: any) => {
 export const updateConform = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
-        data: { isconform: data.isconform }
+        data: { isconform: data.isconform, value: data.value }
     });
 }
 

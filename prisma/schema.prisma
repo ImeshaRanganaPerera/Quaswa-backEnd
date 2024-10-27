@@ -546,6 +546,7 @@ model Cheque {
 
 model journalLine {
   id               String         @id @default(uuid())
+  date             DateTime?
   journal          Voucher?       @relation(fields: [voucherId], references: [id])
   voucherId        String?
   account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])

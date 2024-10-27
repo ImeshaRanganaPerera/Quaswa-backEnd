@@ -631,6 +631,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     }
                     const journalLineData = {
                         voucherId: newVoucher.id, // Link to the created voucher
+                        date: newVoucher.date, // Date of the voucher
                         chartofAccountId: chartofAccId, // Account ID from the journal entry
                         debitAmount: entry.debit || 0, // Debit amount if present
                         creditAmount: entry.credit || 0, // Credit amount if present
@@ -830,6 +831,7 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
 
                 const journalLineData = {
                     voucherId: id.id,
+                    date: data.date,
                     chartofAccountId: chartofAccId, // Account ID from the journal entry
                     debitAmount: entry.debit || 0, // Debit amount if present
                     creditAmount: entry.credit || 0, // Credit amount if present
@@ -965,6 +967,7 @@ voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, 
                 }
                 const journalLineData = {
                     voucherId: id.id,
+                    date: data.date,
                     chartofAccountId: chartofAccId, // Account ID from the journal entry
                     debitAmount: entry.debit || 0, // Debit amount if present
                     creditAmount: entry.credit || 0, // Credit amount if present

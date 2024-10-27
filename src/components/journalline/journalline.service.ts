@@ -8,7 +8,7 @@ export const getByAccountAndDateRange = async (chartofAccountId: string | null, 
     return db.journalLine.findMany({
         where: {
             ...(chartofAccountId && { chartofAccountId }), // Apply filter only if chartofAccountId is provided
-            createdAt: {
+            date: {
                 gte: startDate, // greater than or equal to the start date
                 lte: endDate,   // less than or equal to the end date
             },
@@ -76,6 +76,13 @@ export const update = async (data: any, id: any) => {
     });
 }
 
+export const updateDate = async (data: any, id: any) => {
+    return db.journalLine.update({
+        where: { id: id },  // Correctly specifying `id` in an object
+        data: { date: data.date }
+    });
+};
+
 interface TrialBalanceEntry {
     accountName: string;
     groupName: string;
@@ -92,7 +99,7 @@ export const getTrialBalance = async (
         where: {
             journalLine: {
                 some: {
-                    createdAt: {
+                    date: {
                         lte: endDate,
                     }
                 }

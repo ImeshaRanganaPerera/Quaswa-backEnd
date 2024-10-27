@@ -161,6 +161,7 @@ chequeRouter.put("/used/:id", authenticate, async (request: ExpressRequest, resp
                 }
                 const journalLineData = {
                     chartofAccountId: chartofAccId,
+                    date: data.date,
                     debitAmount: entry.debit || 0,
                     creditAmount: entry.credit || 0,
                     ref: entry.ref,

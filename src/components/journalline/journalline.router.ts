@@ -4,6 +4,7 @@ import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as jornalLineService from './journalline.service'
+import * as voucherService from '../voucher/voucher.service'
 
 export const journalLineRouter = express.Router();
 
@@ -149,6 +150,55 @@ journalLineRouter.post("/", authenticate, async (request: ExpressRequest, respon
     }
 })
 
+journalLineRouter.put("/updatedate", authenticate, async (request: ExpressRequest, response: Response) => {
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        const journalLines = await jornalLineService.list();
+
+        // Check if any journalLines are returned
+        if (!journalLines || journalLines.length === 0) {
+            return response.status(404).json({ message: "No journal lines found to update" });
+        }
+
+        // Map over journalLines, await all updates, and handle missing records
+        await Promise.all(journalLines.map(async (item: any) => {
+            const { id, createdAt: newdate } = item;
+
+            // Log id and date before updating
+            console.log(`Updating journal line ${id} with date ${newdate}`);
+
+            try {
+                await jornalLineService.updateDate({ date: newdate }, id);
+            } catch (updateError) {
+                console.error(`Failed to update journal line ${id}`);
+            }
+        }));
+
+        await Promise.all(journalLines.map(async (item: any) => {
+            const { id, voucherId: voucherId } = item;
+
+            if (voucherId != null) {
+                const voucher = await voucherService.getbyid(voucherId);
+                await jornalLineService.updateDate({ date: voucher?.date }, id);
+            }
+
+            try {
+            } catch (updateError) {
+                console.error(`Failed to update journal line ${id}`);
+            }
+        }));
+
+
+        return response.status(200).json({ message: "Dates updated successfully" });
+
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});
+
 journalLineRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;
     const data: any = request.body;
@@ -166,4 +216,6 @@ journalLineRouter.put("/:id", authenticate, async (request: ExpressRequest, resp
         return response.status(500).json(error.message);
     }
 })
+
+
 

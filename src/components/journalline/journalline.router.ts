@@ -167,25 +167,21 @@ journalLineRouter.put("/updatedate", authenticate, async (request: ExpressReques
         await Promise.all(journalLines.map(async (item: any) => {
             const { id, createdAt: newdate } = item;
 
-            // Log id and date before updating
-            console.log(`Updating journal line ${id} with date ${newdate}`);
-
             try {
                 await jornalLineService.updateDate({ date: newdate }, id);
             } catch (updateError) {
-                console.error(`Failed to update journal line ${id}`);
+                console.error(`Failed to update journal line Created Date ${id}`);
             }
         }));
 
         await Promise.all(journalLines.map(async (item: any) => {
             const { id, voucherId: voucherId } = item;
 
-            if (voucherId != null) {
-                const voucher = await voucherService.getbyid(voucherId);
-                await jornalLineService.updateDate({ date: voucher?.date }, id);
-            }
-
             try {
+                if (voucherId != null) {
+                    const voucher = await voucherService.getbyid(voucherId);
+                    await jornalLineService.updateDate({ date: voucher?.date }, id);
+                }
             } catch (updateError) {
                 console.error(`Failed to update journal line ${id}`);
             }

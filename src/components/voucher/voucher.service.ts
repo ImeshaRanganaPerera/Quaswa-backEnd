@@ -19,6 +19,11 @@ export const get = async (id: any) => {
                     phoneNumber: true,
                 }
             },
+            chartofacc: {
+                select: {
+                    accountName: true,
+                }
+            },
             voucherProduct: {
                 include: {
                     product: {
@@ -55,6 +60,11 @@ export const getbyid = async (id: any) => {
                 select: {
                     name: true,
                     phoneNumber: true,
+                }
+            },
+            chartofacc: {
+                select: {
+                    accountName: true,
                 }
             },
             VoucherCenter: true
@@ -251,7 +261,7 @@ export const updateVoucherNumber = async (data: any) => {
         },
         data: {
             isRef: data.isRef,
-            returnValue: data.returnValue,
+            returnValue: data?.returnValue,
             refVoucherNumber: data.voucherId,
             status: data?.status
         },

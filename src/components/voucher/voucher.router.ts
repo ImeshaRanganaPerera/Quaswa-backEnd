@@ -241,7 +241,7 @@ voucherRouter.get("/refVoucherbyChartofacc", async (request: Request, response: 
         }
         const grpname = await voucherGrpService.getbyname(VoucherGrpName)
         const party = await partyService.get(partyId)
-        const vouchers = await voucherService.getRefVoucherbychartofacc({ voucherGroupId: grpname?.id, partyId: party?.chartofAccountId });
+        const vouchers = await voucherService.getRefVoucherbychartofacc({ voucherGroupId: grpname?.id, chartofAccountId: party?.chartofAccountId });
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });
@@ -410,7 +410,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         })
 
         if (data.refVoucherNumber) {
-            await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data.amount, isRef: true, voucherId: newVoucher.voucherNumber, status: data?.status })
+            await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data?.returnValue, isRef: true, voucherId: newVoucher.voucherNumber, status: data?.status })
         }
 
         if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
@@ -495,13 +495,15 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 const cash = await paymentService.getbyname('Cash');
                 const Cheque = await paymentService.getbyname('Cheque');
                 const Credit = await paymentService.getbyname('Credit');
+                const Advance = await paymentService.getbyname('Advance');
 
                 // Prepare payment vouchers
                 const paymentVouchers = [
                     { voucherId: newVoucher.id, paymentId: onlineTransfer?.id, paymentType: onlineTransfer?.type, amount: data.payment.onlineTransfer, refNumber: data.payment.refNumber },
                     { voucherId: newVoucher.id, paymentId: cash?.id, paymentType: cash?.type, amount: data.payment.cash },
                     { voucherId: newVoucher.id, paymentId: Cheque?.id, paymentType: Cheque?.type, amount: data.payment.cheque },
-                    { voucherId: newVoucher.id, paymentId: Credit?.id, paymentType: Credit?.type, amount: data.payment.credit }
+                    { voucherId: newVoucher.id, paymentId: Credit?.id, paymentType: Credit?.type, amount: data.payment.credit },
+                    { voucherId: newVoucher.id, paymentId: Advance?.id, paymentType: Advance?.type, amount: data.payment.advance },
                 ].filter(record => record.paymentId && record.amount > 0);
 
                 let chequePaymentVoucher = null;

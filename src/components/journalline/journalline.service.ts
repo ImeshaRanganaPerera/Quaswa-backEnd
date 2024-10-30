@@ -22,11 +22,21 @@ export const getByAccountAndDateRange = async (chartofAccountId: string | null, 
             journal: {
                 select: {
                     voucherNumber: true,
+                    party: {
+                        select: {
+                            name: true
+                        }
+                    },
+                    chartofacc: {
+                        select: {
+                            accountName: true
+                        }
+                    }
                 }
             },
         },
         orderBy: {
-            createdAt: 'desc'
+            date: 'desc'
         }
     });
 };
@@ -183,7 +193,6 @@ export const getTrialBalance = async (
             credit: payableCredit
         });
     }
-
 
     return trialBalance;
 };

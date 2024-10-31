@@ -34,6 +34,8 @@ journalLineRouter.get("/filter", async (request: Request, response: Response) =>
         const filterEndDate = endDate ? new Date(endDate as string) : new Date();
         filterEndDate.setHours(23, 59, 59, 999); // Set the time to the end of the day
 
+        console.log( filterStartDate, filterEndDate) 
+
         // Log the parameters for debugging
         console.log(`Filtering journal lines for chartofAccountId=${chartofAccountId || "ALL"} between ${filterStartDate} and ${filterEndDate}`);
 

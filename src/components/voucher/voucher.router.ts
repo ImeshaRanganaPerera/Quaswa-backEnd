@@ -291,6 +291,7 @@ voucherRouter.get("/vouchersByAuthUser", async (req: Request, res: Response) => 
 
         const vouchersGroupedByAuthUser = await voucherService.getVouchersGroupedByAuthUserWithVisits(parseInt(month as string), parseInt(year as string));
 
+        // console.log(vouchersGroupedByAuthUser)
         return res.status(200).json({ data: vouchersGroupedByAuthUser });
     } catch (error: any) {
         console.error("Error fetching vouchers:", error);
@@ -432,6 +433,9 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             voucherGroupId: voucherGrpdetails?.id,
             createdBy: userId
         })
+
+        console.log(data)
+        console.log(newVoucher)
 
         if (data.refVoucherNumber) {
             await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data?.returnValue, isRef: true, voucherId: newVoucher.voucherNumber, status: data?.status })

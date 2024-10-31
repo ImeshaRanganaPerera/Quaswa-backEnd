@@ -874,24 +874,26 @@ export const getRefVoucherbyVoucherGrpid = async (data: any, userId?: any) => {
 }
 
 export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, year?: number) => {
-    const selectedMonth = month !== undefined ? month - 1 : new Date().getMonth(); // Adjust for zero-based index
+    const selectedMonth = month !== undefined ? month - 1 : new Date().getMonth();
     const selectedYear = year !== undefined ? year : new Date().getFullYear();
 
-    // Set start date to the 1st day of the selected month at midnight (UTC)
-    const startDate = new Date(Date.UTC(selectedYear, selectedMonth, 1, 0, 0, 0, 0));
+    // Set start date to the 1st day of the selected month at midnight (local time)
+    const startDate = new Date(selectedYear, selectedMonth, 1, 0, 0, 0, 0);
 
-    // Set end date to the last day of the selected month, at the end of the day (UTC)
-    const endDate = new Date(Date.UTC(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999));
+    // Set end date to the last day of the selected month at the end of the day (local time)
+    const endDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
+
+    const now = new Date();
+
+    // Set todayStart to the start of today at 00:00:00.000 in local time
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    
+    // Set todayEnd to the end of today at 23:59:59.999 in local time
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
     console.log('Monthly range:', startDate.toISOString(), endDate.toISOString());
+    console.log('Today range:', todayStart.toISOString(), todayEnd.toISOString());
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);  // Start of the current day
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);  // End of the current day
-
-    console.log('Monthly range:', startDate, endDate);
-    console.log('Today range:', todayStart, todayEnd);
 
     // Fetch the voucherGroup IDs for SALES-RETURN and INVOICE
     const salesReturnGroup = await db.voucherGroup.findFirst({

@@ -937,6 +937,7 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
     const salesReturnVouchersDaily = await db.voucher.groupBy({
         by: ['authUser'],
         where: {
+            isconform: true,
             date: {
                 gte: todayStart,
                 lte: todayEnd,

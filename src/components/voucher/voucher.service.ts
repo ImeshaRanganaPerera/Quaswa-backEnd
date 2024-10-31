@@ -873,16 +873,16 @@ export const getRefVoucherbyVoucherGrpid = async (data: any) => {
 }
 
 export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, year?: number) => {
-    const currentDate = new Date();
-    const selectedMonth = month !== undefined ? month - 1 : currentDate.getMonth();
-    const selectedYear = year !== undefined ? year : currentDate.getFullYear();
+    const selectedMonth = month !== undefined ? month - 1 : new Date().getMonth(); // Adjust for zero-based index
+    const selectedYear = year !== undefined ? year : new Date().getFullYear();
 
-    // Set start date to the 1st day of the selected month at midnight
-    const startDate = new Date(selectedYear, selectedMonth, 1);
+    // Set start date to the 1st day of the selected month at midnight (UTC)
+    const startDate = new Date(Date.UTC(selectedYear, selectedMonth, 1, 0, 0, 0, 0));
 
-    // Set end date to the last day of the selected month, at the end of the day
-    const endDate = new Date(selectedYear, selectedMonth + 1, 1); // First day of the next month
-    endDate.setMilliseconds(endDate.getMilliseconds() - 1); // Subtract one millisecond to get the end of the selected month
+    // Set end date to the last day of the selected month, at the end of the day (UTC)
+    const endDate = new Date(Date.UTC(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999));
+
+    console.log('Monthly range:', startDate.toISOString(), endDate.toISOString());
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);  // Start of the current day

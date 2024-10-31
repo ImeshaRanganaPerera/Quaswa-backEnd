@@ -23,6 +23,7 @@ import * as pettyCashIOUService from '../pettycashIOU/pettycashIOU.service'
 export const voucherRouter = express.Router();
 
 //GET LIST
+
 voucherRouter.get("/", async (request: Request, response: Response) => {
     try {
         const data = await voucherService.list()
@@ -30,6 +31,18 @@ voucherRouter.get("/", async (request: Request, response: Response) => {
             return response.status(200).json({ data: data });
         }
         return response.status(404).json({ message: "Voucher could not be found" });
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+
+voucherRouter.put("/salesOrderCorrection/correct", async (request: Request, response: Response) => {
+    try {
+        const updateVoucher = await voucherService.pendingConform()
+
+        if (updateVoucher) {
+            return response.status(201).json(updateVoucher);
+        }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
     }
@@ -1008,4 +1021,6 @@ voucherRouter.put("/cancel/:id", authenticate, async (request: ExpressRequest, r
         return response.status(500).json({ message: error.message });
     }
 })
+
+
 

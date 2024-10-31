@@ -877,14 +877,20 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
     const selectedMonth = month !== undefined ? month - 1 : currentDate.getMonth();
     const selectedYear = year !== undefined ? year : currentDate.getFullYear();
 
+    // Set start date to the 1st day of the selected month at midnight
     const startDate = new Date(selectedYear, selectedMonth, 1);
-    const endDate = new Date(selectedYear, selectedMonth + 1, 0);
 
-    const todayStart = new Date(currentDate.setHours(0, 0, 0, 0));  // Start of the current day
-    const todayEnd = new Date(currentDate.setHours(23, 59, 59, 999));  // End of the current day
+    // Set end date to the last day of the selected month, at the end of the day
+    const endDate = new Date(selectedYear, selectedMonth + 1, 1); // First day of the next month
+    endDate.setMilliseconds(endDate.getMilliseconds() - 1); // Subtract one millisecond to get the end of the selected month
 
-    console.log('Monthy ',startDate,endDate)
-    console.log('Today ',todayStart,todayEnd)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);  // Start of the current day
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);  // End of the current day
+
+    console.log('Monthly range:', startDate, endDate);
+    console.log('Today range:', todayStart, todayEnd);
 
     // Fetch the voucherGroup IDs for SALES-RETURN and INVOICE
     const salesReturnGroup = await db.voucherGroup.findFirst({
@@ -1139,6 +1145,29 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
 
     // Filter out null values in case any authUser is missing or doesn't have the SALESMAN role
     return userData.filter(data => data !== null);
+};
+
+export const pendingConform = async () => {
+    const vouchers = await db.voucher.findMany({
+        where: {
+            voucherGroupId: "b5c5fabf-2c63-4ef4-8d0d-1330cd200d97",
+            isRef: true,
+            status: null
+        }
+    });
+
+    await Promise.all(
+        vouchers.map(voucher => 
+            db.voucher.update({
+                where: { id: voucher.id },
+                data: {
+                    status: 'COMPLETED'
+                }
+            })
+        )
+    );
+
+    return "Updated"
 };
 
 

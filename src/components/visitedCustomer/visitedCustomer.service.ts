@@ -12,7 +12,8 @@ export const list = async (startdate: any, enddate: any, userId?: any) => {
         include: {
             party: {
                 select: {
-                    name: true
+                    name: true,
+                    city: true
                 }
             },
             user: {
@@ -20,6 +21,9 @@ export const list = async (startdate: any, enddate: any, userId?: any) => {
                     name: true
                 }
             }
+        },
+        orderBy:{
+            createdAt: 'desc'
         }
     });
 }

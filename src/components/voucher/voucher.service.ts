@@ -831,9 +831,10 @@ export const getRefVoucherbychartofacc = async (data: any) => {
     });
 }
 
-export const getRefVoucherbyVoucherGrpid = async (data: any) => {
+export const getRefVoucherbyVoucherGrpid = async (data: any, userId?: any) => {
     return db.voucher.findMany({
         where: {
+            ...(userId && { authUser: userId }),
             voucherGroupId: data.voucherGroupId,
             partyId: data.partyId,
             isRef: false,

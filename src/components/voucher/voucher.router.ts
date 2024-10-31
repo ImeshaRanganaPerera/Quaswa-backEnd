@@ -224,15 +224,26 @@ voucherRouter.get("/settlement", authenticate, async (request: ExpressRequest, r
     }
 });
 
-voucherRouter.get("/refVoucher", async (request: Request, response: Response) => {
+voucherRouter.get("/refVoucher", authenticate, async (request: ExpressRequest, response: Response) => {
     try {
         const { VoucherGrpName, partyId } = request.query;
+
         if (!VoucherGrpName) {
             return response.status(400).json({ message: "VoucherGrpname is required." });
         }
+
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        var userId;
+        if (request.user.role === "SALESMEN") {
+            userId = request.user?.id;
+        }
+
         const grpname = await voucherGrpService.getbyname(VoucherGrpName)
 
-        const vouchers = await voucherService.getRefVoucherbyVoucherGrpid({ voucherGroupId: grpname?.id, partyId: partyId });
+        const vouchers = await voucherService.getRefVoucherbyVoucherGrpid({ voucherGroupId: grpname?.id, partyId: partyId }, userId);
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher and date range." });

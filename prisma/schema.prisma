@@ -47,6 +47,7 @@ model User {
   target                Decimal?
   username              String                  @unique
   password              String
+  isDeleted             Boolean                 @default(false)
   isconform             Boolean                 @default(false)
   role                  Role                    @default(SALESMEN)
   createdAt             DateTime                @default(now())

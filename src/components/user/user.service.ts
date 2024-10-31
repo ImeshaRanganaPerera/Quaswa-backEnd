@@ -4,6 +4,9 @@ import { hash } from "bcrypt"
 
 export const getlist = async () => {
     return db.user.findMany({
+        where: {
+            isDeleted: false
+        }
     });
 }
 
@@ -11,6 +14,7 @@ export const getbyId = async (id: any) => {
     return db.user.findUnique({
         where: {
             id,
+            isDeleted: false,
         },
         select: {
             id: true,
@@ -37,6 +41,7 @@ export const getbyRole = async (role: any) => {
     return db.user.findMany({
         where: {
             role: role,
+            isDeleted: false,
         }
     });
 }
@@ -45,6 +50,7 @@ export const login = async (username: any) => {
     return db.user.findUnique({
         where: {
             username,
+            isDeleted: false,
         }
     });
 }
@@ -84,5 +90,12 @@ export const updatePassword = async (userId: string, hashedPassword: string) => 
     return db.user.update({
         where: { id: userId },
         data: { password: hashedPassword },
+    });
+};
+
+export const deleteUser = async (userId: string) => {
+    return db.user.update({
+        where: { id: userId, isDeleted: false },
+        data: { isDeleted: true },
     });
 };

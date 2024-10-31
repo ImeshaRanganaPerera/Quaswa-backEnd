@@ -9,6 +9,7 @@ import { hash } from "bcrypt"
 import * as UserService from './user.service'
 import * as centerService from '../center/center.service'
 import * as userCenterService from '../userCenter/userCenter.service'
+import * as inventoryService from '../inventory/inventory.service'
 
 const genarateJwt = (user: User): String => {
     return sign({ userId: user.id, name: user.name, role: user.role }, "Skey")
@@ -188,7 +189,7 @@ userRouter.post("/login", async (request: Request, response: Response) => {
 
 userRouter.put("/change-password", authenticate, async (request: ExpressRequest, response: Response) => {
     const { oldPassword, newPassword } = request.body;
-    
+
     try {
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
@@ -219,6 +220,38 @@ userRouter.put("/change-password", authenticate, async (request: ExpressRequest,
     }
 });
 
+userRouter.put("/deleteUser/:id", authenticate, async (request: ExpressRequest, response: Response) => {
+    const id = request.params.id;
+
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "Unauthorized" });
+        }
+
+        const center = await userCenterService.getbyId(id);
+        if (!center) {
+            return response.status(404).json({ message: "Center not found" });
+        }
+
+        const centerProducts = await inventoryService.getbyCenter(center.centerId); 
+
+        const hasProducts = centerProducts.some((product: any) => product.quantity > 0);
+        if (hasProducts) {
+            return response.status(400).json({ message: "Cannot delete user as there are products in the center" });
+        }
+
+        const updateUser = await UserService.deleteUser(id);
+        if (updateUser) {
+            return response.status(201).json({ message: "User Delete successfully", data: updateUser });
+        } else {
+            return response.status(404).json({ message: "User not found or could not be deleted" });
+        }
+
+    } catch (error: any) {
+        return response.status(500).json({ error: error.message });
+    }
+});
+
 
 //UPDATE
 userRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
@@ -238,6 +271,9 @@ userRouter.put("/:id", authenticate, async (request: ExpressRequest, response: R
         return response.status(500).json({ data: error.message });
     }
 })
+
+
+
 
 // Change Password
 

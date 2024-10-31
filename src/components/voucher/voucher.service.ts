@@ -457,7 +457,7 @@ export const getVouchersByPartyOutstanding = async (voucherGroupId: string, part
             }
         },
         orderBy: {
-            partyId: 'asc'
+            date: 'desc'
         }
     });
 
@@ -1157,7 +1157,7 @@ export const pendingConform = async () => {
     });
 
     await Promise.all(
-        vouchers.map(voucher => 
+        vouchers.map(voucher =>
             db.voucher.update({
                 where: { id: voucher.id },
                 data: {

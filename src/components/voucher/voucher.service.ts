@@ -883,6 +883,9 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
     const todayStart = new Date(currentDate.setHours(0, 0, 0, 0));  // Start of the current day
     const todayEnd = new Date(currentDate.setHours(23, 59, 59, 999));  // End of the current day
 
+    console.log('Monthy ',startDate,endDate)
+    console.log('Today ',todayStart,todayEnd)
+
     // Fetch the voucherGroup IDs for SALES-RETURN and INVOICE
     const salesReturnGroup = await db.voucherGroup.findFirst({
         where: { voucherName: 'SALES-RETURN' },
@@ -902,6 +905,7 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
     const salesReturnVouchersMonthly = await db.voucher.groupBy({
         by: ['authUser'],
         where: {
+            isconform: true,
             date: {
                 gte: startDate,
                 lte: endDate,
@@ -919,6 +923,7 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
     const invoiceVouchersMonthly = await db.voucher.groupBy({
         by: ['authUser'],
         where: {
+            isconform: true,
             date: {
                 gte: startDate,
                 lte: endDate,

@@ -106,13 +106,18 @@ export const getPendingVoucherCondition = async () => {
                     },
                 },
             ],
-            isconform: false, // Ensure the voucher is not confirmed
+            isconform: false, 
         },
         include: {
             voucherProduct: true,
             user: { select: { name: true } },
             journalLine: true,
-            party: true, // Include related party details
+            party: true, 
+            voucherGroup: {
+                select: {
+                    voucherName: true
+                }
+            }
         },
     });
 };

@@ -4,7 +4,6 @@ import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
 import { Prisma, Role } from '@prisma/client';
 
-
 import * as voucherService from './voucher.service'
 import * as voucherGrpService from '../voucherGroup/vouchergrp.service'
 import * as voucherCenter from '../centerVoucher/centerVoucher.service'
@@ -19,6 +18,7 @@ import * as referVoucherService from '../referVouchers/referVouchers.service'
 import * as chequebookService from '../ChequeBook/chequebook.service'
 import * as chequeService from '../Cheque/cheque.service'
 import * as pettyCashIOUService from '../pettycashIOU/pettycashIOU.service'
+import { getSalesmanWiseVouchers } from './voucher.service';
 
 export const voucherRouter = express.Router();
 
@@ -36,17 +36,7 @@ voucherRouter.get("/", async (request: Request, response: Response) => {
     }
 })
 
-voucherRouter.put("/salesOrderCorrection/correct", async (request: Request, response: Response) => {
-    try {
-        const updateVoucher = await voucherService.pendingConform()
 
-        if (updateVoucher) {
-            return response.status(201).json(updateVoucher);
-        }
-    } catch (error: any) {
-        return response.status(500).json({ message: error.message });
-    }
-})
 
 voucherRouter.get("/pendingVouchers", async (request: Request, response: Response) => {
     try {
@@ -109,6 +99,37 @@ voucherRouter.get("/filter", authenticate, async (request: ExpressRequest, respo
         } else {
             vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId);
         }
+
+        if (!vouchers || vouchers.length === 0) {
+            return response.status(404).json({ message: "No vouchers found for the specified Voucher group and date range." });
+        }
+
+        return response.status(200).json({ data: vouchers });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
+voucherRouter.get("/salemenwise", authenticate, async (request: ExpressRequest, response: Response) => {
+    try {
+        var { startDate, endDate, userId } = request.query;
+
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        const filterStartDate = startDate ? new Date(startDate as string) : new Date();
+        filterStartDate.setHours(0, 0, 0, 0);
+
+        const filterEndDate = endDate ? new Date(endDate as string) : new Date();
+        filterEndDate.setHours(23, 59, 59, 999);
+
+        if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
+            return response.status(400).json({ message: "Invalid date format." });
+        }
+
+        const vouchers = await voucherService.getSalesmanWiseVouchers(filterStartDate, filterEndDate, userId);
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher group and date range." });
@@ -1012,6 +1033,18 @@ voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, 
 
         if (updateVoucher) {
             return response.status(201).json({ message: "Voucher Conform Successfully" });
+        }
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+})
+
+voucherRouter.put("/salesOrderCorrection/correct", async (request: Request, response: Response) => {
+    try {
+        const updateVoucher = await voucherService.pendingConform()
+
+        if (updateVoucher) {
+            return response.status(201).json(updateVoucher);
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });

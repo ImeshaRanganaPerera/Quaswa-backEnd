@@ -289,6 +289,7 @@ productRouter.put("/productStatus/:id", authenticate, async (request: ExpressReq
             return response.status(401).json({ message: "User not authorized" });
         }
         console.log(data)
+        const updateInventoryStatus = await inventoryService.updateStatus(data, id)
         const updateProductStatus = await productService.updateStatus(data, id)
 
         if (updateProductStatus) {

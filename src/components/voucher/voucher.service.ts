@@ -106,13 +106,13 @@ export const getPendingVoucherCondition = async () => {
                     },
                 },
             ],
-            isconform: false, 
+            isconform: false,
         },
         include: {
             voucherProduct: true,
             user: { select: { name: true } },
             journalLine: true,
-            party: true, 
+            party: true,
             voucherGroup: {
                 select: {
                     voucherName: true
@@ -121,6 +121,77 @@ export const getPendingVoucherCondition = async () => {
         },
     });
 };
+
+interface SalesmanReport {
+    salesmanName: string;
+    Invoices: {
+        date: any;
+        voucherNumber: string;
+        amount: number;
+        partyName: string;
+        voucherName: string;
+    }[];
+    totalValue: number;
+}
+
+export const getSalesmanWiseVouchers = async (startDate: any, endDate: any, userId?: any) => {
+    const vouchers = await db.voucher.findMany({
+        where: {
+            ...(userId ? { authUser: userId } : {}),
+            date: {
+                gte: startDate,
+                lte: endDate,
+            },
+            OR: [
+                { voucherNumber: { startsWith: 'INV' } },
+                { voucherNumber: { startsWith: 'SRET' } },
+            ],
+            isconform: true,
+        },
+        include: {
+            user: { select: { name: true } },
+            party: { select: { name: true } },
+            voucherGroup: { select: { voucherName: true } },
+        },
+        orderBy: {
+            date: 'desc'
+        }
+    });
+
+    console.log("Vouchers retrieved:", vouchers);
+
+    const report = vouchers.reduce<Record<string, SalesmanReport>>((acc, voucher) => {
+        const authUser = voucher.authUser || 'Unknown Salesman';
+        const amount = voucher.amount ? (voucher.amount as Decimal).toNumber() : 0;
+        const adjustedAmount = voucher.voucherNumber.startsWith('SRET') ? -amount : amount;
+
+        if (!acc[authUser]) {
+            acc[authUser] = {
+                salesmanName: voucher.user?.name || 'Unknown',
+                Invoices: [],
+                totalValue: 0,
+            };
+        }
+
+        console.log(`Processing voucher: ${voucher.voucherNumber}, adjustedAmount: ${adjustedAmount}`);
+
+        acc[authUser].Invoices.push({
+            date: voucher.date,
+            voucherNumber: voucher.voucherNumber,
+            amount: adjustedAmount,
+            partyName: voucher.party?.name || 'N/A',
+            voucherName: voucher.voucherGroup?.voucherName || 'N/A',
+        });
+        acc[authUser].totalValue += adjustedAmount;
+
+        return acc;
+    }, {});
+
+    console.log("Report generated:", report);
+
+    return Object.values(report);
+};
+
 
 export const getVoucherbyGrp = async (id: any) => {
     return db.voucher.findMany({
@@ -892,7 +963,7 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
 
     // Set todayStart to the start of today at 00:00:00.000 in local time
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    
+
     // Set todayEnd to the end of today at 23:59:59.999 in local time
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 

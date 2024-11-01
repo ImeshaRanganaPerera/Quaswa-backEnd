@@ -54,7 +54,6 @@ export const updateStatus = async (data: any, id: any) => {
     return db.product.update({
         where: id,
         data: data,
-
     });
 }
 

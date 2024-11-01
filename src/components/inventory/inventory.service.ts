@@ -107,7 +107,7 @@ export const upsert = async (data: any) => {
                 id: product?.id,
             },
             data: {
-                cost: avgCost,
+                cost: avgCost.toFixed(2),
                 minPrice: data.minPrice,
                 MRP: data.MRP,
                 sellingPrice: data.sellingPrice,
@@ -200,6 +200,31 @@ export const updates = async (data: any, productId: any, centerId: any) => {
         },
     });
 }
+
+export const updateStatus = async (data: any, id: any) => {
+    // Fetch all inventory items with the specified productId
+    console.log(id)
+    const inventory = await db.inventory.findMany({
+        where: {
+            productId: id.id,
+        },
+    });
+
+    if (inventory.length > 0) {
+        // Use Promise.all to wait for all updates to complete
+        await Promise.all(inventory.map((item: any) => {
+            return db.inventory.update({
+                where: {
+                    productId_centerId: {
+                        productId: item.productId,
+                        centerId: item.centerId,
+                    },
+                },
+                data: data,  // Use the data passed in as an argument
+            });
+        }));
+    }
+};
 
 
 export const filterVoucherProduct = async (
@@ -407,6 +432,8 @@ export const getStockMovement = async (productId: string, centerId: string, date
 
     return result;
 };
+
+
 
 
 

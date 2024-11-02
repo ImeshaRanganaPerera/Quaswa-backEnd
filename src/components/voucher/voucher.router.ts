@@ -36,8 +36,6 @@ voucherRouter.get("/", async (request: Request, response: Response) => {
     }
 })
 
-
-
 voucherRouter.get("/pendingVouchers", async (request: Request, response: Response) => {
     try {
         const pendingVoucher = await voucherService.getPendingVoucherCondition()
@@ -714,6 +712,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         quantity: product.quantity,
                         remainingQty: product.quantity,
                         discount: product.discount,
+                        stockStatus: data?.stockStatus,
                         MRP: product.MRP,
                         minPrice: product.minPrice,
                         sellingPrice: product.sellingPrice,
@@ -722,21 +721,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         productId: product.productId,
                         centerId: data.centerId
                     });
-
-                    // if (data.voucherGroupname === 'GRN') {
-                    //     const updateProductPrices = await productService.updatePricesbulk({
-                    //         cost: product.cost,
-                    //         minPrice: product.minPrice,
-                    //         MRP: product.MRP,
-                    //         sellingPrice: product.sellingPrice
-                    //     }, product.productId)
-                    //     if (!updateProductPrices) {
-                    //         throw new Error("Failed to update product prices association");
-                    //     }
-                    // }
-                    // if (!voucherProduct) {
-                    //     throw new Error("Failed to update product to list association");
-                    // }
                 });
                 try {
                     await Promise.all(centerPromises);
@@ -770,13 +754,15 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                                 throw new Error("Failed to update product to list association");
                             }
                         } else {
-                            const inventory = await inventoryService.upsert({
-                                productId: product.productId,
-                                centerId: data.centerId,
-                                quantity: product.quantity,
-                            });
-                            if (!inventory) {
-                                throw new Error("Failed to update product to list association");
+                            if (data.stockStatus === true) {
+                                const inventory = await inventoryService.upsert({
+                                    productId: product.productId,
+                                    centerId: data.centerId,
+                                    quantity: product.quantity,
+                                });
+                                if (!inventory) {
+                                    throw new Error("Failed to update product to list association");
+                                }
                             }
                         }
 
@@ -799,20 +785,23 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 if (!newVoucherCenter) {
                     throw new Error("Failed to update Voucher Center to list association");
                 }
-                const inventoryPromise = data.productList.map(async (product: any) => {
-                    const inventory = await inventoryService.upsert({
-                        productId: product.productId,
-                        centerId: data.centerId,
-                        quantity: -(product.quantity)
+
+                if (data.stockStatus === true) {
+                    const inventoryPromise = data.productList.map(async (product: any) => {
+                        const inventory = await inventoryService.upsert({
+                            productId: product.productId,
+                            centerId: data.centerId,
+                            quantity: -(product.quantity)
+                        });
+                        if (!inventory) {
+                            throw new Error("Failed to update product to list association");
+                        }
                     });
-                    if (!inventory) {
-                        throw new Error("Failed to update product to list association");
+                    try {
+                        await Promise.all(inventoryPromise);
+                    } catch (error: any) {
+                        return response.status(500).json({ message: error.message });
                     }
-                });
-                try {
-                    await Promise.all(inventoryPromise);
-                } catch (error: any) {
-                    return response.status(500).json({ message: error.message });
                 }
             }
         }
@@ -835,6 +824,59 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
         }
 
         const userId = request.user.id;
+        const voucherGroup = await voucherGrpService.getById(data.voucherGroupId)
+
+        if (data.stockStatus === true) {
+            if (voucherGroup?.inventoryMode === "PLUS") {
+                const inventoryPromise = data.voucherProduct.map(async (product: any) => {
+                    const inventory = await inventoryService.upsert({
+                        productId: product.productId,
+                        centerId: product.centerId,
+                        quantity: product.quantity
+                    });
+                    if (!inventory) {
+                        throw new Error("Failed to update product to list association");
+                    }
+                });
+                try {
+                    await Promise.all(inventoryPromise);
+                } catch (error: any) {
+                    return response.status(500).json({ message: error.message });
+                }
+            }
+
+            if (voucherGroup?.inventoryMode === "MINUS") {
+                const inventoryCheckPromises = data.voucherProduct.map(async (product: any) => {
+                    const inventoryStock = await inventoryService.getbycenterIdProductId(product.productId, product.centerId);
+
+                    if (Number(inventoryStock?.quantity ?? 0) < Number(product.quantity)) {
+                        throw new Error(`Insufficient stock for product ${product.product.printName} Available Quantity is ${inventoryStock?.quantity ?? 0} `);
+                    }
+                });
+
+                try {
+                    await Promise.all(inventoryCheckPromises);
+                } catch (error: any) {
+                    return response.status(400).json({ message: error.message });
+                }
+
+                const inventoryPromise = data.voucherProduct.map(async (product: any) => {
+                    const inventory = await inventoryService.upsert({
+                        productId: product.productId,
+                        centerId: product.centerId,
+                        quantity: -(product.quantity)
+                    });
+                    if (!inventory) {
+                        throw new Error("Failed to update product to list association");
+                    }
+                });
+                try {
+                    await Promise.all(inventoryPromise);
+                } catch (error: any) {
+                    return response.status(500).json({ message: error.message });
+                }
+            }
+        }
 
         // Process journal entries if available
         if (data.journalEntries && data.journalEntries.length > 0) {
@@ -943,15 +985,11 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
         // Process voucher product if available
         if (data.voucherProduct && data.voucherProduct.length > 0) {
             const voucherProducts = data.voucherProduct;
-
             for (let product of voucherProducts) {
                 const existingProduct = await productVoucherService.getbyVoucherId(product.id);
-
                 if (existingProduct) {
-                    // Update existing voucherProduct
                     await productVoucherService.updateVoucherProduct(product, product.id);
                 } else {
-                    // Optionally create new if it doesn't exist
                     await productVoucherService.create(product);
                 }
             }
@@ -961,9 +999,7 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
             ...data,
             appovedBy: data.appovedBy ? data.appovedBy : userId
         }
-
         console.log(data)
-        // Update the voucher confirmation status
         const updateVoucher = await voucherService.updatePendingVoucher(data, id);
 
         if (updateVoucher) {
@@ -1059,9 +1095,7 @@ voucherRouter.put("/cancel/:id", authenticate, async (request: ExpressRequest, r
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-
         const updateVoucher = await voucherService.voucherCancel(data, id)
-
         if (updateVoucher) {
             return response.status(201).json({ message: data.voucherGrpName + " Cancelled Successfully", data: updateVoucher });
         }

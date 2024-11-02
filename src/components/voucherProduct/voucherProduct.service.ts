@@ -42,7 +42,8 @@ export const updateVoucherProduct = async (data: any, id: any) => {
             id: id // Correctly pass the id as a string, not an object
         },
         data: {
-            discount: data.discount // Any fields to update go here
+            discount: data.discount, 
+            stockStatus: true
         }
     });
 };

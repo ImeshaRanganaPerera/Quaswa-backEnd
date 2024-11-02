@@ -26,6 +26,15 @@ export const getbyProductId = async (id: any) => {
     });
 }
 
+export const getbycenterIdProductId = async (productId: any, centerId: any) => {
+    return db.inventory.findFirst({
+        where: {
+            productId: productId,
+            centerId: centerId,
+        }
+    })
+}
+
 // Filter inventory based on productId, centerId, and date with 0 qty
 export const filterInventory = async (productId?: string, centerId?: string) => {
     const filterConditions: any = { status: true };
@@ -236,6 +245,7 @@ export const filterVoucherProduct = async (
         createdAt: {
             lte: date,
         },
+        stockStatus: true
     };
 
     if (productId) filterConditions.productId = productId;
@@ -353,6 +363,7 @@ export const getStockMovement = async (productId: string, centerId: string, date
     const stockMovements = await db.voucherProduct.findMany({
         where: {
             productId: productId,
+            stockStatus: true,
             createdAt: { lte: date },
             voucher: {
                 voucherGroup: {

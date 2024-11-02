@@ -213,6 +213,7 @@ model Voucher {
   isRef            Boolean          @default(false)
   note             String?
   status           String?
+  stockStatus      Boolean?         @default(true)
   dueDays          Int?
   isPayment        Boolean          @default(true)
   isconform        Boolean          @default(true)
@@ -250,6 +251,7 @@ model voucherProduct {
   amount       Decimal
   remainingQty Decimal?
   isdisabale   Boolean  @default(false)
+  stockStatus  Boolean? @default(true)
   voucher      Voucher  @relation(fields: [voucherId], references: [id])
   voucherId    String
   product      Product  @relation(fields: [productId], references: [id])

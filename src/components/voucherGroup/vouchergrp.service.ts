@@ -25,6 +25,15 @@ export const getbyname = async (name: any) => {
     });
 }
 
+export const getById = async (id: any) => {
+    return db.voucherGroup.findFirst({
+        where: {
+            id: id,
+        }
+    });
+}
+
+
 export const create = async (data: any) => {
     return db.voucherGroup.create({
         data: data

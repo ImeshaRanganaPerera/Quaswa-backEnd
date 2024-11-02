@@ -86,8 +86,11 @@ export const getApprovedVoucher = async (userid: any) => {
             voucherProduct: true,
             user: { select: { name: true } },
             journalLine: true,
-            party: true, // Include related party details
+            party: true,
         },
+        orderBy: {
+            date: 'desc'
+        }
     });
 };
 
@@ -106,7 +109,15 @@ export const getPendingVoucherCondition = async () => {
                     },
                 },
             ],
-            isconform: false,
+            AND: [
+                {
+                    OR: [
+                        { status: null },
+                        { status: { not: "CANCELLED" } }
+                    ],
+                },
+                { isconform: false }
+            ],
         },
         include: {
             voucherProduct: true,
@@ -119,6 +130,9 @@ export const getPendingVoucherCondition = async () => {
                 }
             }
         },
+        orderBy: {
+            date: 'desc'
+        }
     });
 };
 
@@ -265,7 +279,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
         include: {
             party: true,
             voucherProduct: {
@@ -317,7 +331,7 @@ export const update = async (data: any, id: any) => {
 export const updatePendingVoucher = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
-        data: { amount: data.amount, appovedBy: data.appovedBy, isconform: data.isconform, isPayment: data.isPayment }
+        data: { amount: data.amount, appovedBy: data.appovedBy, isconform: data.isconform, isPayment: data.isPayment, stockStatus: true, status: data?.status }
     });
 }
 
@@ -914,10 +928,11 @@ export const getRefVoucherbyVoucherGrpid = async (data: any, userId?: any) => {
             voucherGroupId: data.voucherGroupId,
             partyId: data.partyId,
             isRef: false,
-            OR: [
-                { status: 'PENDING' },
-                { status: null },
-            ],
+            isconform: true,
+            // OR: [
+            //     { status: 'PENDING' },
+            //     { status: null },
+            // ],
         },
         include: {
             voucherProduct: {
@@ -945,7 +960,8 @@ export const getRefVoucherbyVoucherGrpid = async (data: any, userId?: any) => {
                     }
                 }
             }
-        }
+        },
+        orderBy: { voucherNumber: 'desc' }
     });
 }
 

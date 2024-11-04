@@ -331,7 +331,7 @@ export const update = async (data: any, id: any) => {
 export const updatePendingVoucher = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
-        data: { amount: data.amount, appovedBy: data.appovedBy, isconform: data.isconform, isPayment: data.isPayment, stockStatus: true, status: data?.status }
+        data: { amount: data.amount, appovedBy: data.appovedBy, isconform: data.isconform, isPayment: data.isPayment, stockStatus: true, status: data?.status, note: data?.note }
     });
 }
 
@@ -692,6 +692,69 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
     });
 };
 
+export const getrejectInvoice = async (vouchergrpId: any, startDate?: Date, endDate?: Date, userId?: any) => {
+    return db.voucher.findMany({
+        where: {
+            ...(userId && { authUser: userId }),
+            voucherGroupId: vouchergrpId,
+            date: {
+                gte: startDate,
+                lte: endDate,
+            },
+            status: 'CANCELLED',
+        },
+        include: {
+            party: true,
+            chartofacc: {
+                select: {
+                    accountName: true,
+                }
+            },
+
+            voucherProduct: {
+                select: {
+                    MRP: true,
+                    amount: true,
+                    centerId: true,
+                    cost: true,
+                    createdAt: true,
+                    id: true,
+                    isdisabale: true,
+                    minPrice: true,
+                    discount: true,
+                    productId: true,
+                    quantity: true,
+                    remainingQty: true,
+                    sellingPrice: true,
+                    updatedAt: true,
+                    voucherId: true,
+                    product: {
+                        select: {
+                            productName: true,
+                            printName: true
+                        }
+                    }
+                }
+            },
+            referVouchers: true,
+            PaymentVoucher: true,
+            user: {
+                select: {
+                    name: true,
+                    phoneNumber: true,
+                }
+            },
+            VoucherCenter: {
+                select: {
+                    center: true,
+                    centerStatus: true,
+                }
+            }
+        },
+        orderBy: { voucherNumber: 'desc' }
+    });
+}
+
 export const getVouchersByPartyByUserAndDateRangeall = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any) => {
     return db.voucher.findMany({
         where: {
@@ -1019,6 +1082,7 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
         _count: {
             id: true,
         },
+
     });
 
     const invoiceVouchersMonthly = await db.voucher.groupBy({

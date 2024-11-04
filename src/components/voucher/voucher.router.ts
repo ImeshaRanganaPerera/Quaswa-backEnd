@@ -109,6 +109,40 @@ voucherRouter.get("/filter", authenticate, async (request: ExpressRequest, respo
     }
 });
 
+voucherRouter.get("/rejectInvoices", authenticate, async (request: ExpressRequest, response: Response) => {
+    try {
+        var { startDate, endDate } = request.query;
+
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        const grpname = await voucherGrpService.getbyname('INVOICE');
+
+        const filterStartDate = startDate ? new Date(startDate as string) : new Date();
+        filterStartDate.setHours(0, 0, 0, 0);
+
+        const filterEndDate = endDate ? new Date(endDate as string) : new Date();
+        filterEndDate.setHours(23, 59, 59, 999);
+
+        if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
+            return response.status(400).json({ message: "Invalid date format." });
+        }
+
+        const vouchers = await voucherService.getrejectInvoice(grpname?.id, filterStartDate, filterEndDate);
+
+        if (!vouchers || vouchers.length === 0) {
+            return response.status(404).json({ message: "No vouchers found for the specified Voucher group and date range." });
+        }
+
+        return response.status(200).json({ data: vouchers });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
+
 voucherRouter.get("/salemenwise", authenticate, async (request: ExpressRequest, response: Response) => {
     try {
         var { startDate, endDate, userId } = request.query;

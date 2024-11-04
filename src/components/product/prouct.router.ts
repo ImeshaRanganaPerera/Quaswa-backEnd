@@ -54,6 +54,7 @@ productRouter.get("/discounts", async (request: Request, response: Response) => 
 
             return {
                 productName: product.printName,
+                cost: product.cost,
                 MRP: product.MRP,
                 ...productDiscounts, // Spread dynamic discount levels here
             };

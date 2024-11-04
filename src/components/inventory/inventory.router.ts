@@ -40,12 +40,12 @@ inventoryRouter.get("/stock", authenticate, async (request: ExpressRequest, resp
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-        if (request.user.role === Role.SALESMEN) {
-            const center = await usercenterService.getbyId(request.user.id);
-            if (!centerId) {
-                centerId = center?.centerId;
-            }
-        }
+        // if (request.user.role === Role.SALESMEN) {
+        //     const center = await usercenterService.getbyId(request.user.id);
+        //     if (!centerId) {
+        //         centerId = center?.centerId;
+        //     }
+        // }
         const filteredInventory = await inventoryService.filterVoucherProduct(
             productId?.toString(),
             centerId?.toString(),

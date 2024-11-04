@@ -61,6 +61,7 @@ export const getAllProductsWithDynamicDiscounts = async () => {
     return db.product.findMany({
         select: {
             printName: true,
+            cost: true,
             MRP: true,
             productDiscountLevel: {
                 include: {

@@ -42,8 +42,8 @@ export const updateVoucherProduct = async (data: any, id: any) => {
             id: id // Correctly pass the id as a string, not an object
         },
         data: {
-            discount: data.discount, 
-            stockStatus: true
+            discount: data.discount,
+            stockStatus: data?.stockStatus,
         }
     });
 };
@@ -62,7 +62,9 @@ export const costofsales = async (startDate: any, endDate: any) => {
             date: {
                 gte: startDate,
                 lte: endDate,
-            }
+            },
+            isconform: true,
+            isPayment: true,
         },
         include: {
             voucherProduct: {
@@ -75,6 +77,7 @@ export const costofsales = async (startDate: any, endDate: any) => {
                     },
                     cost: true,
                     MRP: true,
+                    discount: true,
                     quantity: true,
                 },
             },
@@ -86,7 +89,9 @@ export const costofsales = async (startDate: any, endDate: any) => {
     type ProductTotal = {
         itemCode: string;
         printName: string;
+        totalqty: number;
         totalCost: number;
+        discountprice: number;
         totalMRP: number;
         voucherNumbers: string[]; // Track unique voucher numbers
         voucherCount: number;     // Count of unique vouchers
@@ -97,41 +102,48 @@ export const costofsales = async (startDate: any, endDate: any) => {
         ...vp,
         voucherNumber: voucher.voucherNumber,
     })))
-    .reduce((acc: ProductTotal[], vp: any) => {
-        const itemCode = vp.product.itemCode;
-        const printName = vp.product.printName;
-        
-        // Calculate the cost and MRP per quantity
-        const cost = (Number(vp.cost) || 0) * (Number(vp.quantity) || 0);
-        const mrp = (Number(vp.MRP) || 0) * (Number(vp.quantity) || 0);
+        .reduce((acc: ProductTotal[], vp: any) => {
+            const itemCode = vp.product.itemCode;
+            const printName = vp.product.printName;
+            const qty = Number(vp.quantity);
 
-        // Find existing product entry or initialize a new one
-        let existingProduct = acc.find((prod) => prod.itemCode === itemCode);
+            // Calculate the cost and MRP per quantity
+            const cost = (Number(vp.cost) || 0) * (Number(vp.quantity) || 0);
+            const mrp = (Number(vp.MRP) || 0) * (Number(vp.quantity) || 0);
+            const discountprice = vp.discount.includes('%') ? (Number(vp.MRP) - (Number(vp.MRP) * (parseFloat(vp.discount.replace('%', '')) / 100))) * Number(vp.quantity) : (Number(vp.MRP) - Number(vp.discount)) * Number(vp.quantity);
+            console.log(vp.voucherNumber, printName, discountprice)
 
-        if (existingProduct) {
-            // Accumulate totals for existing product
-            existingProduct.totalCost += cost;
-            existingProduct.totalMRP += mrp;
-            
-            // Track unique vouchers for each product
-            if (!existingProduct.voucherNumbers.includes(vp.voucherNumber)) {
-                existingProduct.voucherNumbers.push(vp.voucherNumber);
-                existingProduct.voucherCount++;
+            // Find existing product entry or initialize a new one
+            let existingProduct = acc.find((prod) => prod.itemCode === itemCode);
+
+            if (existingProduct) {
+                // Accumulate totals for existing product
+                existingProduct.totalCost += cost;
+                existingProduct.totalMRP += mrp;
+                existingProduct.totalqty += Number(qty);
+                existingProduct.discountprice += discountprice;
+
+                // Track unique vouchers for each product
+                if (!existingProduct.voucherNumbers.includes(vp.voucherNumber)) {
+                    existingProduct.voucherNumbers.push(vp.voucherNumber);
+                    existingProduct.voucherCount++;
+                }
+            } else {
+                // Add a new product entry with initial totals and count
+                acc.push({
+                    itemCode,
+                    printName,
+                    totalCost: cost,
+                    totalMRP: mrp,
+                    totalqty: qty,
+                    discountprice: discountprice,
+                    voucherNumbers: [vp.voucherNumber], // Track unique voucher numbers
+                    voucherCount: 1, // Initialize voucher count
+                });
             }
-        } else {
-            // Add a new product entry with initial totals and count
-            acc.push({
-                itemCode,
-                printName,
-                totalCost: cost,
-                totalMRP: mrp,
-                voucherNumbers: [vp.voucherNumber], // Track unique voucher numbers
-                voucherCount: 1, // Initialize voucher count
-            });
-        }
 
-        return acc;
-    }, []);
+            return acc;
+        }, []);
 
     // Remove voucherNumbers array before returning if not needed
     return productTotals.map(({ voucherNumbers, ...rest }) => rest);

@@ -17,8 +17,7 @@ async function seed() {
             password: hashedPassword,
             role: Role.ADMIN,  // Using the Role enum
             isconform: true
-        }
-    });
+        }});
     const userid = user.id;
 
     const CompanyDetails = await db.companyDetails.create({
@@ -166,7 +165,6 @@ async function seed() {
             { accountName: "USER EXPENCESS ACCOUNT", accountSubCategoryId: Expencess.id, accountGroupId: acexpencess.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "CASH BOOK", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "PETTY CASH", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
-            { accountName: "BANK BOOK", accountSubCategoryId: currentassets.id, accountGroupId: bank.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "PENDING CHEQUE", accountSubCategoryId: currentassets.id, accountGroupId: cash.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "INVENTORY ACCOUNT", accountSubCategoryId: currentassets.id, accountGroupId: inventory.id, Opening_Balance: 0, createdBy: userid },
             { accountName: "IMPORT CONTROL ACCOUNT", accountSubCategoryId: currentLiabilites.id, accountGroupId: payable.id, Opening_Balance: 0, createdBy: userid },

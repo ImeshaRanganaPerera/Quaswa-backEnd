@@ -4,8 +4,7 @@ export const list = async () => {
     return db.product.findMany({
         include: {
             OEMNumber: true,
-            productDiscountLevel: true,
-            productcommissionRate: true
+            productDiscountLevel: true
         },
     });
 }

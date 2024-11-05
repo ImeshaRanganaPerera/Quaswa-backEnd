@@ -8,7 +8,6 @@ import * as inventoryService from '../inventory/inventory.service'
 import * as centerService from '../center/center.service'
 import * as OENumberService from '../OEMNumber/oemnumber.service'
 import * as productdiscountlevelService from '../productDiscountLevel/productDiscount.service'
-import * as productcommissionRateService from '../productcommsionRate/productCommissionRate.service'
 
 
 export const productRouter = express.Router();
@@ -239,24 +238,24 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
             return dis; // Return the created OEM number
         });
 
-        const commissionLevelsPromises = data.commissionLevels.map(async (com: any) => {
-            const comm = await productcommissionRateService.upserts({
-                commissionRateId: com.commissionRateId,
-                commissionRate: com.commissionRate,
-                createdBy: userId
-            }, id);
-            if (!comm) {
-                throw new Error("Failed to update Commission Rates");
-            }
-            return comm; // Return the created OEM number
-        });
+        // const commissionLevelsPromises = data.commissionLevels.map(async (com: any) => {
+        //     const comm = await productcommissionRateService.upserts({
+        //         commissionRateId: com.commissionRateId,
+        //         commissionRate: com.commissionRate,
+        //         createdBy: userId
+        //     }, id);
+        //     if (!comm) {
+        //         throw new Error("Failed to update Commission Rates");
+        //     }
+        //     return comm; // Return the created OEM number
+        // });
 
         try {
             // Wait for all promises
-            const [oemNumbers, discountList, commissionLevel] = await Promise.all([
+            const [oemNumbers, discountList] = await Promise.all([
                 Promise.all(OEMnumberPromises),
                 Promise.all(discountLevelsPromises),
-                Promise.all(commissionLevelsPromises),
+                // Promise.all(commissionLevelsPromises),
             ]);
 
             // Combine product and OEM numbers into a single data object
@@ -264,7 +263,7 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
                 ...updateProduct,
                 OEMNumber: oemNumbers,
                 productDiscountLevel: discountList,
-                productcommissionRate: commissionLevel
+                // productcommissionRate: commissionLevel
             };
 
             // Return the response including the combined data

@@ -73,7 +73,6 @@ model User {
   pettyCashIOUDetails   pettyCashIOUDetails[]
   vistingCustomer       vistingCustomer[]
   commissionLevel       commissionLevel[]
-  productcommissionRate productcommissionRate[]
   partyType             partyType[]
   userAuth              Voucher[]               @relation("UserAuth")
   createdbyUserVoucher  Voucher[]               @relation("CreatedByUserVoucher")
@@ -372,27 +371,27 @@ model commissionLevel {
   id                    String                  @id @default(uuid())
   commissionlevel       String
   days                  Int?
+  commissionRate        String
   user                  User                    @relation(fields: [createdBy], references: [id])
   createdBy             String
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
-  productcommissionRate productcommissionRate[]
 }
 
-model productcommissionRate {
-  product          Product         @relation(fields: [productId], references: [id])
-  productId        String
-  commission       commissionLevel @relation(fields: [commissionRateId], references: [id])
-  commissionRateId String
-  commissionRate   String
+// model productcommissionRate {
+//   product          Product         @relation(fields: [productId], references: [id])
+//   productId        String
+//   commission       commissionLevel @relation(fields: [commissionRateId], references: [id])
+//   commissionRateId String
+//   commissionRate   String
 
-  user      User     @relation(fields: [createdBy], references: [id])
-  createdBy String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+//   user      User     @relation(fields: [createdBy], references: [id])
+//   createdBy String
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
 
-  @@id([productId, commissionRateId])
-}
+//   @@id([productId, commissionRateId])
+// }
 
 model Product {
   id                    String                  @id @default(uuid())
@@ -420,7 +419,6 @@ model Product {
   voucherProduct        voucherProduct[]
   OEMNumber             OEMNumber[]
   productDiscountLevel  productDiscountLevel[]
-  productcommissionRate productcommissionRate[]
 }
 
 model discountLevel {

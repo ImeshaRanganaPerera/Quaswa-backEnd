@@ -38,45 +38,45 @@ model companyDetails {
 }
 
 model User {
-  id                    String                  @id @default(uuid())
-  name                  String
-  nic                   String?                 @unique
-  phoneNumber           String?                 @unique
-  address               String?
-  dateofbirth           DateTime?
-  target                Decimal?
-  username              String                  @unique
-  password              String
-  isDeleted             Boolean                 @default(false)
-  isconform             Boolean                 @default(false)
-  role                  Role                    @default(SALESMEN)
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  Party                 Party[]
-  Product               Product[]
-  userCenter            userCenter[]
-  Center                Center[]
-  Brand                 Brand[]
-  Type                  Type[]
-  ChartofAccount        ChartofAccount[]
-  journalLine           journalLine[]
-  AccountSubCategory    AccountSubCategory[]
-  AccountGroup          AccountGroup[]
-  partyCategory         partyCategory[]
-  ChequeBook            ChequeBook[]
-  Cheque                Cheque[]
-  discountLevel         discountLevel[]
-  productDiscountLevel  productDiscountLevel[]
-  referVouchers         referVouchers[]
-  pettycashIOU          pettycashIOU[]          @relation("UserIOU")
-  createdPettycashIOU   pettycashIOU[]          @relation("CreatedByUserIOU")
-  pettyCashIOUDetails   pettyCashIOUDetails[]
-  vistingCustomer       vistingCustomer[]
-  commissionLevel       commissionLevel[]
-  partyType             partyType[]
-  userAuth              Voucher[]               @relation("UserAuth")
-  createdbyUserVoucher  Voucher[]               @relation("CreatedByUserVoucher")
-  apporvelUser          Voucher[]               @relation("apporvelUser")
+  id                   String                 @id @default(uuid())
+  name                 String
+  nic                  String?                @unique
+  phoneNumber          String?                @unique
+  address              String?
+  dateofbirth          DateTime?
+  target               Decimal?
+  username             String                 @unique
+  password             String
+  isDeleted            Boolean                @default(false)
+  isconform            Boolean                @default(false)
+  role                 Role                   @default(SALESMEN)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  Party                Party[]
+  Product              Product[]
+  userCenter           userCenter[]
+  Center               Center[]
+  Brand                Brand[]
+  Type                 Type[]
+  ChartofAccount       ChartofAccount[]
+  journalLine          journalLine[]
+  AccountSubCategory   AccountSubCategory[]
+  AccountGroup         AccountGroup[]
+  partyCategory        partyCategory[]
+  ChequeBook           ChequeBook[]
+  Cheque               Cheque[]
+  discountLevel        discountLevel[]
+  productDiscountLevel productDiscountLevel[]
+  referVouchers        referVouchers[]
+  pettycashIOU         pettycashIOU[]         @relation("UserIOU")
+  createdPettycashIOU  pettycashIOU[]         @relation("CreatedByUserIOU")
+  pettyCashIOUDetails  pettyCashIOUDetails[]
+  vistingCustomer      vistingCustomer[]
+  commissionLevel      commissionLevel[]
+  partyType            partyType[]
+  userAuth             Voucher[]              @relation("UserAuth")
+  createdbyUserVoucher Voucher[]              @relation("CreatedByUserVoucher")
+  apporvelUser         Voucher[]              @relation("apporvelUser")
 }
 
 model userCenter {
@@ -197,8 +197,8 @@ model VoucherGroup {
 }
 
 model Voucher {
-  id               String           @id @default(uuid())
-  voucherNumber    String           @unique
+  id               String             @id @default(uuid())
+  voucherNumber    String             @unique
   date             DateTime?
   totalDebit       Decimal?
   totalCredit      Decimal?
@@ -209,27 +209,27 @@ model Voucher {
   returnValue      Decimal?
   refNumber        String?
   refVoucherNumber String?
-  isRef            Boolean          @default(false)
+  isRef            Boolean            @default(false)
   note             String?
   status           String?
-  stockStatus      Boolean?         @default(true)
+  stockStatus      Boolean?           @default(true)
   dueDays          Int?
-  isPayment        Boolean          @default(true)
-  isconform        Boolean          @default(true)
-  party            Party?           @relation(fields: [partyId], references: [id])
+  isPayment        Boolean            @default(true)
+  isconform        Boolean            @default(true)
+  party            Party?             @relation(fields: [partyId], references: [id])
   partyId          String?
-  chartofacc       ChartofAccount?  @relation(fields: [chartofAccountId], references: [id])
+  chartofacc       ChartofAccount?    @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String?
-  voucherGroup     VoucherGroup     @relation(fields: [voucherGroupId], references: [id])
+  voucherGroup     VoucherGroup       @relation(fields: [voucherGroupId], references: [id])
   voucherGroupId   String
-  user             User?            @relation("UserAuth", fields: [authUser], references: [id])
+  user             User?              @relation("UserAuth", fields: [authUser], references: [id])
   authUser         String?
-  createdByUser    User             @relation("CreatedByUserVoucher", fields: [createdBy], references: [id])
+  createdByUser    User               @relation("CreatedByUserVoucher", fields: [createdBy], references: [id])
   createdBy        String
-  apporvelUser     User?            @relation("apporvelUser", fields: [appovedBy], references: [id])
+  apporvelUser     User?              @relation("apporvelUser", fields: [appovedBy], references: [id])
   appovedBy        String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
   PaymentVoucher   PaymentVoucher[]
   voucherProduct   voucherProduct[]
   VoucherCenter    VoucherCenter[]
@@ -237,6 +237,7 @@ model Voucher {
   Cheque           Cheque[]
   referVouchers    referVouchers[]
   pettycashIOU     pettycashIOU[]
+  commissionReport commissionReport[]
 }
 
 model voucherProduct {
@@ -368,14 +369,23 @@ model OEMNumber {
 }
 
 model commissionLevel {
-  id                    String                  @id @default(uuid())
-  commissionlevel       String
-  days                  Int?
-  commissionRate        String
-  user                  User                    @relation(fields: [createdBy], references: [id])
-  createdBy             String
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
+  id              String   @id @default(uuid())
+  commissionlevel String
+  days            Int?
+  commissionRate  String
+  user            User     @relation(fields: [createdBy], references: [id])
+  createdBy       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model commissionReport {
+  id        String  @id @default(uuid())
+  voucher   Voucher @relation(fields: [voucherId], references: [id])
+  voucherId String
+  comRate   String
+  amount    Decimal
+  
 }
 
 // model productcommissionRate {
@@ -394,31 +404,31 @@ model commissionLevel {
 // }
 
 model Product {
-  id                    String                  @id @default(uuid())
-  unit                  Unit                    @default(PCS)
-  itemCode              String?                 @unique()
-  barcode               String?
-  productName           String
-  printName             String?
-  image                 String?
-  criticalLevel         Int?
-  cost                  Decimal?
-  minPrice              Decimal?
-  MRP                   Decimal?
-  sellingPrice          Decimal?
-  status                Boolean                 @default(true)
-  type                  Type                    @relation(fields: [typeId], references: [id])
-  typeId                String
-  brand                 Brand?                  @relation(fields: [brandId], references: [id])
-  brandId               String?
-  user                  User                    @relation(fields: [createdBy], references: [id])
-  createdBy             String
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  Inventory             Inventory[]
-  voucherProduct        voucherProduct[]
-  OEMNumber             OEMNumber[]
-  productDiscountLevel  productDiscountLevel[]
+  id                   String                 @id @default(uuid())
+  unit                 Unit                   @default(PCS)
+  itemCode             String?                @unique()
+  barcode              String?
+  productName          String
+  printName            String?
+  image                String?
+  criticalLevel        Int?
+  cost                 Decimal?
+  minPrice             Decimal?
+  MRP                  Decimal?
+  sellingPrice         Decimal?
+  status               Boolean                @default(true)
+  type                 Type                   @relation(fields: [typeId], references: [id])
+  typeId               String
+  brand                Brand?                 @relation(fields: [brandId], references: [id])
+  brandId              String?
+  user                 User                   @relation(fields: [createdBy], references: [id])
+  createdBy            String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  Inventory            Inventory[]
+  voucherProduct       voucherProduct[]
+  OEMNumber            OEMNumber[]
+  productDiscountLevel productDiscountLevel[]
 }
 
 model discountLevel {

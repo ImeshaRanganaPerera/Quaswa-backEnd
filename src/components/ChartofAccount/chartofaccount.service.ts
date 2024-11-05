@@ -39,6 +39,18 @@ export const getbygroup = async (id: string) => {
     })
 }
 
+export const getbyaccCategory = async (name: string) => {
+    return db.chartofAccount.findMany({
+        where: {
+            AccountSubCategory: {
+                AccountCategory: {
+                    accCategory: name
+                }
+            }
+        }
+    })
+}
+
 export const getdepositAcc = async () => {
     return db.chartofAccount.findMany({
         where: {

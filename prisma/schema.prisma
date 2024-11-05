@@ -160,6 +160,7 @@ model vistingCustomer {
   partyId   String
   note      String?
   status    String?
+  type      String?
   user      User     @relation(fields: [createdBy], references: [id])
   createdBy String
   createdAt DateTime @default(now())
@@ -380,28 +381,13 @@ model commissionLevel {
 }
 
 model commissionReport {
-  id        String  @id @default(uuid())
-  voucher   Voucher @relation(fields: [voucherId], references: [id])
+  id        String   @id @default(uuid())
+  date      DateTime
+  voucher   Voucher  @relation(fields: [voucherId], references: [id])
   voucherId String
   comRate   String
   amount    Decimal
-  
 }
-
-// model productcommissionRate {
-//   product          Product         @relation(fields: [productId], references: [id])
-//   productId        String
-//   commission       commissionLevel @relation(fields: [commissionRateId], references: [id])
-//   commissionRateId String
-//   commissionRate   String
-
-//   user      User     @relation(fields: [createdBy], references: [id])
-//   createdBy String
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   @@id([productId, commissionRateId])
-// }
 
 model Product {
   id                   String                 @id @default(uuid())

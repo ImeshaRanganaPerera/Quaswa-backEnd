@@ -129,6 +129,7 @@ partyRouter.post("/", authenticate, async (request: ExpressRequest, response: Re
                 partyId: newParty.id,
                 note: data.visitingCustomer.note,
                 status: data.visitingCustomer.status,
+                type: data.visitingCustomer.type,
                 createdBy: userId
             }
             await visitingCustomerService.create(visitingdata)
@@ -228,6 +229,7 @@ partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage
                     partyId: newParty.id,
                     note: visitingCustomer.note,
                     status: visitingCustomer.status,
+                    type: visitingCustomer.type,
                     createdBy: userId,
                 };
                 await visitingCustomerService.create(visitingdata);

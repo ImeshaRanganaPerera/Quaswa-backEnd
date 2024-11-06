@@ -16,7 +16,7 @@ export const list = async (id: any) => {
                     category: true
                 }
             },
-        }
+        },
     });
 }
 
@@ -53,6 +53,11 @@ export const getbyGroup = async (id: any, condition: boolean) => {
                     name: true,
                 },
             },
+        },
+        orderBy: {
+            partyCategory: {
+                category: 'asc'
+            }
         }
     }).then(parties => {
         return parties.map(party => ({

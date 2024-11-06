@@ -1,7 +1,14 @@
 import { db } from "../../utils/db.server";
 
 export const list = async () => {
-    return db.commissionReport.findMany();
+    return db.commissionReport.findMany({
+        include: {
+            voucher: true,
+        },
+        orderBy: {
+            date: "desc"
+        }
+    });
 }
 
 export const get = async (id: any) => {

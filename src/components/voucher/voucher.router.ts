@@ -18,7 +18,8 @@ import * as referVoucherService from '../referVouchers/referVouchers.service'
 import * as chequebookService from '../ChequeBook/chequebook.service'
 import * as chequeService from '../Cheque/cheque.service'
 import * as pettyCashIOUService from '../pettycashIOU/pettycashIOU.service'
-import { getSalesmanWiseVouchers } from './voucher.service';
+import * as commissionReportService from '../commissionReport/commissionReport.service'
+import * as commissionRateService from '../commissionRate/commissionRate.service'
 
 export const voucherRouter = express.Router();
 
@@ -487,8 +488,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             createdBy: userId
         })
 
-        console.log(data)
-        console.log(newVoucher)
 
         if (data.refVoucherNumber) {
             await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data?.returnValue, isRef: true, voucherId: newVoucher.voucherNumber, status: data?.status })
@@ -509,7 +508,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     centerId: data.fromCenterId,
                     toCenterId: data.toCenterId
                 });
-                console.log(voucherProduct)
                 if (!voucherProduct) {
                     throw new Error("Failed to update product to list association");
                 }
@@ -600,7 +598,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 }
                 // Now handle the cheque creation if applicable
                 if (data.payment.cheque > 0 && chequePaymentVoucher) {
-                    console.log(data.payment.chequeBookId);
                     const cheque = await chequeService.create({
                         chequeNumber: data.payment.chequenumber.toString(),
                         chequeBankName: data.payment.chequeBankName,
@@ -617,6 +614,28 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         await chequebookService.updatechequeRemaning(data.payment?.chequeBookId);
                     }
                 }
+
+                if (data.voucherGroupname === "INVOICE" && data.paidValue > 0) {
+                    const invoiceDate = new Date(data.date);
+                    invoiceDate.setHours(0, 0, 0, 0);
+
+                    // Calculate the days difference (although in your current code, it's always zero)
+                    const invoicedays = 0; // Consider calculating the difference with a reference date if needed
+
+                    const rates = await commissionRateService.list();
+
+                    // Filter rates and find the appropriate rate based on invoicedays
+                    const rate = rates.find(rate => rate.days != null && invoicedays <= rate.days);
+
+                    const commissionRate = rate?.commissionRate || "0%";
+                    const commission = await commissionReportService.create({
+                        date: data.date,
+                        voucherId: newVoucher.id,
+                        comRate: commissionRate,
+                        amount: data.paidValue
+                    });
+                }
+
             }
 
             if (data.voucherGroupname !== "DIRECT PAYMENT") {
@@ -657,6 +676,32 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                                 voucherId: newVoucher.id,
                                 createdBy: userId
                             });
+                            console.log('hi')
+                            if (selectedVoucher?.voucherNumber?.startsWith('INV')) {
+                                if (selectedVoucher.date) {
+                                    const invoiceDate = new Date(selectedVoucher.date);
+                                    const payDate = new Date(data.date);
+                                    invoiceDate.setHours(0, 0, 0, 0);
+                                    payDate.setHours(0, 0, 0, 0);
+
+                                    const timeDifference = payDate.getTime() - invoiceDate.getTime();
+                                    const dueDays = selectedVoucher.dueDays ?? 0;
+                                    const invoicedays = (timeDifference / (1000 * 60 * 60 * 24) - dueDays);
+
+                                    const rates = await commissionRateService.list();
+                                    const rate = rates.find(rate => rate.days != null && invoicedays <= rate.days);
+
+                                    console.log(dueDays, invoicedays, rate)
+
+                                    const commissionRate = rate?.commissionRate || "0%";
+                                    await commissionReportService.create({
+                                        date: data.date,
+                                        voucherId: selectedVoucher.id,
+                                        comRate: commissionRate,
+                                        amount: updatedPaidValue - paidValue
+                                    });
+                                }
+                            }
 
                             // Decrease the remaining amount by the amount just paid
                             remainingAmount -= payableAmount;
@@ -1014,6 +1059,27 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                     await chequebookService.updatechequeRemaning(data.payment?.chequeBookId);
                 }
             }
+
+            if (voucherGroup?.voucherName === "INVOICE" && data.paidValue > 0) {
+                const invoiceDate = new Date(data.date);
+                invoiceDate.setHours(0, 0, 0, 0);
+
+                // Calculate the days difference (although in your current code, it's always zero)
+                const invoicedays = 0; // Consider calculating the difference with a reference date if needed
+
+                const rates = await commissionRateService.list();
+
+                // Filter rates and find the appropriate rate based on invoicedays
+                const rate = rates.find(rate => rate.days != null && invoicedays <= rate.days);
+
+                const commissionRate = rate?.commissionRate || "0%";
+                const commission = await commissionReportService.create({
+                    date: data.date,
+                    voucherId: id.id,
+                    comRate: commissionRate,
+                    amount: data.paidValue
+                });
+            }
         }
 
         // Process voucher product if available
@@ -1033,7 +1099,6 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
             ...data,
             appovedBy: data.appovedBy ? data.appovedBy : userId
         }
-        console.log(data)
         const updateVoucher = await voucherService.updatePendingVoucher(data, id);
 
         if (updateVoucher) {

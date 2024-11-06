@@ -30,6 +30,7 @@ import { commsissionRateRouter } from "./components/commissionRate/commissionRat
 import { partyTypeRouter } from "./components/partyType/partyType.route";
 import { proofImageRouter } from "./components/proofImage/proofImage.router";
 import { referVoucherRouter } from "./components/referVouchers/referVouchers.route";
+import { commissionReportRouter } from "./components/commissionReport/commissionReport.route";
 
 
 dotenv.config();
@@ -76,6 +77,7 @@ app.use("/api/visitingCustomer", visitingCustomerRouter)
 app.use("/api/partyType", partyTypeRouter)
 app.use("/api/proofImage", proofImageRouter)
 app.use("/api/referVoucher", referVoucherRouter)
+app.use("/api/commissionReport", commissionReportRouter)
 
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 

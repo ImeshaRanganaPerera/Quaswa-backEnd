@@ -333,7 +333,7 @@ export const update = async (data: any, id: any) => {
 export const updatePendingVoucher = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
-        data: { amount: data.amount, appovedBy: data.appovedBy, isconform: data.isconform, isPayment: data.isPayment, stockStatus: data?.stockStatus, status: data?.status, note: data?.note }
+        data: { amount: data.amount, paidValue: data.paidValue, appovedBy: data.appovedBy, isconform: data.isconform, isPayment: data.isPayment, stockStatus: data?.stockStatus, status: data?.status, note: data?.note }
     });
 }
 

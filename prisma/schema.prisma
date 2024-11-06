@@ -204,6 +204,7 @@ model Voucher {
   totalDebit       Decimal?
   totalCredit      Decimal?
   value            Decimal?
+  firstPay         Decimal?
   amount           Decimal?
   location         String?
   paidValue        Decimal?

@@ -6,6 +6,19 @@ export const list = async () => {
     return db.voucher.findMany();
 }
 
+export const commission = async () =>{
+    return db.voucher.findMany({
+        where: {
+            isconform: true,
+            isPayment: true,
+            voucherGroup: {
+                voucherName: "INVOICE"
+            },
+            paidValue: {gt: 0}
+        }
+    })
+}
+
 export const get = async (id: any) => {
     return db.voucher.findFirst({
         where: {
@@ -281,7 +294,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, firstPay: data?.firstPay, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
         include: {
             party: true,
             voucherProduct: {
@@ -333,7 +346,7 @@ export const update = async (data: any, id: any) => {
 export const updatePendingVoucher = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
-        data: { amount: data.amount, paidValue: data.paidValue, appovedBy: data.appovedBy, isconform: data.isconform, isPayment: data.isPayment, stockStatus: data?.stockStatus, status: data?.status, note: data?.note }
+        data: { amount: data.amount, paidValue: data.paidValue, appovedBy: data.appovedBy, isconform: data.isconform, isPayment: data.isPayment, firstPay: data?.firstPay, stockStatus: data?.stockStatus, status: data?.status, note: data?.note }
     });
 }
 

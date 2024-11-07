@@ -353,6 +353,27 @@ voucherRouter.get("/vouchersByAuthUser", async (req: Request, res: Response) => 
     }
 });
 
+voucherRouter.get("/dashboardFigures", async (req: Request, res: Response) => {
+    try {
+        let { month, year } = req.query;
+
+        // Get current month and year if not provided
+        if (!month || !year) {
+            const currentDate = new Date();
+            month = month || (currentDate.getMonth() + 1).toString(); // JavaScript months are 0-indexed, so add 1
+            year = year || currentDate.getFullYear().toString();
+        }
+
+        const vouchersGroupedByAuthUser = await voucherService.dashboardFiguresByUser(parseInt(month as string), parseInt(year as string));
+
+        // console.log(vouchersGroupedByAuthUser)
+        return res.status(200).json({ data: vouchersGroupedByAuthUser });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return res.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
 voucherRouter.get("/:id", async (request: Request, response: Response) => {
     const id: any = request.params.id;
     try {

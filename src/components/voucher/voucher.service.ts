@@ -6,7 +6,7 @@ export const list = async () => {
     return db.voucher.findMany();
 }
 
-export const commission = async () =>{
+export const commission = async () => {
     return db.voucher.findMany({
         where: {
             isconform: true,
@@ -14,7 +14,7 @@ export const commission = async () =>{
             voucherGroup: {
                 voucherName: "INVOICE"
             },
-            paidValue: {gt: 0}
+            paidValue: { gt: 0 }
         }
     })
 }
@@ -1345,6 +1345,213 @@ export const pendingConform = async () => {
 };
 
 
+export const dashboardFiguresByUser = async (month?: number, year?: number) => {
+    const selectedMonth = month !== undefined ? month - 1 : new Date().getMonth();
+    const selectedYear = year !== undefined ? year : new Date().getFullYear();
+
+    const startDate = new Date(selectedYear, selectedMonth, 1, 0, 0, 0, 0);
+    const endDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const salesReturnGroup = await db.voucherGroup.findFirst({
+        where: { voucherName: 'SALES-RETURN' },
+        select: { id: true }
+    });
+    const invoiceGroup = await db.voucherGroup.findFirst({
+        where: { voucherName: 'INVOICE' },
+        select: { id: true }
+    });
+
+    if (!salesReturnGroup || !invoiceGroup) {
+        throw new Error("Unable to find specified voucher groups");
+    }
+
+    const getVouchers = async (groupId: any, startDate: any, endDate: any) => {
+        const vouchers = await db.voucher.findMany({
+            where: {
+                isconform: true,
+                date: {
+                    gte: startDate,
+                    lte: endDate,
+                },
+                voucherGroupId: groupId,
+            },
+            include: {
+                user: true,
+                PaymentVoucher: {
+                    include: { payment: true }
+                }
+            }
+        });
+
+        return vouchers;
+    };
+
+    const salesReturnVouchersMonthly = await getVouchers(salesReturnGroup.id, startDate, endDate);
+    const invoiceVouchersMonthly = await getVouchers(invoiceGroup.id, startDate, endDate);
+    const salesReturnVouchersDaily = await getVouchers(salesReturnGroup.id, todayStart, todayEnd);
+    const invoiceVouchersDaily = await getVouchers(invoiceGroup.id, todayStart, todayEnd);
+
+    // Query VisitingCustomer for daily and monthly counts
+    const getVisitingCustomerCount = async (userId: string, startDate: Date, endDate: Date) => {
+        const count = await db.vistingCustomer.count({
+            where: {
+                user: { name: userId },
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate,
+                }
+            }
+        });
+        return count;
+    };
+
+    interface PaymentSummary {
+        Cash: number;
+        OnlineTransfer: number;
+        Credit: number;
+    }
+
+    interface UserGroupedData {
+        username: string;
+        monthlyGroupedData: {
+            totalInvoice: number;
+            totalReturn: number;
+            payments: PaymentSummary;
+            visitingCount: number;
+        };
+        dailyGroupedData: {
+            totalInvoice: number;
+            totalReturn: number;
+            payments: PaymentSummary;
+            visitingCount: number;
+        };
+    }
+
+    // Group by authUser and track payments by type
+    const groupByAuthUser = (vouchers: any[]): { [key: string]: UserGroupedData } => {
+        return vouchers.reduce((acc, cur) => {
+            const userId = cur.user?.name;  // Check if `cur.user` is not null
+
+            if (!userId) {
+                return acc;  // Skip if there's no user associated with the voucher
+            }
+
+            if (!acc[userId]) {
+                acc[userId] = {
+                    username: userId,
+                    monthlyGroupedData: {
+                        totalInvoice: 0,
+                        totalReturn: 0,
+                        totalInvoiceCount: 0,  // Add invoice count
+                        totalReturnCount: 0,   // Add return count
+                        payments: { Cash: 0, OnlineTransfer: 0, Cheque: 0, Credit: 0 },
+                        visitingCount: 0,  // Add visiting count field
+                    },
+                    dailyGroupedData: {
+                        totalInvoice: 0,
+                        totalReturn: 0,
+                        totalInvoiceCount: 0,  // Add invoice count
+                        totalReturnCount: 0,   // Add return count
+                        payments: { Cash: 0, OnlineTransfer: 0, Cheque: 0, Credit: 0 },
+                        visitingCount: 0,  // Add visiting count field
+                    }
+                };
+            }
+
+            // Update totals by user
+            if (cur.voucherGroupId === invoiceGroup.id) {
+                acc[userId].monthlyGroupedData.totalInvoice += Number(cur.amount);
+                acc[userId].monthlyGroupedData.totalInvoiceCount += 1;  // Increment invoice count
+            } else if (cur.voucherGroupId === salesReturnGroup.id) {
+                acc[userId].monthlyGroupedData.totalReturn += Number(cur.amount);
+                acc[userId].monthlyGroupedData.totalReturnCount += 1;  // Increment return count
+            }
+
+            // Track payments by type (monthly)
+            if (cur.PaymentVoucher) {
+                cur.PaymentVoucher.forEach((paymentVoucher: any) => {
+                    const paymentType = paymentVoucher.paymentType;  // Assuming `paymentType` is a field in `PaymentVoucher`
+                    const amount = paymentVoucher.amount;
+                    if (paymentType === 'Cash') {
+                        acc[userId].monthlyGroupedData.payments.Cash += Number(amount);
+                    } else if (paymentType === 'Online Transfer') {
+                        acc[userId].monthlyGroupedData.payments.OnlineTransfer += Number(amount);
+                    } else if (paymentType === 'Credit') {
+                        acc[userId].monthlyGroupedData.payments.Credit += Number(amount);
+                    }
+                    else if (paymentType === 'Cheque') {
+                        acc[userId].monthlyGroupedData.payments.Cheque += Number(amount);
+                    }
+                });
+            }
+
+            return acc;
+        }, {});
+    };
+
+    const monthlyGroupedData = groupByAuthUser([...salesReturnVouchersMonthly, ...invoiceVouchersMonthly]);
+    const dailyGroupedData = groupByAuthUser([...salesReturnVouchersDaily, ...invoiceVouchersDaily]);
+
+    // Now, update the daily data and include invoice/return counts:
+    for (const userId in monthlyGroupedData) {
+        const userMonthlyData = monthlyGroupedData[userId];
+
+        // Calculate daily figures for each user
+        const dailyVouchers = [
+            ...salesReturnVouchersDaily.filter(voucher => voucher.user?.name === userId),
+            ...invoiceVouchersDaily.filter(voucher => voucher.user?.name === userId)
+        ];
+
+        const dailyData = groupByAuthUser(dailyVouchers)[userId]?.monthlyGroupedData || {
+            totalInvoice: 0,
+            totalReturn: 0,
+            totalInvoiceCount: 0,  // Add invoice count
+            totalReturnCount: 0,   // Add return count
+            payments: { Cash: 0, OnlineTransfer: 0, Cheque: 0, Credit: 0 },
+            visitingCount: 0
+        };
+
+        // Combine monthly and daily data for each user
+        monthlyGroupedData[userId].dailyGroupedData = dailyData;
+
+        // Get the monthly and daily visiting customer counts
+        const monthlyVisitingCount = await getVisitingCustomerCount(userId, startDate, endDate);
+        const dailyVisitingCount = await getVisitingCustomerCount(userId, todayStart, todayEnd);
+
+        // Update the visiting count in the grouped data
+        monthlyGroupedData[userId].monthlyGroupedData.visitingCount = monthlyVisitingCount;
+        monthlyGroupedData[userId].dailyGroupedData.visitingCount = dailyVisitingCount;
+    }
+
+    // Now filter by role
+    const filteredData = await Promise.all(Object.values(monthlyGroupedData).map(async (userData) => {
+        // Check if the user is a 'SALESMEN' in the User table
+        const user = await db.user.findFirst({
+            where: { name: userData.username },
+            select: { role: true, target: true }
+        });
+
+        // If user role is 'SALESMEN', include their data
+        if (user?.role === 'SALESMEN') {
+            return {
+                username: userData.username,
+                target: user.target,
+                monthlyGroupedData: userData.monthlyGroupedData,
+                dailyGroupedData: userData.dailyGroupedData
+            };
+        }
+        return null; // Skip this user if they are not a 'SALESMEN'
+    }));
+
+    // Remove null entries
+    const combinedData = filteredData.filter(item => item !== null);
+
+    return { combinedData };
+};
 
 
 

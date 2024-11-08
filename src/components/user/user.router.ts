@@ -264,7 +264,7 @@ userRouter.put("/:id", authenticate, async (request: ExpressRequest, response: R
 
         const updateUser = await UserService.update(userData, id)
         if (updateUser) {
-            return response.status(201).json({ data: updateUser });
+            return response.status(201).json({ message: "User updated successfully", data: updateUser });
         }
 
     } catch (error: any) {

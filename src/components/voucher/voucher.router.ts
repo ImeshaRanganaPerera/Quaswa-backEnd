@@ -20,6 +20,7 @@ import * as chequeService from '../Cheque/cheque.service'
 import * as pettyCashIOUService from '../pettycashIOU/pettycashIOU.service'
 import * as commissionReportService from '../commissionReport/commissionReport.service'
 import * as commissionRateService from '../commissionRate/commissionRate.service'
+import * as bankRecJournalService from '../bankRecJournal/bankRecJournal.service'
 
 export const voucherRouter = express.Router();
 
@@ -98,6 +99,38 @@ voucherRouter.get("/filter", authenticate, async (request: ExpressRequest, respo
         } else {
             vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId);
         }
+
+        if (!vouchers || vouchers.length === 0) {
+            return response.status(404).json({ message: "No vouchers found for the specified Voucher group and date range." });
+        }
+
+        return response.status(200).json({ data: vouchers });
+    } catch (error: any) {
+        console.error("Error fetching vouchers:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving vouchers.", error: error.message });
+    }
+});
+
+voucherRouter.get("/bankRecVouchers", authenticate, async (request: ExpressRequest, response: Response) => {
+    try {
+        var { startDate, endDate } = request.query;
+
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        const grpname = await voucherGrpService.getbyname("BANK-RECONCILIATION");
+        const filterStartDate = startDate ? new Date(startDate as string) : new Date();
+        filterStartDate.setHours(0, 0, 0, 0);
+
+        const filterEndDate = endDate ? new Date(endDate as string) : new Date();
+        filterEndDate.setHours(23, 59, 59, 999);
+
+        if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
+            return response.status(400).json({ message: "Invalid date format." });
+        }
+
+        var vouchers = await voucherService.getBankReconciliationVouchers(grpname?.id as string, filterStartDate, filterEndDate);
 
         if (!vouchers || vouchers.length === 0) {
             return response.status(404).json({ message: "No vouchers found for the specified Voucher group and date range." });
@@ -401,6 +434,19 @@ voucherRouter.get("/voucherNumber/:vouchername", async (request: Request, respon
     }
 })
 
+voucherRouter.get("/bankRec/startingValue/:bankId", async (request: Request, response: Response) => {
+    const bankId: any = request.params.bankId;
+    try {
+        const startingValue = await voucherService.getstartValue(bankId)
+        if (startingValue) {
+            return response.status(200).json({ data: startingValue });
+        }
+        return response.status(404).json({ message: "Voucher Number could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
+
 voucherRouter.get("/group/:vouchername", async (request: Request, response: Response) => {
     const vouchername: any = request.params.vouchername;
     try {
@@ -501,6 +547,7 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                 return total + (product.cost * product.quantity);
             }, 0);
         }
+        console.log(data)
         const newVoucher = await voucherService.create({
             ...data,
             authUser: data.authUser ? data.authUser : userId,
@@ -904,6 +951,28 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     }
                 }
             }
+
+            if (data.bankRecJournal && data.bankRecJournal.length > 0) {
+                const journalPromise = data.bankRecJournal?.map(async (record: any) => {
+                    const bankRecJournal = await bankRecJournalService.create({
+                        date: record.date,
+                        voucherId: newVoucher.id,
+                        chartofAccountId: record.chartofAccountId,
+                        debitAmount: record.debitAmount,
+                        creditAmount: record.creditAmount,
+                        ref: record.ref,
+                        isStatus: record.isStatus,
+                        createdBy: userId
+                    });
+                    const updateJournalLine = await journalLineService.updateStatus({ isStatus: record.isStatus }, record.id);
+                });
+                try {
+                    await Promise.all(journalPromise);
+                } catch (error: any) {
+                    return response.status(500).json({ message: error.message });
+                }
+            }
+
         }
         if (newVoucher) {
             return response.status(201).json({ message: "Transaction Saved Successfully", data: newVoucher });

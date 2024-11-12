@@ -443,13 +443,3 @@ export const getStockMovement = async (productId: string, centerId: string, date
 
     return result;
 };
-
-
-
-
-
-
-
-
-
-

@@ -77,6 +77,7 @@ model User {
   userAuth             Voucher[]              @relation("UserAuth")
   createdbyUserVoucher Voucher[]              @relation("CreatedByUserVoucher")
   apporvelUser         Voucher[]              @relation("apporvelUser")
+  bankRecJournal       bankRecJournal[]
 }
 
 model userCenter {
@@ -218,6 +219,10 @@ model Voucher {
   dueDays          Int?
   isPayment        Boolean            @default(true)
   isconform        Boolean            @default(true)
+  startDate        DateTime?
+  endDate          DateTime?
+  startingValue    Decimal?
+  endingValue      Decimal?
   party            Party?             @relation(fields: [partyId], references: [id])
   partyId          String?
   chartofacc       ChartofAccount?    @relation(fields: [chartofAccountId], references: [id])
@@ -240,6 +245,7 @@ model Voucher {
   referVouchers    referVouchers[]
   pettycashIOU     pettycashIOU[]
   commissionReport commissionReport[]
+  bankRecJournal   bankRecJournal[]
 }
 
 model voucherProduct {
@@ -501,6 +507,7 @@ model ChartofAccount {
   Party                Party[]
   ChequeBook           ChequeBook[]
   Voucher              Voucher[]
+  bankRecJournal       bankRecJournal[]
 }
 
 model ChequeBook {
@@ -552,6 +559,24 @@ model journalLine {
   debitAmount      Decimal?
   creditAmount     Decimal?
   ref              String?
+  isStatus         Boolean        @default(false)
+  user             User           @relation(fields: [createdBy], references: [id])
+  createdBy        String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model bankRecJournal {
+  id               String         @id @default(uuid())
+  date             DateTime?
+  journal          Voucher?       @relation(fields: [voucherId], references: [id])
+  voucherId        String?
+  account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])
+  chartofAccountId String
+  debitAmount      Decimal?
+  creditAmount     Decimal?
+  ref              String?
+  isStatus         Boolean        @default(false)
   user             User           @relation(fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime       @default(now())

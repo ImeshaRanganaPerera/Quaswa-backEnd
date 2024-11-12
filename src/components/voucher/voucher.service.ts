@@ -294,7 +294,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, firstPay: data?.firstPay, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, firstPay: data?.firstPay, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, startDate: data?.startDate, endDate: data?.endDate, startingValue: data?.startingValue, endingValue: data?.endingValue, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
         include: {
             party: true,
             voucherProduct: {
@@ -406,6 +406,30 @@ export const generateVoucherNumber = async (voucherGroupId: any) => {
 
     return newVoucherNumber;
 };
+
+export const getstartValue = async (bankId: any) => {
+    const lastVoucher = await db.voucher.findFirst({
+        where: {
+            chartofAccountId: bankId,
+            voucherGroup: {
+                voucherName: 'BANK-RECONCILIATION'
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    })
+
+    console.log("Last Voucher:", lastVoucher)
+
+    let endValue;
+
+    if (lastVoucher) {
+        endValue = lastVoucher.endingValue
+    }
+    else {
+        endValue = 0
+    }
+    return endValue
+}
 
 export const updateConform = async (data: any, id: any) => {
     return db.voucher.update({
@@ -827,6 +851,27 @@ export const getVouchersByPartyByUserAndDateRangeall = async (voucherGroupId: st
                     centerStatus: true,
                 }
             }
+        },
+        orderBy: { voucherNumber: 'desc' }
+    });
+};
+
+export const getBankReconciliationVouchers = async (voucherGroupId: string, startDate?: Date, endDate?: Date, userId?: any) => {
+    return db.voucher.findMany({
+        where: {
+            voucherGroupId: voucherGroupId,
+            date: {
+                gte: startDate,
+                lte: endDate,
+            }
+        },
+        include: {
+            chartofacc: {
+                select: {
+                    accountName: true,
+                }
+            },
+            bankRecJournal: true
         },
         orderBy: { voucherNumber: 'desc' }
     });

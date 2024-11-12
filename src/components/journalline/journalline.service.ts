@@ -9,7 +9,7 @@ export const getByAccountAndDateRange = async (chartofAccountId: string | null, 
         where: {
             ...(chartofAccountId && { chartofAccountId }), // Apply filter only if chartofAccountId is provided
             date: {
-                gte: startDate, // greater than or equal to the start date
+                gte: startDate,
                 lte: endDate,   // less than or equal to the end date
             },
         },
@@ -17,6 +17,43 @@ export const getByAccountAndDateRange = async (chartofAccountId: string | null, 
             account: {
                 select: {
                     accountName: true, // This will retrieve the account name
+                },
+            },
+            journal: {
+                select: {
+                    voucherNumber: true,
+                    party: {
+                        select: {
+                            name: true
+                        }
+                    },
+                    chartofacc: {
+                        select: {
+                            accountName: true
+                        }
+                    }
+                }
+            },
+        },
+        orderBy: {
+            date: 'desc'
+        }
+    });
+};
+
+export const getByAccountAndDate = async (chartofAccountId: string | null, endDate: Date) => {
+    return db.journalLine.findMany({
+        where: {
+            ...(chartofAccountId && { chartofAccountId }),
+            date: {
+                lte: endDate,
+            },
+            isStatus: false,
+        },
+        include: {
+            account: {
+                select: {
+                    accountName: true,
                 },
             },
             journal: {
@@ -88,8 +125,15 @@ export const update = async (data: any, id: any) => {
 
 export const updateDate = async (data: any, id: any) => {
     return db.journalLine.update({
-        where: { id: id },  // Correctly specifying `id` in an object
+        where: { id: id }, 
         data: { date: data.date }
+    });
+};
+
+export const updateStatus = async (data: any, id: any) => {
+    return db.journalLine.update({
+        where: { id: id }, 
+        data: { isStatus: data.isStatus }
     });
 };
 

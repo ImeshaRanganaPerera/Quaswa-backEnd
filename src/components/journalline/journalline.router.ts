@@ -34,7 +34,7 @@ journalLineRouter.get("/filter", async (request: Request, response: Response) =>
         const filterEndDate = endDate ? new Date(endDate as string) : new Date();
         filterEndDate.setHours(23, 59, 59, 999); // Set the time to the end of the day
 
-        console.log( filterStartDate, filterEndDate) 
+        console.log(filterStartDate, filterEndDate)
 
         // Log the parameters for debugging
         console.log(`Filtering journal lines for chartofAccountId=${chartofAccountId || "ALL"} between ${filterStartDate} and ${filterEndDate}`);
@@ -48,6 +48,39 @@ journalLineRouter.get("/filter", async (request: Request, response: Response) =>
         const journalLines = await jornalLineService.getByAccountAndDateRange(
             chartofAccountId ? (chartofAccountId as string) : null,
             filterStartDate,
+            filterEndDate
+        );
+
+        // If no journal lines are found, return a 404
+        if (!journalLines || journalLines.length === 0) {
+            return response.status(404).json({ message: "No journal lines found for the specified criteria." });
+        }
+
+        // Return the filtered journal lines
+        return response.status(200).json({ data: journalLines });
+    } catch (error: any) {
+        console.error("Error fetching journal lines:", error);
+        return response.status(500).json({ message: "An error occurred while retrieving journal lines.", error: error.message });
+    }
+});
+
+journalLineRouter.get("/bankRec", async (request: Request, response: Response) => {
+    try {
+        const { chartofAccountId, endDate } = request.query;
+        console.log(chartofAccountId, endDate)
+
+
+        // Parse the endDate, set it to the end of the day if provided, or use today's date
+        const filterEndDate = endDate ? new Date(endDate as string) : new Date();
+        filterEndDate.setHours(23, 59, 59, 999); // Set the time to the end of the day
+
+        if (isNaN(filterEndDate.getTime())) {
+            return response.status(400).json({ message: "Invalid date format." });
+        }
+
+        // Fetch filtered journal lines from the service
+        const journalLines = await jornalLineService.getByAccountAndDate(
+            chartofAccountId ? (chartofAccountId as string) : null,
             filterEndDate
         );
 

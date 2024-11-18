@@ -1178,7 +1178,7 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
             for (let product of voucherProducts) {
                 const existingProduct = await productVoucherService.getbyVoucherId(product.id);
                 if (existingProduct) {
-                    await productVoucherService.updateVoucherProduct({ product, stockStatus: data?.stockStatus }, product.id);
+                    await productVoucherService.updateVoucherProduct({ discount: product.discount, stockStatus: data?.stockStatus }, product.id);
                 } else {
                     await productVoucherService.create(product);
                 }

@@ -1533,7 +1533,6 @@ export const dashboardFiguresByUser = async (month?: number, year?: number) => {
                     }
                 });
             }
-
             return acc;
         }, {});
     };
@@ -1598,5 +1597,29 @@ export const dashboardFiguresByUser = async (month?: number, year?: number) => {
     return { combinedData };
 };
 
+export const dataLoop = async () => {
+    const vouchers = db.voucher.findMany({
+        where: {
+            PaymentVoucher: {
+                some: {
+                    paymentType: 'Cash'
+                }
+            },
+            NOT: {
+                partyId: null
+            }
+        },
+        include: {
+            PaymentVoucher: {
+                select: {
+                    paymentType: true,
+                    amount: true
+                }
+            },
+        },
+    })
+
+    return vouchers
+}
 
 

@@ -523,6 +523,43 @@ voucherRouter.get("/party/false/:partyId", async (request: Request, response: Re
     }
 })
 
+// voucherRouter.post("/loop", async (request: Request, response: Response) => {
+//     const partyId: any = request.params.partyId;
+//     const data: any = request.body;
+//     try {
+//         const vouchers = await voucherService.dataLoop()
+//         if (vouchers) {
+//             vouchers.map(async (voucher) => {
+//                 const party = await partyService.get(voucher.partyId);
+//                 const journalLineData1 = {
+//                     voucherId: voucher.id,
+//                     date: voucher.date,
+//                     chartofAccountId: party?.chartofAccountId,
+//                     debitAmount: voucher.PaymentVoucher[0].amount || 0,
+//                     creditAmount: 0,
+//                     createdBy: voucher.createdBy,
+//                 };
+//                 const journalLineData2 = {
+//                     voucherId: voucher.id,
+//                     date: voucher.date,
+//                     chartofAccountId: party?.chartofAccountId,
+//                     debitAmount: 0,
+//                     creditAmount: voucher.PaymentVoucher[0].amount || 0,
+//                     createdBy: voucher.createdBy,
+//                 };
+//                 await journalLineService.create(journalLineData1);
+//                 await journalLineService.create(journalLineData2);
+//             })
+//         }
+//         else {
+//             return response.status(404).json({ message: "Voucher Group could not be found" });
+//         }
+//         return response.status(200).json({ message: "Loop completed successfully" });
+//     } catch (error: any) {
+//         return response.status(500).json(error.message);
+//     }
+// })
+
 //POST
 voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     var data: any = request.body;

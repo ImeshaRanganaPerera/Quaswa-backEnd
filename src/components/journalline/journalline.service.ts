@@ -347,6 +347,112 @@ export const getProfitAndLoss = async (
     return formatResult;
 };
 
+export const getBalanceSheet = async (
+    endDate: Date
+) => {
+    const accounts = await db.chartofAccount.findMany({
+        where: {
+            AccountSubCategory: {
+                AccountCategory: {
+                    accCategory: {
+                        in: ['ASSETS', 'EQUITY', 'LIABILITIES'],
+                    },
+                },
+            },
+        },
+        include: {
+            accGroup: true,
+            AccountSubCategory: {
+                select: {
+                    AccountCategory: true,
+                },
+            },
+            journalLine: {
+                where: {
+                    date: {
+                        lte: endDate,
+                    },
+                },
+            },
+        },
+    });
+
+    // Explicit type for the accumulator
+    interface AccountGroup {
+        accountName: string;
+        totalCreditAmount: number;
+        totalDebitAmount: number;
+    }
+
+    interface ResultType {
+        assets: Record<string, AccountGroup[]>;
+        equity: Record<string, AccountGroup[]>;
+        liabilities: Record<string, AccountGroup[]>;
+    }
+
+    const result: ResultType = accounts.reduce((acc: ResultType, account) => {
+        if (!account.AccountSubCategory || !account.AccountSubCategory.AccountCategory) {
+            return acc; // Skip invalid accounts
+        }
+
+        const category =
+            account.AccountSubCategory.AccountCategory.accCategory === 'ASSETS'
+                ? 'assets'
+                : account.AccountSubCategory.AccountCategory.accCategory === 'EQUITY'
+                    ? 'equity'
+                    : 'liabilities';
+
+        const groupName = account.accGroup?.accountGroupName || 'Unknown Group';
+
+        const totalCreditAmount = account.journalLine.reduce(
+            (sum: number, line: any) => sum + Number(line.creditAmount || 0),
+            0
+        );
+
+        const totalDebitAmount = account.journalLine.reduce(
+            (sum: number, line: any) => sum + Number(line.debitAmount || 0),
+            0
+        );
+
+        if (!acc[category][groupName]) {
+            acc[category][groupName] = [];
+        }
+
+        acc[category][groupName].push({
+            accountName: account.accountName || 'Unknown Account',
+            totalCreditAmount,
+            totalDebitAmount,
+        });
+
+        return acc;
+    }, { assets: {}, equity: {}, liabilities: {} });
+
+    // Transform result into the desired format
+    const formatResult = Object.entries(result).map(([key, groups]) => ({
+        [key]: Object.entries(groups as Record<string, AccountGroup[]>).map(
+            ([groupName, values]) => {
+                const sumCreditTotal = values.reduce(
+                    (sum, value) => sum + value.totalCreditAmount,
+                    0
+                );
+                const sumDebitTotal = values.reduce(
+                    (sum, value) => sum + value.totalDebitAmount,
+                    0
+                );
+
+                return {
+                    accountGroupName: groupName,
+                    values,
+                    sumCreditTotal,
+                    sumDebitTotal,
+                };
+            }
+        ),
+    }));
+
+    return formatResult;
+};
+
 
 
 

@@ -781,7 +781,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                                 voucherId: newVoucher.id,
                                 createdBy: userId
                             });
-                            console.log('hi')
                             if (selectedVoucher?.voucherNumber?.startsWith('INV')) {
                                 if (selectedVoucher.date) {
                                     const invoiceDate = new Date(selectedVoucher.date);

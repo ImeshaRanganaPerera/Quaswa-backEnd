@@ -781,7 +781,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                                 voucherId: newVoucher.id,
                                 createdBy: userId
                             });
-                            console.log('hi')
                             if (selectedVoucher?.voucherNumber?.startsWith('INV')) {
                                 if (selectedVoucher.date) {
                                     const invoiceDate = new Date(selectedVoucher.date);
@@ -1009,7 +1008,6 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                     return response.status(500).json({ message: error.message });
                 }
             }
-
         }
         if (newVoucher) {
             return response.status(201).json({ message: "Transaction Saved Successfully", data: newVoucher });

@@ -46,10 +46,10 @@ discountLevelRouter.post("/", authenticate, async (request: ExpressRequest, resp
             ...data,
             createdBy: userId
         }
-        const newbrand = await discountLevelservice.create(data)
+        const newDiscountLevel = await discountLevelservice.create(data)
 
-        if (newbrand) {
-            return response.status(201).json({ message: "Discount Level Created Successfully", data: newbrand });
+        if (newDiscountLevel) {
+            return response.status(201).json({ message: "Discount Level Created Successfully", data: newDiscountLevel });
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
@@ -64,10 +64,10 @@ discountLevelRouter.put("/:id", authenticate, async (request: ExpressRequest, re
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
-        const updateBrand = await discountLevelservice.update(data, id)
+        const updateDiscountLevel = await discountLevelservice.update(data, id)
 
-        if (updateBrand) {
-            return response.status(201).json({ message: "Discount Level Updated Successfully", data: updateBrand });
+        if (updateDiscountLevel) {
+            return response.status(201).json({ message: "Discount Level Updated Successfully", data: updateDiscountLevel });
         }
     } catch (error: any) {
         return response.status(500).json({ message: error.message });

@@ -30,12 +30,12 @@ partyCategoryRouter.post("/", authenticate, async (request: ExpressRequest, resp
             return response.status(401).json({ message: "User not authorized" });
         }
 
-        const cutomer = await partyGroupService.getbyname('CUSTOMER')
+        const cutomergrp = await partyGroupService.getbyname('CUSTOMER')
 
         const userId = request.user.id;
         data = {
             ...data,
-            partyGroupId: cutomer?.id,
+            partyGroupId: cutomergrp?.id,
             createdBy: userId
         }
         const newbrand = await partyCategoryService.create(data)

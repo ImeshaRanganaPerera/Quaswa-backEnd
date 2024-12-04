@@ -59,7 +59,6 @@ export const create = async (userData: any) => {
     const hashedPassword = await hash(userData.password, 10);
     return db.user.create({
         data: { ...userData, password: hashedPassword }
-
     });
 }
 

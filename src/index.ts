@@ -79,8 +79,8 @@ app.use("/api/proofImage", proofImageRouter)
 app.use("/api/referVoucher", referVoucherRouter)
 app.use("/api/commissionReport", commissionReportRouter)
 
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
-
+// app.use('/api/public', express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 });

@@ -165,10 +165,10 @@ partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage
             console.log(files);  // This will show you the structure of files being uploaded
 
             // Handle image URLs safely
-            const shopImageUrl = files.shopImage && files.shopImage[0] ? `/uploads/${files.shopImage[0].filename}` : null;
-            const BRimageUrl = files.brImage && files.brImage[0] ? `/uploads/${files.brImage[0].filename}` : null;
-            const nicImageUrl = files.nicImage && files.nicImage[0] ? `/uploads/${files.nicImage[0].filename}` : null;
-            const nicBackImageUrl = files.nicBackImage && files.nicBackImage[0] ? `/uploads/${files.nicBackImage[0].filename}` : null;
+            const shopImageUrl = files.shopImage && files.shopImage[0] ? `/public/${files.shopImage[0].filename}` : null;
+            const BRimageUrl = files.brImage && files.brImage[0] ? `/public/${files.brImage[0].filename}` : null;
+            const nicImageUrl = files.nicImage && files.nicImage[0] ? `/public/${files.nicImage[0].filename}` : null;
+            const nicBackImageUrl = files.nicBackImage && files.nicBackImage[0] ? `/public/${files.nicBackImage[0].filename}` : null;
 
             console.log('Shop Image URL:', shopImageUrl);
             console.log('BR Image URL:', BRimageUrl);
@@ -329,10 +329,10 @@ partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopIm
             }
 
             // Handle uploaded images
-            const shopImageUrl = files.shopImage && files.shopImage[0] ? `/uploads/${files.shopImage[0].filename}` : existingParty.shopImage;
-            const BRimageUrl = files.brImage && files.brImage[0] ? `/uploads/${files.brImage[0].filename}` : existingParty.BRimage;
-            const nicImageUrl = files.nicImage && files.nicImage[0] ? `/uploads/${files.nicImage[0].filename}` : existingParty.nicImage;
-            const nicBackImageUrl = files.nicBackImage && files.nicBackImage[0] ? `/uploads/${files.nicBackImage[0].filename}` : existingParty.nicBackImage;
+            const shopImageUrl = files.shopImage && files.shopImage[0] ? `/public/${files.shopImage[0].filename}` : existingParty.shopImage;
+            const BRimageUrl = files.brImage && files.brImage[0] ? `/public/${files.brImage[0].filename}` : existingParty.BRimage;
+            const nicImageUrl = files.nicImage && files.nicImage[0] ? `/public/${files.nicImage[0].filename}` : existingParty.nicImage;
+            const nicBackImageUrl = files.nicBackImage && files.nicBackImage[0] ? `/public/${files.nicBackImage[0].filename}` : existingParty.nicBackImage;
 
             console.log('Shop Image URL:', shopImageUrl);
             console.log('BR Image URL:', BRimageUrl);

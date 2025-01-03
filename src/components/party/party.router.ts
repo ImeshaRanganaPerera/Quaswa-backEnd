@@ -17,7 +17,7 @@ export const partyRouter = express.Router();
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'src/uploads/'); // Ensure this matches the folder name
+        cb(null, 'public'); // Ensure this matches the folder name
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + '-' + file.originalname); // Give the file a unique name

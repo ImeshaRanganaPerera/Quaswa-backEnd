@@ -123,6 +123,11 @@ export const getPendingVoucherCondition = async () => {
                         startsWith: 'SRET',
                     },
                 },
+                {
+                    voucherNumber: {
+                        startsWith: 'SO',
+                    },
+                },
             ],
             AND: [
                 {

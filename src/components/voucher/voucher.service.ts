@@ -299,7 +299,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, firstPay: data?.firstPay, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, startDate: data?.startDate, endDate: data?.endDate, startingValue: data?.startingValue, endingValue: data?.endingValue, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy },
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, firstPay: data?.firstPay, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, startDate: data?.startDate, endDate: data?.endDate, startingValue: data?.startingValue, endingValue: data?.endingValue, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy,discountLevel:data?.discountLevelIddesc},
         include: {
             party: true,
             voucherProduct: {
@@ -1560,10 +1560,10 @@ export const dashboardFiguresByUser = async (month?: number, year?: number) => {
         Object.values(monthlyGroupedData).map(async (userData) => {
             const user = await db.user.findFirst({
                 where: { name: userData.username },
-                select: { role: true, target: true },
+                select: { role: true, target: true, isDeleted: true },
             });
 
-            if (user?.role === 'SALESMEN') {
+            if (user?.role === 'SALESMEN' && user?.isDeleted === false) {
                 return {
                     username: userData.username,
                     target: user.target,

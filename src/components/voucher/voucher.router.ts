@@ -561,6 +561,96 @@ voucherRouter.get("/party/false/:partyId", async (request: Request, response: Re
 // })
 
 //POST
+voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRequest, response: Response) => {
+    try{
+    var data: any = request.body;
+    if (!request.user) {
+        return response.status(401).json({ message: "User not authorized" });
+    }
+
+    const userId = request.user.id;
+    const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
+    const newVoucherNumber = await voucherService.generateVoucherNumber(voucherGrpdetails?.id)
+
+    var totalCost = 0;
+    var partyAcc: any;
+
+    if (data?.partyId) {
+        partyAcc = await partyService.get(data?.partyId)
+    }
+    if (data.productList) {
+        totalCost = data.productList?.reduce((total: number, product: any) => {
+            return total + (product.cost * product.quantity);
+        }, 0);
+    }
+    console.log(data)
+    const newVoucher = await voucherService.create({
+        ...data,
+        authUser: data.authUser ? data.authUser : userId,
+        voucherNumber: newVoucherNumber,
+        voucherGroupId: voucherGrpdetails?.id,
+        createdBy: userId
+    })
+
+
+    if (data.refVoucherNumber) {
+        await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data?.returnValue, isRef: true, voucherId: newVoucher.voucherNumber, status: data?.status })
+    }
+    if (voucherGrpdetails?.inventoryMode === "PLUS") {
+        const newVoucherCenter = await voucherCenter.create({
+            centerId: data.centerId,
+            voucherId: newVoucher.id,
+            centerStatus: "IN"
+        })
+        if (!newVoucherCenter) {
+            throw new Error("Failed to update Voucher Center to list association");
+        }
+        if (voucherGrpdetails?.isAccount === false) {
+            const inventoryPromise = data.productList.map(async (product: any) => {
+                if (data.voucherGroupname === 'GRN') {
+                    const inventory = await inventoryService.upsert({
+                        productId: product.productId,
+                        centerId: data.centerId,
+                        quantity: product.quantity,
+                        cost: product.cost,
+                        minPrice: product.minPrice,
+                        MRP: product.MRP,
+                        sellingPrice: product.sellingPrice,
+                    });
+                    if (!inventory) {
+                        throw new Error("Failed to update product to list association");
+                    }
+                } else {
+                    if (data.stockStatus === true) {
+                        const inventory = await inventoryService.upsert({
+                            productId: product.productId,
+                            centerId: data.centerId,
+                            quantity: product.quantity,
+                        });
+                        if (!inventory) {
+                            throw new Error("Failed to update product to list association");
+                        }
+                    }
+                }
+
+            });
+
+            try {
+                await Promise.all(inventoryPromise);
+            } catch (error: any) {
+                return response.status(500).json({ message: error.message });
+            }
+        }
+    }
+    if (newVoucher) {
+        return response.status(201).json({ message: "Transaction Saved Successfully", data: newVoucher });
+    }
+} catch (error: any) {
+    console.error("Error creating voucher:", error);  // Add more detailed logging
+    return response.status(500).json({ message: error.message });
+}
+}),
+
 voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
     var data: any = request.body;
     try {

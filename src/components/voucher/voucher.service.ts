@@ -299,7 +299,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, firstPay: data?.firstPay, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, startDate: data?.startDate, endDate: data?.endDate, startingValue: data?.startingValue, endingValue: data?.endingValue, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy,discountLevel:data?.discountLevelIddesc},
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, firstPay: data?.firstPay, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, startDate: data?.startDate, endDate: data?.endDate, startingValue: data?.startingValue, endingValue: data?.endingValue, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy,discountId:data?.discountLevelIddesc},
         include: {
             party: true,
             voucherProduct: {
@@ -691,7 +691,7 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
                     accountName: true,
                 }
             },
-
+     
             voucherProduct: {
                 select: {
                     MRP: true,
@@ -730,6 +730,12 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
                     center: true,
                     centerStatus: true,
                 }
+            },
+
+            discountLevel:{
+                select:{
+                   level:true
+                }
             }
         },
         orderBy: { voucherNumber: 'desc' }
@@ -749,12 +755,19 @@ export const getrejectInvoice = async (vouchergrpId: any, startDate?: Date, endD
         },
         include: {
             party: true,
+           
             chartofacc: {
                 select: {
                     accountName: true,
                 }
             },
 
+          discountLevel:{
+            select: {
+                level: true
+            }
+
+          },
             voucherProduct: {
                 select: {
                     MRP: true,

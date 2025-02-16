@@ -237,7 +237,8 @@ model Voucher {
   appovedBy        String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
-  discountLevel    String?
+  discountLevel    discountLevel?     @relation(fields: [discountId], references: [id])
+  discountId       String?
   PaymentVoucher   PaymentVoucher[]
   voucherProduct   voucherProduct[]
   VoucherCenter    VoucherCenter[]
@@ -433,6 +434,7 @@ model discountLevel {
   createdBy            String
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
+  Voucher              Voucher[]
   productDiscountLevel productDiscountLevel[]
 }
 

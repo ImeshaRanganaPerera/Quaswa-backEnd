@@ -98,6 +98,7 @@ voucherRouter.get("/filter", authenticate, async (request: ExpressRequest, respo
             vouchers = await voucherService.getVouchersByPartyByUserAndDateRangeall(grpname?.id as string, filterStartDate, filterEndDate, userId);
         } else {
             vouchers = await voucherService.getVouchersByPartyByUserAndDateRange(grpname?.id as string, filterStartDate, filterEndDate, userId);
+
         }
 
         if (!vouchers || vouchers.length === 0) {

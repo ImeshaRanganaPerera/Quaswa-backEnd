@@ -25,6 +25,17 @@ export const getbyProductId = async (id: any) => {
         }
     });
 }
+export const getByProductAndCenter = async (productId: string, centerId: string) => {
+    return db.inventory.findUnique({
+        where: {
+            productId_centerId: {
+                productId,
+                centerId,
+            },
+        },
+    });
+};
+
 
 export const getbycenterIdProductId = async (productId: any, centerId: any) => {
     return db.inventory.findFirst({
@@ -137,7 +148,7 @@ export const upsert = async (data: any) => {
                 }
             },
             update: {
-                quantity: newQuantity, // Update with the calculated new quantity
+                quantity: data.quantity, // Update with the calculated new quantity
             },
             create: {
                 productId: data.productId,
@@ -263,6 +274,7 @@ export const filterVoucherProduct = async (
             center: true,
         },
     });
+   
 
     const result: Record<string, any[]> = {};
 
@@ -302,7 +314,7 @@ export const filterVoucherProduct = async (
                 addOrUpdateProduct(result[toCenterName], productName, quantity, voucherProduct, voucherProduct.toCenterId as string); // Cast to string
             }
         } else {
-            if (['INVOICE', 'PURCHASE-RETURN', 'GRN', 'SALES-RETURN'].includes(voucherGroup)) {
+            if (['INVOICE', 'PURCHASE-RETURN', 'GRN', 'SALES-RETURN','STOCK-VERIFICATION'].includes(voucherGroup)) {
                 if (!result[centerName]) {
                     result[centerName] = [];
                 }
@@ -354,6 +366,21 @@ const addOrUpdateProduct = (
             productId: voucherProduct.product.id, // Add productId to the response
         });
     }
+};
+
+export const getFinalQuantity = async (productId: string, centerId: string): Promise<number> => {
+    const result = await filterVoucherProduct(productId, centerId);
+
+    // Find the center by name (since filterVoucherProduct uses centerName as key)
+    const centerName = Object.keys(result)[0]; // since you're filtering by centerId, only one key will exist
+    const products = result[centerName] || [];
+
+    const product = products.find((item: any) => item.productId === productId);
+
+    if (!product) return 0;
+
+    // Safely return as number
+    return new Decimal(product.quantity || 0).toNumber();
 };
 
 export const getStockMovement = async (productId: string, centerId: string, date: Date) => {

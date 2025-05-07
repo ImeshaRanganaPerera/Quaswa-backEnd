@@ -606,31 +606,116 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
         if (!newVoucherCenter) {
             throw new Error("Failed to update Voucher Center to list association");
         }
+
+        // if (data.productList) {
+        //     const centerPromises = data.productList?.map(async (product: any) => {
+        //         const avastock = await inventoryService.getFinalQuantity(product.productId, data.centerId);
+        //         if (avastock){
+               
+        //             const voucherProduct = await productVoucherService.create({
+        //                 cost: product.cost,
+        //                 quantity: avastock- product.quantity,
+        //                 remainingQty: product.quantity,
+        //                 discount: product.discount,
+        //                 stockStatus: data?.stockStatus,
+        //                 MRP: product.MRP,
+        //                 minPrice: product.minPrice,
+        //                 sellingPrice: product.sellingPrice,
+        //                 amount: product.amount,
+        //                 voucherId: newVoucher.id,
+        //                 productId: product.productId,
+        //                 centerId: data.centerId
+        //             });
+        //         }
+             
+        //     });
+        //     try {
+        //         await Promise.all(centerPromises);
+        //     } catch (error: any) {
+        //         return response.status(500).json({ message: error.message });
+        //     }
+        // }
+        if (data.productList) {
+            const centerPromises = data.productList.map(async (product: any) => {
+                const avastock = await inventoryService.getFinalQuantity(product.productId, data.centerId);
+                
+                if (avastock !== undefined) {
+                    let quantity = 0;
+
+                    if (avastock > 0) {
+                        quantity = product.quantity;
+                    } else {
+                        const absStock = Math.abs(avastock);
+                        quantity = product.quantity > absStock ? product.quantity - absStock : 0;
+                    }
+                  
+        
+                    const voucherProduct = await productVoucherService.create({
+                        cost: product.cost,
+                        quantity: product.quantity,
+                        remainingQty: product.quantity,
+                        discount: product.discount,
+                        stockStatus: data?.stockStatus,
+                        MRP: product.MRP,
+                        minPrice: product.minPrice,
+                        sellingPrice: product.sellingPrice,
+                        amount: product.amount,
+                        voucherId: newVoucher.id,
+                        productId: product.productId,
+                        centerId: data.centerId
+                    });
+                }
+            });
+        
+            try {
+                await Promise.all(centerPromises);
+            } catch (error: any) {
+                return response.status(500).json({ message: error.message });
+            }
+        }
+        
         if (voucherGrpdetails?.isAccount === false) {
             const inventoryPromise = data.productList.map(async (product: any) => {
-                if (data.voucherGroupname === 'GRN') {
-                    const inventory = await inventoryService.upsert({
-                        productId: product.productId,
-                        centerId: data.centerId,
-                        quantity: product.quantity,
-                        cost: product.cost,
-                        minPrice: product.minPrice,
-                        MRP: product.MRP,
-                        sellingPrice: product.sellingPrice,
-                    });
-                    if (!inventory) {
-                        throw new Error("Failed to update product to list association");
-                    }
+                if (data.voucherGroupname === 'STOCK-VERIFICATION') {
+                    const avastock = await inventoryService.getFinalQuantity(product.productId, data.centerId);
+                
+                    if (avastock !== undefined) {
+                        let quantity = 0;
+
+                        if (avastock > 0) {
+                            quantity = avastock + product.quantity;
+                        } else {
+                            const absStock = Math.abs(avastock);
+                            quantity = product.quantity > absStock ? product.quantity - absStock : 0;
+                        }
+                      
+                                const inventory = await inventoryService.upsert({
+                                    productId: product.productId,
+                                    centerId: data.centerId,
+                                    quantity: avastock,
+                                    cost: product.cost,
+                                    minPrice: product.minPrice,
+                                    MRP: product.MRP,
+                                    sellingPrice: product.sellingPrice,
+                                });
+                                if (!inventory) {
+                                    throw new Error("Failed to update product to list association");
+                                }
+                            }
+                
                 } else {
                     if (data.stockStatus === true) {
+                      
                         const inventory = await inventoryService.upsert({
                             productId: product.productId,
                             centerId: data.centerId,
-                            quantity: product.quantity,
-                        });
+                            quantity: product.quantity
+                        }); 
                         if (!inventory) {
                             throw new Error("Failed to update product to list association");
                         }
+                     
+                      
                     }
                 }
 

@@ -17,13 +17,13 @@ model center {
   id             String           @id @default(uuid())
   centerName     String
   mode           CenterMode       @default(VIRTUAL)
-  user           User             @relation(fields: [createdBy], references: [id])
+  user           user             @relation(fields: [createdBy], references: [id])
   createdBy      String
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt()
   userCenter     userCenter[]
-  Inventory      Inventory[]
-  VoucherCenter  VoucherCenter[]
+  Inventory      inventory[]
+  VoucherCenter  voucherCenter[]
   voucherProduct voucherProduct[]
 }
 
@@ -52,19 +52,19 @@ model user {
   role                 Role                   @default(SALESMEN)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
-  Party                Party[]
-  Product              Product[]
+  Party                party[]
+  Product              product[]
   userCenter           userCenter[]
-  Center               Center[]
-  Brand                Brand[]
-  Type                 Type[]
-  ChartofAccount       ChartofAccount[]
+  Center               center[]
+  Brand                brand[]
+  Type                 type[]
+  ChartofAccount       chartofAccount[]
   journalLine          journalLine[]
-  AccountSubCategory   AccountSubCategory[]
-  AccountGroup         AccountGroup[]
+  AccountSubCategory   accountSubCategory[]
+  AccountGroup         accountGroup[]
   partyCategory        partyCategory[]
-  ChequeBook           ChequeBook[]
-  Cheque               Cheque[]
+  ChequeBook           chequeBook[]
+  Cheque               cheque[]
   discountLevel        discountLevel[]
   productDiscountLevel productDiscountLevel[]
   referVouchers        referVouchers[]
@@ -74,16 +74,16 @@ model user {
   vistingCustomer      vistingCustomer[]
   commissionLevel      commissionLevel[]
   partyType            partyType[]
-  userAuth             Voucher[]              @relation("UserAuth")
-  createdbyUserVoucher Voucher[]              @relation("CreatedByUserVoucher")
-  apporvelUser         Voucher[]              @relation("apporvelUser")
+  userAuth             voucher[]              @relation("UserAuth")
+  createdbyUserVoucher voucher[]              @relation("CreatedByUserVoucher")
+  apporvelUser         voucher[]              @relation("apporvelUser")
   bankRecJournal       bankRecJournal[]
 }
 
 model userCenter {
-  center   Center @relation(fields: [centerId], references: [id])
+  center   center @relation(fields: [centerId], references: [id])
   centerId String
-  user     User   @relation(fields: [userId], references: [id])
+  user     user   @relation(fields: [userId], references: [id])
   userId   String
 
   @@id([centerId, userId])
@@ -94,7 +94,7 @@ model partyGroup {
   partyGroupName String
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  party          Party[]
+  party          party[]
   partyCategory  partyCategory[]
 }
 
@@ -119,15 +119,15 @@ model party {
   partyCategoryId  String?
   partyType        partyType?        @relation(fields: [partyTypeId], references: [id])
   partyTypeId      String?
-  chartofacc       ChartofAccount?   @relation(fields: [chartofAccountId], references: [id])
+  chartofacc       chartofAccount?   @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String?
-  PartyGroup       PartyGroup        @relation(fields: [partyGroupId], references: [id])
+  PartyGroup       partyGroup        @relation(fields: [partyGroupId], references: [id])
   partyGroupId     String
-  user             User              @relation(fields: [createdBy], references: [id])
+  user             user              @relation(fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
-  Voucher          Voucher[]
+  Voucher          voucher[]
   partyproofimage  partyproofimage[]
   vistingCustomer  vistingCustomer[]
 }
@@ -135,34 +135,34 @@ model party {
 model partyCategory {
   id           String     @id @default(uuid())
   category     String
-  PartyGroup   PartyGroup @relation(fields: [partyGroupId], references: [id])
+  PartyGroup   partyGroup @relation(fields: [partyGroupId], references: [id])
   partyGroupId String
   isEditable   Boolean    @default(true)
-  user         User       @relation(fields: [createdBy], references: [id])
+  user         user       @relation(fields: [createdBy], references: [id])
   createdBy    String
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  Party        Party[]
+  Party        party[]
 }
 
 model partyType {
   id        String   @id @default(uuid())
   type      String
-  user      User     @relation(fields: [createdBy], references: [id])
+  user      user     @relation(fields: [createdBy], references: [id])
   createdBy String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Party     Party[]
+  Party     party[]
 }
 
 model vistingCustomer {
   id        String   @id @default(uuid())
-  party     Party    @relation(fields: [partyId], references: [id])
+  party     party    @relation(fields: [partyId], references: [id])
   partyId   String
   note      String?
   status    String?
   type      String?
-  user      User     @relation(fields: [createdBy], references: [id])
+  user      user     @relation(fields: [createdBy], references: [id])
   createdBy String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -175,7 +175,7 @@ model proofimage {
 }
 
 model partyproofimage {
-  party        Party      @relation(fields: [partyId], references: [id])
+  party        party      @relation(fields: [partyId], references: [id])
   partyId      String
   proofimage   proofimage @relation(fields: [proofimageId], references: [id])
   proofimageId String
@@ -188,14 +188,14 @@ model voucherGroup {
   id            String        @id @default(uuid())
   voucherName   String
   shortname     String
-  inventoryMode InventoryMode
+  inventoryMode inventoryMode
   isAccount     Boolean
   label         String?
   category      String?
   isSidemenu    Boolean?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  voucher       Voucher[]
+  voucher       voucher[]
 }
 
 model voucher {
@@ -223,15 +223,15 @@ model voucher {
   endDate          DateTime?
   startingValue    Decimal?
   endingValue      Decimal?
-  party            Party?             @relation(fields: [partyId], references: [id])
+  party            party?             @relation(fields: [partyId], references: [id])
   partyId          String?
-  chartofacc       ChartofAccount?    @relation(fields: [chartofAccountId], references: [id])
+  chartofacc       chartofAccount?    @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String?
-  voucherGroup     VoucherGroup       @relation(fields: [voucherGroupId], references: [id])
+  voucherGroup     voucherGroup       @relation(fields: [voucherGroupId], references: [id])
   voucherGroupId   String
-  user             User?              @relation("UserAuth", fields: [authUser], references: [id])
+  user             user?              @relation("UserAuth", fields: [authUser], references: [id])
   authUser         String?
-  createdByUser    User               @relation("CreatedByUserVoucher", fields: [createdBy], references: [id])
+  createdByUser    user               @relation("CreatedByUserVoucher", fields: [createdBy], references: [id])
   createdBy        String
   apporvelUser     User?              @relation("apporvelUser", fields: [appovedBy], references: [id])
   appovedBy        String?
@@ -239,11 +239,11 @@ model voucher {
   updatedAt        DateTime           @updatedAt
   discountLevel    discountLevel?     @relation(fields: [discountId], references: [id])
   discountId       String?
-  PaymentVoucher   PaymentVoucher[]
+  PaymentVoucher   paymentVoucher[]
   voucherProduct   voucherProduct[]
-  VoucherCenter    VoucherCenter[]
+  VoucherCenter    voucherCenter[]
   journalLine      journalLine[]
-  Cheque           Cheque[]
+  Cheque           cheque[]
   referVouchers    referVouchers[]
   pettycashIOU     pettycashIOU[]
   commissionReport commissionReport[]
@@ -262,11 +262,11 @@ model voucherProduct {
   remainingQty Decimal?
   isdisabale   Boolean  @default(false)
   stockStatus  Boolean? @default(true)
-  voucher      Voucher  @relation(fields: [voucherId], references: [id])
+  voucher      voucher  @relation(fields: [voucherId], references: [id])
   voucherId    String
-  product      Product  @relation(fields: [productId], references: [id])
+  product      product  @relation(fields: [productId], references: [id])
   productId    String
-  center       Center?  @relation(fields: [centerId], references: [id])
+  center       center?  @relation(fields: [centerId], references: [id])
   centerId     String?
   toCenterId   String?
   createdAt    DateTime @default(now())
@@ -283,12 +283,12 @@ model pettycashIOU {
   spent               Decimal?
   returnDate          DateTime?
   returnAmount        Decimal?
-  voucher             Voucher               @relation(fields: [voucherId], references: [id])
+  voucher             voucher               @relation(fields: [voucherId], references: [id])
   voucherId           String
   isReturn            Boolean               @default(false)
   isDelete            Boolean               @default(false)
-  user                User                  @relation("UserIOU", fields: [userid], references: [id])
-  createdByUser       User                  @relation("CreatedByUserIOU", fields: [createdBy], references: [id])
+  user                user                  @relation("UserIOU", fields: [userid], references: [id])
+  createdByUser       user                  @relation("CreatedByUserIOU", fields: [createdBy], references: [id])
   createdBy           String
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
@@ -302,7 +302,7 @@ model pettyCashIOUDetails {
   amount         Decimal?
   pettycashIOU   pettycashIOU @relation(fields: [pettycashIOUId], references: [id])
   pettycashIOUId String
-  user           User         @relation(fields: [createdBy], references: [id])
+  user           user         @relation(fields: [createdBy], references: [id])
   createdBy      String
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -316,19 +316,19 @@ model referVouchers {
   value            Decimal?
   settledAmount    Decimal
   paidAmount       Decimal
-  voucher          Voucher  @relation(fields: [voucherId], references: [id])
+  voucher          voucher  @relation(fields: [voucherId], references: [id])
   voucherId        String
   isdelete         Boolean  @default(false)
-  user             User     @relation(fields: [createdBy], references: [id])
+  user             user     @relation(fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
 
 model voucherCenter {
-  center       Center       @relation(fields: [centerId], references: [id])
+  center       center       @relation(fields: [centerId], references: [id])
   centerId     String
-  voucher      Voucher      @relation(fields: [voucherId], references: [id])
+  voucher      voucher      @relation(fields: [voucherId], references: [id])
   voucherId    String
   centerStatus centerStatus
 
@@ -338,7 +338,7 @@ model voucherCenter {
 model payment {
   id             String           @id @default(uuid())
   type           String?
-  PaymentVoucher PaymentVoucher[]
+  PaymentVoucher paymentVoucher[]
 }
 
 model paymentVoucher {
@@ -346,31 +346,31 @@ model paymentVoucher {
   amount      Decimal
   paymentType String?
   refNumber   String?
-  payment     Payment  @relation(fields: [paymentId], references: [id])
+  payment     payment  @relation(fields: [paymentId], references: [id])
   paymentId   String
-  voucher     Voucher  @relation(fields: [voucherId], references: [id])
+  voucher     voucher  @relation(fields: [voucherId], references: [id])
   voucherId   String
-  Cheque      Cheque[]
+  Cheque      cheque[]
 }
 
 model brand {
   id        String    @id @default(uuid())
   brandName String    @unique
-  user      User      @relation(fields: [createdBy], references: [id])
+  user      user      @relation(fields: [createdBy], references: [id])
   createdBy String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  Product   Product[]
+  Product   product[]
 }
 
 model type {
   id        String    @id @default(uuid())
   typeName  String    @unique
-  user      User      @relation(fields: [createdBy], references: [id])
+  user      user      @relation(fields: [createdBy], references: [id])
   createdBy String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  Product   Product[]
+  Product   product[]
 }
 
 model oemnumber {
@@ -378,7 +378,7 @@ model oemnumber {
   productId String
   OEMnumber String
 
-  @@id([OEMnumber, productId])
+  @@id([oemnumber, productId])
 }
 
 model commissionLevel {
@@ -386,7 +386,7 @@ model commissionLevel {
   commissionlevel String
   days            Int?
   commissionRate  String
-  user            User     @relation(fields: [createdBy], references: [id])
+  user            user     @relation(fields: [createdBy], references: [id])
   createdBy       String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -395,7 +395,7 @@ model commissionLevel {
 model commissionReport {
   id        String   @id @default(uuid())
   date      DateTime
-  voucher   Voucher  @relation(fields: [voucherId], references: [id])
+  voucher   voucher  @relation(fields: [voucherId], references: [id])
   voucherId String
   comRate   String
   amount    Decimal
@@ -403,7 +403,7 @@ model commissionReport {
 
 model product {
   id                   String                 @id @default(uuid())
-  unit                 Unit                   @default(PCS)
+  unit                 unit                   @default(PCS)
   itemCode             String?                @unique()
   barcode              String?
   productName          String
@@ -416,17 +416,17 @@ model product {
   MRP                  Decimal?
   sellingPrice         Decimal?
   status               Boolean                @default(true)
-  type                 Type                   @relation(fields: [typeId], references: [id])
+  type                 type                   @relation(fields: [typeId], references: [id])
   typeId               String
-  brand                Brand?                 @relation(fields: [brandId], references: [id])
+  brand                brand?                 @relation(fields: [brandId], references: [id])
   brandId              String?
-  user                 User                   @relation(fields: [createdBy], references: [id])
+  user                 user                   @relation(fields: [createdBy], references: [id])
   createdBy            String
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
-  Inventory            Inventory[]
+  Inventory            inventory[]
   voucherProduct       voucherProduct[]
-  OEMNumber            OEMNumber[]
+  OEMNumber            oemnumber[]
   productDiscountLevel productDiscountLevel[]
 }
 
@@ -434,22 +434,22 @@ model discountLevel {
   id                   String                 @id @default(uuid())
   level                String
   days                 Int?
-  user                 User                   @relation(fields: [createdBy], references: [id])
+  user                 user                   @relation(fields: [createdBy], references: [id])
   createdBy            String
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
-  Voucher              Voucher[]
+  Voucher              voucher[]
   productDiscountLevel productDiscountLevel[]
 }
 
 model productDiscountLevel {
-  product         Product       @relation(fields: [productId], references: [id])
+  product         product       @relation(fields: [productId], references: [id])
   productId       String
   discountLevel   discountLevel @relation(fields: [discountLevelId], references: [id])
   discountLevelId String
   discountRate    String
 
-  user      User     @relation(fields: [createdBy], references: [id])
+  user      user     @relation(fields: [createdBy], references: [id])
   createdBy String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -459,9 +459,9 @@ model productDiscountLevel {
 
 model inventory {
   
-  product   Product  @relation(fields: [productId], references: [id])
+  product   product  @relation(fields: [productId], references: [id])
   productId String
-  center    Center   @relation(fields: [centerId], references: [id])
+  center    center   @relation(fields: [centerId], references: [id])
   centerId  String
   batchNo   String
   quantity  Decimal?
@@ -478,47 +478,47 @@ model inventory {
 model accountCategory {
   id                 String               @id @default(uuid())
   accCategory        String
-  AccountSubCategory AccountSubCategory[]
+  AccountSubCategory accountSubCategory[]
 }
 
 model accountSubCategory {
   id                String           @id @default(uuid())
   accountSubName    String
-  AccountCategory   AccountCategory  @relation(fields: [accountCategoryId], references: [id])
+  AccountCategory   accountCategory  @relation(fields: [accountCategoryId], references: [id])
   accountCategoryId String
-  user              User             @relation(fields: [createdBy], references: [id])
+  user              user             @relation(fields: [createdBy], references: [id])
   createdBy         String
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
-  ChartofAccount    ChartofAccount[]
+  ChartofAccount    chartofAccount[]
 }
 
 model accountGroup {
   id               String           @id @default(uuid())
   accountGroupName String
-  user             User             @relation(fields: [createdBy], references: [id])
+  user             user             @relation(fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-  ChartofAccount   ChartofAccount[]
+  ChartofAccount   chartofAccount[]
 }
 
 model chartofAccount {
   id                   String              @id @default(uuid())
   accountName          String
-  AccountSubCategory   AccountSubCategory? @relation(fields: [accountSubCategoryId], references: [id])
+  AccountSubCategory   accountSubCategory? @relation(fields: [accountSubCategoryId], references: [id])
   accountSubCategoryId String?
-  accGroup             AccountGroup?       @relation(fields: [accountGroupId], references: [id])
+  accGroup             accountGroup?       @relation(fields: [accountGroupId], references: [id])
   accountGroupId       String?
   Opening_Balance      Decimal?
-  user                 User                @relation(fields: [createdBy], references: [id])
+  user                 user                @relation(fields: [createdBy], references: [id])
   createdBy            String
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   journalLine          journalLine[]
-  Party                Party[]
-  ChequeBook           ChequeBook[]
-  Voucher              Voucher[]
+  Party                party[]
+  ChequeBook           chequeBook[]
+  Voucher              voucher[]
   bankRecJournal       bankRecJournal[]
 }
 
@@ -529,13 +529,13 @@ model chequeBook {
   startNumber      String
   endNumber        String
   remainingCheques Int
-  account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])
+  account          chartofAccount @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String
-  user             User           @relation(fields: [createdBy], references: [id])
+  user             user           @relation(fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  Cheque           Cheque[]
+  Cheque           cheque[]
 }
 
 model cheque {
@@ -548,14 +548,14 @@ model cheque {
   month            String?
   year             String?
   used             Boolean         @default(false)
-  creditDebit      CreditDebit
-  chequeBook       ChequeBook?     @relation(fields: [chequeBookId], references: [id])
+  creditDebit      creditDebit
+  chequeBook       chequeBook?     @relation(fields: [chequeBookId], references: [id])
   chequeBookId     String?
-  voucher          Voucher?        @relation(fields: [voucherId], references: [id])
+  voucher          voucher?        @relation(fields: [voucherId], references: [id])
   voucherId        String?
-  paymentVoucher   PaymentVoucher? @relation(fields: [paymentVoucherId], references: [id])
+  paymentVoucher   paymentVoucher? @relation(fields: [paymentVoucherId], references: [id])
   paymentVoucherId String?
-  user             User            @relation(fields: [createdBy], references: [id])
+  user             user            @relation(fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
@@ -564,15 +564,15 @@ model cheque {
 model journalLine {
   id               String         @id @default(uuid())
   date             DateTime?
-  journal          Voucher?       @relation(fields: [voucherId], references: [id])
+  journal          voucher?       @relation(fields: [voucherId], references: [id])
   voucherId        String?
-  account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])
+  account          chartofAccount @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String
   debitAmount      Decimal?
   creditAmount     Decimal?
   ref              String?
   isStatus         Boolean        @default(false)
-  user             User           @relation(fields: [createdBy], references: [id])
+  user             user           @relation(fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
@@ -581,15 +581,15 @@ model journalLine {
 model bankRecJournal {
   id               String         @id @default(uuid())
   date             DateTime?
-  journal          Voucher?       @relation(fields: [voucherId], references: [id])
+  journal          voucher?       @relation(fields: [voucherId], references: [id])
   voucherId        String?
-  account          ChartofAccount @relation(fields: [chartofAccountId], references: [id])
+  account          chartofAccount @relation(fields: [chartofAccountId], references: [id])
   chartofAccountId String
   debitAmount      Decimal?
   creditAmount     Decimal?
   ref              String?
   isStatus         Boolean        @default(false)
-  user             User           @relation(fields: [createdBy], references: [id])
+  user             user           @relation(fields: [createdBy], references: [id])
   createdBy        String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt

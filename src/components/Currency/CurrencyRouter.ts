@@ -4,7 +4,6 @@ import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as usercenterService from '../userCenter/userCenter.service'
-import { Role } from '@prisma/client';
 export const currencyRouter = express.Router();
 
 const axios = require('axios');

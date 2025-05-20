@@ -271,6 +271,9 @@ model voucherProduct {
   toCenterId   String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  expDate          DateTime?
+  closingExpDate   DateTime?
+  batchNo          String?
 }
 
 model pettycashIOU {
@@ -406,6 +409,7 @@ model Product {
   productName          String
   printName            String?
   image                String?
+  ExpnotifDays         Int?
   criticalLevel        Int?
   cost                 Decimal?
   minPrice             Decimal?
@@ -454,16 +458,21 @@ model productDiscountLevel {
 }
 
 model Inventory {
+  
   product   Product  @relation(fields: [productId], references: [id])
   productId String
   center    Center   @relation(fields: [centerId], references: [id])
   centerId  String
+  batchNo   String
   quantity  Decimal?
+  expDate          DateTime?
+  closingExpDate   DateTime?
   status    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@id([productId, centerId])
+  @@id([productId, centerId,batchNo])
+  @@unique([productId, centerId, batchNo]) // <-- Add new constraint
 }
 
 model AccountCategory {

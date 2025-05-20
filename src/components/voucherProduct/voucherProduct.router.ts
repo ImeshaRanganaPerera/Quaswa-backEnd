@@ -38,7 +38,7 @@ VoucherProductListRouter.get("/byvoucher/:id", authenticate, async (request: Exp
 })
 
 VoucherProductListRouter.get("/byProductCenter", authenticate, async (request: ExpressRequest, response: Response) => {
-    const { productId, centerId } = request.query; // Extract query parameters
+    const { productId, centerId,batchNo } = request.query; // Extract query parameters
     try {
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
@@ -46,7 +46,8 @@ VoucherProductListRouter.get("/byProductCenter", authenticate, async (request: E
 
         const data = {
             productId: productId,
-            centerId: centerId
+            centerId: centerId,
+            batchNo: batchNo
         };
         console.log(data);
         const voucherProductlist = await voucherProductService.getbyProductIdCenterId(data);

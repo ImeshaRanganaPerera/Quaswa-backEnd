@@ -1078,7 +1078,10 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         amount: product.amount,
                         voucherId: newVoucher.id,
                         productId: product.productId,
-                        centerId: data.centerId
+                        centerId: data.centerId,
+                        expDate:product.expiryDate,
+                        closingExpDate:product.costingExpiryDate,
+                        batchNo:product.batchNo
                     });
                 });
                 try {
@@ -1108,6 +1111,9 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                                 minPrice: product.minPrice,
                                 MRP: product.MRP,
                                 sellingPrice: product.sellingPrice,
+                                batchNo:product.batchNo,
+                                expDate:product.expiryDate,
+                                closingExpDate:product.costingExpiryDate,
                             });
                             if (!inventory) {
                                 throw new Error("Failed to update product to list association");
@@ -1118,6 +1124,9 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                                     productId: product.productId,
                                     centerId: data.centerId,
                                     quantity: product.quantity,
+                                    batchNo:product.batchNo,
+                                    expDate:product.expiryDate,
+                                    closingExpDate:product.costingExpiryDate,
                                 });
                                 if (!inventory) {
                                     throw new Error("Failed to update product to list association");
@@ -1150,7 +1159,10 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
                         const inventory = await inventoryService.upsert({
                             productId: product.productId,
                             centerId: data.centerId,
-                            quantity: -(product.quantity)
+                            quantity: -(product.quantity),
+                            batchNo:product.batchNo,
+                            expDate:product.expiryDate,
+                            closingExpDate:product.costingExpiryDate,
                         });
                         if (!inventory) {
                             throw new Error("Failed to update product to list association");
@@ -1227,7 +1239,7 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
 
             if (voucherGroup?.inventoryMode === "MINUS") {
                 const inventoryCheckPromises = data.voucherProduct.map(async (product: any) => {
-                    const inventoryStock = await inventoryService.getbycenterIdProductId(product.productId, product.centerId);
+                    const inventoryStock = await inventoryService.getbycenterIdProductId(product.productId, product.centerId,product.batchNo);
 
                     if (Number(inventoryStock?.quantity ?? 0) < Number(product.quantity)) {
                         throw new Error(`Insufficient stock for product ${product.product.printName} Available Quantity is ${inventoryStock?.quantity ?? 0} `);
@@ -1244,7 +1256,8 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                     const inventory = await inventoryService.upsert({
                         productId: product.productId,
                         centerId: product.centerId,
-                        quantity: -(product.quantity)
+                        quantity: -(product.quantity),
+                        batchNo:product.batchNo,
                     });
                     if (!inventory) {
                         throw new Error("Failed to update product to list association");

@@ -88,6 +88,7 @@ centerRouter.post("/", authenticate, async (request: ExpressRequest, response: R
                     productId: product.id,
                     centerId: newCenter.id,
                     quantity: 0,
+                    batchNo:""
                 });
                 if (!inventory) {
                     throw new Error("Failed to update inventory association");

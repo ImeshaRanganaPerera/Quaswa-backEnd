@@ -31,7 +31,7 @@ import { partyTypeRouter } from "./components/partyType/partyType.route";
 import { proofImageRouter } from "./components/proofImage/proofImage.router";
 import { referVoucherRouter } from "./components/referVouchers/referVouchers.route";
 import { commissionReportRouter } from "./components/commissionReport/commissionReport.route";
-
+import { currencyRouter } from "./components/Currency/CurrencyRouter";
 
 dotenv.config();
 
@@ -78,6 +78,8 @@ app.use("/api/partyType", partyTypeRouter)
 app.use("/api/proofImage", proofImageRouter)
 app.use("/api/referVoucher", referVoucherRouter)
 app.use("/api/commissionReport", commissionReportRouter)
+app.use('/api/Currency', currencyRouter);
+
 
 // app.use('/api/public', express.static(path.join(__dirname, 'public')));
 app.use(express.static('public'));

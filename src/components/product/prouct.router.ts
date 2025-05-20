@@ -99,6 +99,7 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             printName: data.printName,
             productName: data.productName,
             typeId: data.typeId,
+            ExpnotifDays:data.ExpnotifDays,
             cost: 0,
             minPrice: 0,
             MRP: 0,
@@ -110,28 +111,28 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         if (newProduct) {
             // Handle inventory
             const centerList = await centerService.getlist();
-            const centerPromises = centerList.map(async (center: { id: string }) => {
-                const inventory = await inventoryService.upsert({
-                    productId: newProduct.id,
-                    centerId: center.id,
-                    quantity: 0,
-                });
-                if (!inventory) {
-                    throw new Error("Failed to update inventory association");
-                }
-            });
+            // const centerPromises = centerList.map(async (center: { id: string }) => {
+            //     const inventory = await inventoryService.upsert({
+            //         productId: newProduct.id,
+            //         centerId: center.id,
+            //         quantity: 0,
+            //     });
+            //     if (!inventory) {
+            //         throw new Error("Failed to update inventory association");
+            //     }
+            // });
 
             // Handle OEM Numbers
-            const OEMnumberPromises = data.OEMnumberList.map(async (oem: any) => {
-                const oenum = await OENumberService.create({
-                    productId: newProduct.id,
-                    OEMnumber: oem.OEMnumber
-                });
-                if (!oenum) {
-                    throw new Error("Failed to update OEM Numbers");
-                }
-                return oenum; // Return the created OEM number
-            });
+            // const OEMnumberPromises = data.OEMnumberList.map(async (oem: any) => {
+            //     const oenum = await OENumberService.create({
+            //         productId: newProduct.id,
+            //         OEMnumber: oem.OEMnumber
+            //     });
+            //     if (!oenum) {
+            //         throw new Error("Failed to update OEM Numbers");
+            //     }
+            //     return oenum; // Return the created OEM number
+            // });
 
             const discountLevelsPromises = data.discountLevels.map(async (discount: any) => {
                 const dis = await productdiscountlevelService.create({
@@ -161,17 +162,17 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
 
             try {
                 // Wait for all promises
-                const [inventoryResults, oemNumbers, discountList] = await Promise.all([
-                    Promise.all(centerPromises), // Wait for all inventory updates
-                    Promise.all(OEMnumberPromises), // Wait for all OEM numbers to be created
-                    Promise.all(discountLevelsPromises),
-                ]);
+                // const [oemNumbers, discountList] = await Promise.all([
+                //     // Wait for all inventory updates
+                //    // Promise.all(OEMnumberPromises), // Wait for all OEM numbers to be created
+                //     Promise.all(discountLevelsPromises),
+                // ]);
 
                 // Combine product and OEM numbers into a single data object
                 const combinedData = {
                     ...newProduct,
-                    OEMNumber: oemNumbers,
-                    productDiscountLevel: discountList,
+                    // OEMNumber: oemNumbers,
+                    // productDiscountLevel: discountList,
                 };
 
                 // Return the response including the combined data

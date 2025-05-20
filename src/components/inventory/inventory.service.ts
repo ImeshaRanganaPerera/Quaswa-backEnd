@@ -25,23 +25,25 @@ export const getbyProductId = async (id: any) => {
         }
     });
 }
-export const getByProductAndCenter = async (productId: string, centerId: string) => {
+export const getByProductAndCenter = async (productId: string, centerId: string,batchNo: string) => {
     return db.inventory.findUnique({
         where: {
-            productId_centerId: {
+            productId_centerId_batchNo: {
                 productId,
                 centerId,
+                batchNo,
             },
         },
     });
 };
 
 
-export const getbycenterIdProductId = async (productId: any, centerId: any) => {
+export const getbycenterIdProductId = async (productId: any, centerId: any,batchNo: any) => {
     return db.inventory.findFirst({
         where: {
             productId: productId,
             centerId: centerId,
+            batchNo:batchNo,
         }
     })
 }
@@ -88,9 +90,10 @@ export const upsert = async (data: any) => {
     if (data.cost) {
         const existingInventory = await db.inventory.findUnique({
             where: {
-                productId_centerId: {
+                productId_centerId_batchNo: {
                     productId: data.productId,
                     centerId: data.centerId,
+                    batchNo: data.batchNo,
                 },
             },
         });
@@ -106,13 +109,10 @@ export const upsert = async (data: any) => {
                 productId: data.productId,
             },
         });
-        console.log(allInventory)
 
         const totalQuantity = allInventory.reduce((acc, inventory) => {
-            return acc.plus(new Decimal(inventory.quantity || 0)); // Use Decimal for precise addition
+            return acc.plus(new Decimal(inventory.quantity || 0));
         }, new Decimal(0));
-
-        console.log(`Total quantity for product ${data.productId}:`, totalQuantity.toString());
 
         const oldCost = product?.cost || new Decimal(0);
         const oldqty = totalQuantity || new Decimal(0);
@@ -122,10 +122,8 @@ export const upsert = async (data: any) => {
 
         const avgCost = (oldCost.times(oldqty).plus(newCost.times(newqty))).div(oldqty.plus(newqty));
 
-        const updateCostproduct = await db.product.update({
-            where: {
-                id: product?.id,
-            },
+        await db.product.update({
+            where: { id: product?.id },
             data: {
                 cost: avgCost.toFixed(2),
                 minPrice: data.minPrice,
@@ -134,65 +132,69 @@ export const upsert = async (data: any) => {
             }
         });
 
-        let newQuantity: Decimal;
-        if (existingInventory && existingInventory.quantity !== null) {
-            newQuantity = new Decimal(existingInventory.quantity).plus(new Decimal(data.quantity));
-        } else {
-            newQuantity = new Decimal(data.quantity);
-        }
+        const newQuantity = existingInventory
+            ? new Decimal(existingInventory.quantity ?? 0).plus(new Decimal(data.quantity))
+            : new Decimal(data.quantity);
+
         return db.inventory.upsert({
             where: {
-                productId_centerId: {
+                productId_centerId_batchNo: {
                     productId: data.productId,
-                    centerId: data.centerId
-                }
+                    centerId: data.centerId,
+                    batchNo: data.batchNo,
+                },
             },
             update: {
-                quantity: data.quantity, // Update with the calculated new quantity
+                quantity: newQuantity,
             },
             create: {
                 productId: data.productId,
                 centerId: data.centerId,
-                quantity: newQuantity, // Insert the original quantity on creation
+                batchNo: data.batchNo,
+                quantity: newQuantity,
+                expDate:data.expDate,
+                closingExpDate:data.closingExpDate,
+            },
+        });
+    } else {
+        const existingInventory = await db.inventory.findUnique({
+            where: {
+                productId_centerId_batchNo: {
+                    productId: data.productId,
+                    centerId: data.centerId,
+                    batchNo: data.batchNo,
+                },
+            },
+        });
+
+        const newQuantity = existingInventory
+            ? new Decimal(existingInventory.quantity ?? 0).plus(new Decimal(data.quantity))
+            : new Decimal(data.quantity);
+
+        return db.inventory.upsert({
+            where: {
+                productId_centerId_batchNo: {
+                    productId: data.productId,
+                    centerId: data.centerId,
+                    batchNo: data.batchNo,
+                },
+            },
+            update: {
+                quantity: newQuantity,
+            },
+            create: {
+                productId: data.productId,
+                centerId: data.centerId,
+                batchNo: data.batchNo,
+                quantity: newQuantity,
+                expDate:data.expDate,
+                closingExpDate:data.closingExpDate,
+              
             },
         });
     }
-    else {
-        const existingInventory = await db.inventory.findUnique({
-            where: {
-                productId_centerId: {
-                    productId: data.productId,
-                    centerId: data.centerId
-                }
-            },
-        });
-
-        let newQuantity: Decimal;
-        if (existingInventory && existingInventory.quantity !== null) {
-            newQuantity = new Decimal(existingInventory.quantity).plus(new Decimal(data.quantity));
-        } else {
-            newQuantity = new Decimal(data.quantity);
-        }
-        return db.inventory.upsert({
-            where: {
-                productId_centerId: {
-                    productId: data.productId,
-                    centerId: data.centerId
-                }
-            },
-            update: {
-                quantity: newQuantity, // Update with the calculated new quantity
-            },
-            create: {
-                productId: data.productId,
-                centerId: data.centerId,
-                quantity: newQuantity, // Insert the original quantity on creation
-            },
-        });
-    };
-
-
 };
+
 
 export const create = async (data: any) => {
     return db.inventory.create({
@@ -207,12 +209,13 @@ export const update = async (data: any, id: any) => {
     });
 }
 
-export const updates = async (data: any, productId: any, centerId: any) => {
+export const updates = async (data: any, productId: any, centerId: any,batchNo:any) => {
     return db.inventory.update({
         where: {
-            productId_centerId: {
+            productId_centerId_batchNo: {
                 productId: productId,
                 centerId: centerId,
+                batchNo:batchNo,
             },
         },
         data: {
@@ -235,9 +238,10 @@ export const updateStatus = async (data: any, id: any) => {
         await Promise.all(inventory.map((item: any) => {
             return db.inventory.update({
                 where: {
-                    productId_centerId: {
+                    productId_centerId_batchNo: {
                         productId: item.productId,
                         centerId: item.centerId,
+                        batchNo:item.batchNo,
                     },
                 },
                 data: data,  // Use the data passed in as an argument
@@ -250,6 +254,7 @@ export const updateStatus = async (data: any, id: any) => {
 export const filterVoucherProduct = async (
     productId?: string,
     centerId?: string,
+   
     date: Date = new Date()
 ) => {
     const filterConditions: any = {
@@ -347,9 +352,13 @@ const addOrUpdateProduct = (
     productName: string,
     quantity: Decimal,
     voucherProduct: any,
-    centerId: string // centerId should be a string
+    centerId: string
 ) => {
-    const existingProductIndex = centerProducts.findIndex((item: any) => item.productName === productName);
+    const existingProductIndex = centerProducts.findIndex(
+        (item: any) =>
+            item.productName === productName &&
+            item.batchNo === voucherProduct.batchNo
+    );
 
     if (existingProductIndex > -1) {
         const existingProduct = centerProducts[existingProductIndex];
@@ -362,8 +371,9 @@ const addOrUpdateProduct = (
             MRP: new Decimal(voucherProduct.product.MRP || 0),
             cost: new Decimal(voucherProduct.product.cost || 0),
             quantity: quantity,
-            centerId: centerId,  // Add centerId to the response
-            productId: voucherProduct.product.id, // Add productId to the response
+            centerId: centerId,
+            productId: voucherProduct.product.id,
+            batchNo: voucherProduct.batchNo || "",
         });
     }
 };
@@ -421,8 +431,8 @@ export const getStockMovement = async (productId: string, centerId: string, date
     });
 
     // Prepare the result based on your criteria
-    const result: any[] = [];
-
+    // const result: any[] = [];
+     const result: Record<string, any[]> = {};
     stockMovements.forEach((voucherProduct) => {
         const voucherGroup = voucherProduct.voucher.voucherGroup.voucherName;
         const date = voucherProduct.voucher.date;
@@ -454,18 +464,37 @@ export const getStockMovement = async (productId: string, centerId: string, date
         }
 
         // Add the record to the result array
-        result.push({
-            date: date,
-            printName: productName,
-            voucherName: voucherGroup,
-            voucherNumber: voucherNumber,
-            partyName: partyName,
-            qtyIn: qtyIn.toNumber(), // Convert Decimal to number for the response
-            qtyOut: qtyOut.toNumber(), // Convert Decimal to number for the response
-            mrp: mrp.toNumber(), // Convert Decimal to number for the response
-            cost: cost.toNumber(), // Convert Decimal to number for the response
-            centerId: centerId
-        });
+        const batchNo = voucherProduct.batchNo || 'UNKNOWN';
+if (!result[batchNo]) {
+    result[batchNo] = [];
+}
+result[batchNo].push({
+    date: date,
+    printName: productName,
+    voucherName: voucherGroup,
+    voucherNumber: voucherNumber,
+    partyName: partyName,
+    qtyIn: qtyIn.toNumber(),
+    qtyOut: qtyOut.toNumber(),
+    mrp: mrp.toNumber(),
+    cost: cost.toNumber(),
+    centerId: centerId,
+    batchNo: batchNo
+});
+
+        // result.push({
+        //     date: date,
+        //     printName: productName,
+        //     voucherName: voucherGroup,
+        //     voucherNumber: voucherNumber,
+        //     partyName: partyName,
+        //     qtyIn: qtyIn.toNumber(), // Convert Decimal to number for the response
+        //     qtyOut: qtyOut.toNumber(), // Convert Decimal to number for the response
+        //     mrp: mrp.toNumber(), // Convert Decimal to number for the response
+        //     cost: cost.toNumber(), // Convert Decimal to number for the response
+        //     centerId: centerId,
+        //     batchNo: voucherProduct.batchNo || ''
+        // });
     });
 
     return result;

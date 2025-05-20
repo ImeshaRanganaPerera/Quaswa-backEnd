@@ -13,7 +13,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Center {
+model center {
   id             String           @id @default(uuid())
   centerName     String
   mode           CenterMode       @default(VIRTUAL)
@@ -37,7 +37,7 @@ model companyDetails {
   address2    String?
 }
 
-model User {
+model user {
   id                   String                 @id @default(uuid())
   name                 String
   nic                  String?                @unique
@@ -89,7 +89,7 @@ model userCenter {
   @@id([centerId, userId])
 }
 
-model PartyGroup {
+model partyGroup {
   id             String          @id @default(uuid())
   partyGroupName String
   createdAt      DateTime        @default(now())
@@ -98,7 +98,7 @@ model PartyGroup {
   partyCategory  partyCategory[]
 }
 
-model Party {
+model party {
   id               String            @id @default(uuid())
   name             String
   nic              String?
@@ -184,7 +184,7 @@ model partyproofimage {
   @@id([partyId, proofimageId])
 }
 
-model VoucherGroup {
+model voucherGroup {
   id            String        @id @default(uuid())
   voucherName   String
   shortname     String
@@ -198,7 +198,7 @@ model VoucherGroup {
   voucher       Voucher[]
 }
 
-model Voucher {
+model voucher {
   id               String             @id @default(uuid())
   voucherNumber    String             @unique
   date             DateTime?
@@ -325,7 +325,7 @@ model referVouchers {
   updatedAt        DateTime @updatedAt
 }
 
-model VoucherCenter {
+model voucherCenter {
   center       Center       @relation(fields: [centerId], references: [id])
   centerId     String
   voucher      Voucher      @relation(fields: [voucherId], references: [id])
@@ -335,13 +335,13 @@ model VoucherCenter {
   @@id([centerId, voucherId])
 }
 
-model Payment {
+model payment {
   id             String           @id @default(uuid())
   type           String?
   PaymentVoucher PaymentVoucher[]
 }
 
-model PaymentVoucher {
+model paymentVoucher {
   id          String   @id @default(uuid())
   amount      Decimal
   paymentType String?
@@ -353,7 +353,7 @@ model PaymentVoucher {
   Cheque      Cheque[]
 }
 
-model Brand {
+model brand {
   id        String    @id @default(uuid())
   brandName String    @unique
   user      User      @relation(fields: [createdBy], references: [id])
@@ -363,7 +363,7 @@ model Brand {
   Product   Product[]
 }
 
-model Type {
+model type {
   id        String    @id @default(uuid())
   typeName  String    @unique
   user      User      @relation(fields: [createdBy], references: [id])
@@ -373,7 +373,7 @@ model Type {
   Product   Product[]
 }
 
-model OEMNumber {
+model oemnumber {
   product   Product @relation(fields: [productId], references: [id])
   productId String
   OEMnumber String
@@ -401,7 +401,7 @@ model commissionReport {
   amount    Decimal
 }
 
-model Product {
+model product {
   id                   String                 @id @default(uuid())
   unit                 Unit                   @default(PCS)
   itemCode             String?                @unique()
@@ -457,7 +457,7 @@ model productDiscountLevel {
   @@id([productId, discountLevelId])
 }
 
-model Inventory {
+model inventory {
   
   product   Product  @relation(fields: [productId], references: [id])
   productId String
@@ -475,13 +475,13 @@ model Inventory {
   @@unique([productId, centerId, batchNo]) // <-- Add new constraint
 }
 
-model AccountCategory {
+model accountCategory {
   id                 String               @id @default(uuid())
   accCategory        String
   AccountSubCategory AccountSubCategory[]
 }
 
-model AccountSubCategory {
+model accountSubCategory {
   id                String           @id @default(uuid())
   accountSubName    String
   AccountCategory   AccountCategory  @relation(fields: [accountCategoryId], references: [id])
@@ -493,7 +493,7 @@ model AccountSubCategory {
   ChartofAccount    ChartofAccount[]
 }
 
-model AccountGroup {
+model accountGroup {
   id               String           @id @default(uuid())
   accountGroupName String
   user             User             @relation(fields: [createdBy], references: [id])
@@ -503,7 +503,7 @@ model AccountGroup {
   ChartofAccount   ChartofAccount[]
 }
 
-model ChartofAccount {
+model chartofAccount {
   id                   String              @id @default(uuid())
   accountName          String
   AccountSubCategory   AccountSubCategory? @relation(fields: [accountSubCategoryId], references: [id])
@@ -522,7 +522,7 @@ model ChartofAccount {
   bankRecJournal       bankRecJournal[]
 }
 
-model ChequeBook {
+model chequeBook {
   id               String         @id @default(uuid())
   chequeBookNumber String
   totalCheques     Int
@@ -538,7 +538,7 @@ model ChequeBook {
   Cheque           Cheque[]
 }
 
-model Cheque {
+model cheque {
   id               String          @id @default(uuid())
   chequeNumber     String          @unique
   chequeBankName   String?
@@ -595,22 +595,22 @@ model bankRecJournal {
   updatedAt        DateTime       @updatedAt
 }
 
-enum Role {
+enum role {
   ADMIN
   MANAGER
   SALESMEN
 }
 
-enum CenterMode {
+enum centerMode {
   VIRTUAL
   PHYSICAL
 }
 
-enum Unit {
+enum unit {
   PCS
 }
 
-enum InventoryMode {
+enum inventoryMode {
   PLUS
   MINUS
   DOUBLE
@@ -622,7 +622,7 @@ enum centerStatus {
   OUT
 }
 
-enum CreditDebit {
+enum creditDebit {
   CREDIT
   DEBIT
 }

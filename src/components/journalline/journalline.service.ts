@@ -161,9 +161,9 @@ export const getTrialBalance = async (
         },
         include: {
             accGroup: true,
-            AccountSubCategory: {
+            accountSubCategory: {
                 select: {
-                    AccountCategory: true,
+                    accountCategory: true,
                 }
             },
             journalLine: true,
@@ -179,7 +179,7 @@ export const getTrialBalance = async (
     let payableCredit = 0;
 
     accounts.forEach(account => {
-        const accountCategory = account.AccountSubCategory?.AccountCategory?.accCategory;
+        const accountCategory = account.accountSubCategory?.accountCategory?.accCategory;
         const openingBalance = account.Opening_Balance;
         const accGroup = account.accGroup?.accountGroupName || "";
 
@@ -248,8 +248,8 @@ export const getProfitAndLoss = async (
 ) => {
     const accounts = await db.chartofAccount.findMany({
         where: {
-            AccountSubCategory: {
-                AccountCategory: {
+            accountSubCategory: {
+                accountCategory: {
                     accCategory: {
                         in: ['INCOME', 'EXPENCESS'],
                     },
@@ -258,9 +258,9 @@ export const getProfitAndLoss = async (
         },
         include: {
             accGroup: true,
-            AccountSubCategory: {
+            accountSubCategory: {
                 select: {
-                    AccountCategory: true,
+                    accountCategory: true,
                 },
             },
             journalLine: {
@@ -287,12 +287,12 @@ export const getProfitAndLoss = async (
     }
 
     const result: ResultType = accounts.reduce((acc: ResultType, account) => {
-        if (!account.AccountSubCategory || !account.AccountSubCategory.AccountCategory) {
+        if (!account.accountSubCategory || !account.accountSubCategory.accountCategory) {
             return acc; // Skip invalid accounts
         }
 
         const category =
-            account.AccountSubCategory.AccountCategory.accCategory === 'INCOME'
+            account.accountSubCategory.accountCategory.accCategory === 'INCOME'
                 ? 'income'
                 : 'expencess';
 
@@ -352,8 +352,8 @@ export const getBalanceSheet = async (
 ) => {
     const accounts = await db.chartofAccount.findMany({
         where: {
-            AccountSubCategory: {
-                AccountCategory: {
+            accountSubCategory: {
+                accountCategory: {
                     accCategory: {
                         in: ['ASSETS', 'EQUITY', 'LIABILITIES'],
                     },
@@ -362,9 +362,9 @@ export const getBalanceSheet = async (
         },
         include: {
             accGroup: true,
-            AccountSubCategory: {
+            accountSubCategory: {
                 select: {
-                    AccountCategory: true,
+                    accountCategory: true,
                 },
             },
             journalLine: {
@@ -391,14 +391,14 @@ export const getBalanceSheet = async (
     }
 
     const result: ResultType = accounts.reduce((acc: ResultType, account) => {
-        if (!account.AccountSubCategory || !account.AccountSubCategory.AccountCategory) {
+        if (!account.accountSubCategory || !account.accountSubCategory.accountCategory) {
             return acc; // Skip invalid accounts
         }
 
         const category =
-            account.AccountSubCategory.AccountCategory.accCategory === 'ASSETS'
+            account.accountSubCategory.accountCategory.accCategory === 'ASSETS'
                 ? 'assets'
-                : account.AccountSubCategory.AccountCategory.accCategory === 'EQUITY'
+                : account.accountSubCategory.accountCategory.accCategory === 'EQUITY'
                     ? 'equity'
                     : 'liabilities';
 

@@ -50,7 +50,7 @@ export const getNextChequeNumber = async (chartOfAccountId: string) => {
             chartofAccountId: chartOfAccountId // Filter by chart of account ID
         },
         include: {
-            Cheque: true // Include associated Cheque records
+            cheque: true // Include associated Cheque records
         }
     });
 
@@ -60,7 +60,7 @@ export const getNextChequeNumber = async (chartOfAccountId: string) => {
     }
 
     // Step 2: Get all used cheque numbers
-    const usedChequeNumbers = chequeBook.Cheque.map(cheque => cheque.chequeNumber);
+    const usedChequeNumbers = chequeBook.cheque.map(cheque => cheque.chequeNumber);
     
 
     // Step 3: Determine the next cheque number

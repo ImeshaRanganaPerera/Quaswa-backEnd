@@ -22,7 +22,7 @@ model center {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt()
   userCenter     userCenter[]
-  Inventory      inventory[]
+  inventory      inventory[]
   VoucherCenter  voucherCenter[]
   voucherProduct voucherProduct[]
 }
@@ -52,19 +52,19 @@ model user {
   role                 role                   @default(SALESMEN)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
-  Party                party[]
-  Product              product[]
+  party                party[]
+  product              product[]
   userCenter           userCenter[]
-  Center               center[]
-  Brand                brand[]
-  Type                 type[]
+  center               center[]
+  brand                brand[]
+  type                 type[]
   ChartofAccount       chartofAccount[]
   journalLine          journalLine[]
-  AccountSubCategory   accountSubCategory[]
-  AccountGroup         accountGroup[]
+  accountSubCategory   accountSubCategory[]
+  accountGroup         accountGroup[]
   partyCategory        partyCategory[]
-  ChequeBook           chequeBook[]
-  Cheque               cheque[]
+  chequeBook           chequeBook[]
+  cheque               cheque[]
   discountLevel        discountLevel[]
   productDiscountLevel productDiscountLevel[]
   referVouchers        referVouchers[]
@@ -152,7 +152,7 @@ model partyType {
   createdBy String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Party     party[]
+  party     party[]
 }
 
 model vistingCustomer {
@@ -239,11 +239,11 @@ model voucher {
   updatedAt        DateTime           @updatedAt
   discountLevel    discountLevel?     @relation(fields: [discountId], references: [id])
   discountId       String?
-  PaymentVoucher   paymentVoucher[]
+  paymentVoucher   paymentVoucher[]
   voucherProduct   voucherProduct[]
-  VoucherCenter    voucherCenter[]
+  voucherCenter    voucherCenter[]
   journalLine      journalLine[]
-  Cheque           cheque[]
+  cheque           cheque[]
   referVouchers    referVouchers[]
   pettycashIOU     pettycashIOU[]
   commissionReport commissionReport[]
@@ -338,7 +338,7 @@ model voucherCenter {
 model payment {
   id             String           @id @default(uuid())
   type           String?
-  PaymentVoucher paymentVoucher[]
+  paymentVoucher paymentVoucher[]
 }
 
 model paymentVoucher {
@@ -350,7 +350,7 @@ model paymentVoucher {
   paymentId   String
   voucher     voucher  @relation(fields: [voucherId], references: [id])
   voucherId   String
-  Cheque      cheque[]
+  cheque      cheque[]
 }
 
 model brand {
@@ -360,7 +360,7 @@ model brand {
   createdBy String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  Product   product[]
+  product   product[]
 }
 
 model type {
@@ -370,7 +370,7 @@ model type {
   createdBy String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  Product   product[]
+  product   product[]
 }
 
 model oemnumber {
@@ -424,9 +424,9 @@ model product {
   createdBy            String
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
-  Inventory            inventory[]
+  inventory            inventory[]
   voucherProduct       voucherProduct[]
-  OEMNumber            oemnumber[]
+  oemnumber            oemnumber[]
   productDiscountLevel productDiscountLevel[]
 }
 
@@ -438,7 +438,7 @@ model discountLevel {
   createdBy            String
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
-  Voucher              voucher[]
+  voucher              voucher[]
   productDiscountLevel productDiscountLevel[]
 }
 
@@ -478,19 +478,19 @@ model inventory {
 model accountCategory {
   id                 String               @id @default(uuid())
   accCategory        String
-  AccountSubCategory accountSubCategory[]
+  accountSubCategory accountSubCategory[]
 }
 
 model accountSubCategory {
   id                String           @id @default(uuid())
   accountSubName    String
-  AccountCategory   accountCategory  @relation(fields: [accountCategoryId], references: [id])
+  accountCategory   accountCategory  @relation(fields: [accountCategoryId], references: [id])
   accountCategoryId String
   user              user             @relation(fields: [createdBy], references: [id])
   createdBy         String
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
-  ChartofAccount    chartofAccount[]
+  chartofAccount    chartofAccount[]
 }
 
 model accountGroup {
@@ -500,13 +500,13 @@ model accountGroup {
   createdBy        String
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-  ChartofAccount   chartofAccount[]
+  chartofAccount   chartofAccount[]
 }
 
 model chartofAccount {
   id                   String              @id @default(uuid())
   accountName          String
-  AccountSubCategory   accountSubCategory? @relation(fields: [accountSubCategoryId], references: [id])
+  accountSubCategory   accountSubCategory? @relation(fields: [accountSubCategoryId], references: [id])
   accountSubCategoryId String?
   accGroup             accountGroup?       @relation(fields: [accountGroupId], references: [id])
   accountGroupId       String?
@@ -516,9 +516,9 @@ model chartofAccount {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   journalLine          journalLine[]
-  Party                party[]
-  ChequeBook           chequeBook[]
-  Voucher              voucher[]
+  party                party[]
+  chequeBook           chequeBook[]
+  voucher              voucher[]
   bankRecJournal       bankRecJournal[]
 }
 
@@ -535,7 +535,7 @@ model chequeBook {
   createdBy        String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  Cheque           cheque[]
+  cheque           cheque[]
 }
 
 model cheque {

@@ -272,7 +272,7 @@ export const filterVoucherProduct = async (
             voucher: {
                 include: {
                     voucherGroup: true,
-                    VoucherCenter: true,
+                    voucherCenter: true,
                 },
             },
             product: true,
@@ -408,7 +408,7 @@ export const getStockMovement = async (productId: string, centerId: string, date
                         in: ['INVOICE', 'PURCHASE-RETURN', 'GRN', 'SALES-RETURN', 'STOCK-TRANSFER'],
                     },
                 },
-                VoucherCenter: {
+                voucherCenter: {
                     some: {
                         centerId: centerId
                     }
@@ -421,7 +421,7 @@ export const getStockMovement = async (productId: string, centerId: string, date
                 include: {
                     voucherGroup: true,
                     party: true,
-                    VoucherCenter: true,
+                    voucherCenter: true,
                 }
             },
         },

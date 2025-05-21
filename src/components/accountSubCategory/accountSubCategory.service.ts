@@ -3,7 +3,7 @@ import { db } from "../../utils/db.server";
 export const list = async () => {
     return db.accountSubCategory.findMany({
         include: {
-            AccountCategory: true
+            accountCategory: true
         }
     });
 }
@@ -30,7 +30,7 @@ export const create = async (data: any) => {
     return db.accountSubCategory.create({
         data: data,
         include: {
-            AccountCategory: true
+            accountCategory: true
         }
     });
 }
@@ -40,7 +40,7 @@ export const update = async (data: any, id: any) => {
         where: id,
         data: data,
         include: {
-            AccountCategory: true
+            accountCategory: true
         }
     });
 }

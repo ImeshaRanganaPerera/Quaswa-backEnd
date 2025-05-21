@@ -5,7 +5,7 @@ export const list = async () => {
     return db.chartofAccount.findMany({
         include: {
             accGroup: true,
-            AccountSubCategory: true
+            accountSubCategory: true
         }
     });
 }
@@ -42,8 +42,8 @@ export const getbygroup = async (id: string) => {
 export const getbyaccCategory = async (name: string) => {
     return db.chartofAccount.findMany({
         where: {
-            AccountSubCategory: {
-                AccountCategory: {
+            accountSubCategory: {
+                accountCategory: {
                     accCategory: name
                 }
             }
@@ -69,7 +69,7 @@ export const create = async (data: any) => {
         data: data,
         include: {
             accGroup: true,
-            AccountSubCategory: true
+            accountSubCategory: true
         }
     });
 }
@@ -80,7 +80,7 @@ export const updates = async (data: any, id: any) => {
         data: data,
         include: {
             accGroup: true,
-            AccountSubCategory: true
+            accountSubCategory: true
         }
     });
 }
@@ -92,7 +92,7 @@ export const update = async (data: any, id: any) => {
         data: data,
         include: {
             accGroup: true,
-            AccountSubCategory: true
+            accountSubCategory: true
         }
     });
 }

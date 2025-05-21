@@ -48,8 +48,8 @@ export const get = async (id: any) => {
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true,
-            VoucherCenter: {
+            paymentVoucher: true,
+            voucherCenter: {
                 select: {
                     center: {
                         select: {
@@ -80,7 +80,7 @@ export const getbyid = async (id: any) => {
                     accountName: true,
                 }
             },
-            VoucherCenter: true
+            voucherCenter: true
         }
     });
 }
@@ -328,14 +328,14 @@ export const create = async (data?: any) => {
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true,
+            paymentVoucher: true,
             user: {
                 select: {
                     name: true,
                     phoneNumber: true,
                 }
             },
-            VoucherCenter: true,
+            voucherCenter: true,
             voucherGroup: true,
         }
     });
@@ -576,14 +576,14 @@ export const getVouchersByPartyOutstanding = async (voucherGroupId: string, part
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true,
+            paymentVoucher: true,
             user: {
                 select: {
                     name: true,
                     phoneNumber: true,
                 }
             },
-            VoucherCenter: {
+            voucherCenter: {
                 select: {
                     center: true,
                     centerStatus: true,
@@ -652,14 +652,14 @@ export const getVouchersByPartySettlement = async (voucherGroupId: string, party
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true,
+            paymentVoucher: true,
             user: {
                 select: {
                     name: true,
                     phoneNumber: true,
                 }
             },
-            VoucherCenter: {
+            voucherCenter: {
                 select: {
                     center: true,
                     centerStatus: true,
@@ -718,14 +718,14 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true,
+            paymentVoucher: true,
             user: {
                 select: {
                     name: true,
                     phoneNumber: true,
                 }
             },
-            VoucherCenter: {
+            voucherCenter: {
                 select: {
                     center: true,
                     centerStatus: true,
@@ -794,14 +794,14 @@ export const getrejectInvoice = async (vouchergrpId: any, startDate?: Date, endD
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true,
+            paymentVoucher: true,
             user: {
                 select: {
                     name: true,
                     phoneNumber: true,
                 }
             },
-            VoucherCenter: {
+            voucherCenter: {
                 select: {
                     center: true,
                     centerStatus: true,
@@ -856,14 +856,14 @@ export const getVouchersByPartyByUserAndDateRangeall = async (voucherGroupId: st
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true,
+            paymentVoucher: true,
             user: {
                 select: {
                     name: true,
                     phoneNumber: true,
                 }
             },
-            VoucherCenter: {
+            voucherCenter: {
                 select: {
                     center: true,
                     centerStatus: true,
@@ -942,14 +942,14 @@ export const getVouchersByStatusByUser = async (voucherGroupId: any, status?: an
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true,
+            paymentVoucher: true,
             user: {
                 select: {
                     name: true,
                     phoneNumber: true,
                 }
             },
-            VoucherCenter: {
+            voucherCenter: {
                 select: {
                     center: true,
                     centerStatus: true,
@@ -1003,14 +1003,14 @@ export const getVouchersByUserAndDateRange = async (userId: string, startDate?: 
                 }
             },
             referVouchers: true,
-            PaymentVoucher: true,
+            paymentVoucher: true,
             user: {
                 select: {
                     name: true,
                     phoneNumber: true,
                 }
             },
-            VoucherCenter: {
+            voucherCenter: {
                 select: {
                     center: true,
                     centerStatus: true,
@@ -1444,7 +1444,7 @@ export const dashboardFiguresByUser = async (month?: number, year?: number) => {
             },
             include: {
                 user: true,
-                PaymentVoucher: {
+                paymentVoucher: {
                     include: { payment: true },
                 },
             },
@@ -1802,7 +1802,7 @@ export const dashboardFiguresByUser = async (month?: number, year?: number) => {
 export const dataLoop = async () => {
     const vouchers = db.voucher.findMany({
         where: {
-            PaymentVoucher: {
+            paymentVoucher: {
                 some: {
                     paymentType: 'Cash'
                 }
@@ -1812,7 +1812,7 @@ export const dataLoop = async () => {
             }
         },
         include: {
-            PaymentVoucher: {
+            paymentVoucher: {
                 select: {
                     paymentType: true,
                     amount: true

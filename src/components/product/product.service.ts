@@ -3,7 +3,7 @@ import { db } from "../../utils/db.server";
 export const list = async () => {
     return db.product.findMany({
         include: {
-            OEMNumber: true,
+            oemnumber: true,
             productDiscountLevel: true
         },
     });
@@ -36,7 +36,7 @@ export const updatePrices = async (data: any, id: any) => {
         where: id,
         data: data,
         include: {
-            OEMNumber: true,
+            oemnumber: true,
             productDiscountLevel: true,
         }
     });

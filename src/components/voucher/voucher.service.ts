@@ -1,4 +1,4 @@
-import { Role, InventoryMode } from "@prisma/client";
+import { role, inventoryMode } from "@prisma/client";
 import { db } from "../../utils/db.server";
 import { Decimal } from "@prisma/client/runtime/library";
 
@@ -1353,7 +1353,7 @@ export const getVouchersGroupedByAuthUserWithVisits = async (month?: number, yea
             const user = await db.user.findFirst({
                 where: {
                     id: authUser,
-                    role: Role.SALESMEN,  // Filter by role SALESMAN
+                    role: role.SALESMEN,  // Filter by role SALESMAN
                 },
                 select: { name: true, target: true },
             });

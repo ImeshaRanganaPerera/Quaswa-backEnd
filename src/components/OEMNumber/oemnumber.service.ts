@@ -1,7 +1,7 @@
 import { db } from "../../utils/db.server";
 
 export const list = async () => {
-    return db.oEMNumber.findMany();
+    return db.oemnumber.findMany();
 }
 
 // export const get = async (id: any) => {
@@ -13,20 +13,20 @@ export const list = async () => {
 // }
 
 export const create = async (data: any) => {
-    return db.oEMNumber.create({
+    return db.oemnumber.create({
         data: data
     });
 }
 
 export const update = async (data: any, id: any) => {
-    return db.oEMNumber.update({
+    return db.oemnumber.update({
         where: id,
         data: data
     });
 }
 
 export const deleteOEMNumbers = async (id: string) => {
-    return db.oEMNumber.deleteMany({
+    return db.oemnumber.deleteMany({
         where: {
             productId: id
         }

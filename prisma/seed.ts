@@ -1,11 +1,11 @@
-import { Role, InventoryMode } from "@prisma/client";
+import { role, inventoryMode } from "@prisma/client";
 import { db } from "../src/utils/db.server"
 import { format, toZonedTime } from 'date-fns-tz';
 import { hash } from "bcrypt";
 
 async function seed() {
-    const currentDateTime = new Date();
-    const timezone = 'Asia/Colombo';
+    // const currentDateTime = new Date();
+    // const timezone = 'Asia/Colombo';
 
     // const utcDateTime = format(toZonedTime(currentDateTime, timezone), 'yyyy-MM-dd HH:mm:ss.SSSXXX', { timeZone: 'UTC' });
     // const hashedPassword = await hash("1234", 10);
@@ -198,8 +198,8 @@ async function seed() {
 
 }
 
-seed().catch((error) => {
-    console.error("Error seeding data:", error);
-}).finally(async () => {
-    await db.$disconnect();
-});
+// seed().catch((error) => {
+//     console.error("Error seeding data:", error);
+// }).finally(async () => {
+//     await db.$disconnect();
+// });

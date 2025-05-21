@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { User } from '@prisma/client';
+import { user } from '@prisma/client';
 import { verify } from "jsonwebtoken";
 import { db } from "../utils/db.server";
 
 export interface ExpressRequest extends Request {
-    user?: User;
+    user?: user;
 }
 
 export const authenticate = async (req: ExpressRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -17,7 +17,7 @@ export const authenticate = async (req: ExpressRequest, res: Response, next: Nex
 
     if (!token) {
         return next(new Error("Token not Found"));
-    }
+    }next
 
     try {
         const decode = verify(token, 'Skey') as { userId: string }

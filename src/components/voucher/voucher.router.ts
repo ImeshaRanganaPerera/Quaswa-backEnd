@@ -2,7 +2,7 @@ import express from "express";
 import type { Request, Response } from "express";
 import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, role } from '@prisma/client';
 
 import * as voucherService from './voucher.service'
 import * as voucherGrpService from '../voucherGroup/vouchergrp.service'
@@ -73,7 +73,7 @@ voucherRouter.get("/filter", authenticate, async (request: ExpressRequest, respo
             return response.status(401).json({ message: "User not authorized" });
         }
 
-        if (request.user.role === Role.SALESMEN) {
+        if (request.user.role === role.SALESMEN) {
             userId = request.user?.id;
             console.log(userId)
         }
@@ -218,7 +218,7 @@ voucherRouter.get("/filter/status", authenticate, async (request: ExpressRequest
             return response.status(401).json({ message: "User not authorized" });
         }
         var userId;
-        if (request.user.role === Role.SALESMEN) {
+        if (request.user.role === role.SALESMEN) {
             userId = request.user?.id;
             console.log(userId)
         }
@@ -249,7 +249,7 @@ voucherRouter.get("/outstanding", authenticate, async (request: ExpressRequest, 
             return response.status(401).json({ message: "User not authorized" });
         }
 
-        if (request.user.role === Role.SALESMEN) {
+        if (request.user.role === role.SALESMEN) {
             userId = request.user?.id;
             console.log(userId)
         }

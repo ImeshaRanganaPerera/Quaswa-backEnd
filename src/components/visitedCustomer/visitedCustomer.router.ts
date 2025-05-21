@@ -4,7 +4,7 @@ import { body, validationResult } from "express-validator";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as visitingCustomerService from './visitedCustomer.service'
-import { Role } from "@prisma/client";
+import { role } from "@prisma/client";
 
 export const visitingCustomerRouter = express.Router();
 
@@ -18,7 +18,7 @@ visitingCustomerRouter.get("/",authenticate, async (request: ExpressRequest, res
             return response.status(401).json({ message: "User not authorized" });
         }
 
-        if (request.user.role === Role.SALESMEN) {
+        if (request.user.role === role.SALESMEN) {
             userId = request.user?.id;
         }
 

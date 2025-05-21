@@ -2,7 +2,7 @@ import express from "express";
 import type { Request, Response } from "express";
 import { authenticate, ExpressRequest } from '../../middleware/auth'
 import { sign } from "jsonwebtoken";
-import { User } from "@prisma/client";
+import { user } from "@prisma/client";
 import { compare } from "bcrypt";
 import { hash } from "bcrypt"
 
@@ -11,7 +11,7 @@ import * as centerService from '../center/center.service'
 import * as userCenterService from '../userCenter/userCenter.service'
 import * as inventoryService from '../inventory/inventory.service'
 
-const genarateJwt = (user: User): String => {
+const genarateJwt = (user: user): String => {
     return sign({ userId: user.id, name: user.name, role: user.role }, "Skey")
 }
 

@@ -61,6 +61,7 @@ export const getNextChequeNumber = async (chartOfAccountId: string) => {
 
     // Step 2: Get all used cheque numbers
     const usedChequeNumbers = chequeBook.Cheque.map(cheque => cheque.chequeNumber);
+    
 
     // Step 3: Determine the next cheque number
     const startNumber = parseInt(chequeBook.startNumber, 10);

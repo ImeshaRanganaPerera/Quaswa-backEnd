@@ -5,7 +5,7 @@ import { authenticate, ExpressRequest } from '../../middleware/auth'
 
 import * as inventoryService from './inventory.service'
 import * as usercenterService from '../userCenter/userCenter.service'
-import { Role } from '@prisma/client';
+import { role } from '@prisma/client';
 export const inventoryRouter = express.Router();
 
 inventoryRouter.get("/filter", authenticate, async (request: ExpressRequest, response: Response) => {
@@ -16,7 +16,7 @@ inventoryRouter.get("/filter", authenticate, async (request: ExpressRequest, res
             return response.status(401).json({ message: "User not authorized" });
         }
 
-        if (request.user.role === Role.SALESMEN) {
+        if (request.user.role === role.SALESMEN) {
             const center = await usercenterService.getbyId(request.user.id);
             if (centerId === undefined) {
                 centerId = center?.centerId;

@@ -16,7 +16,7 @@ datasource db {
 model center {
   id             String           @id @default(uuid())
   centerName     String
-  mode           CenterMode       @default(VIRTUAL)
+  mode           centerMode       @default(VIRTUAL)
   user           user             @relation(fields: [createdBy], references: [id])
   createdBy      String
   createdAt      DateTime         @default(now())
@@ -49,7 +49,7 @@ model user {
   password             String
   isDeleted            Boolean                @default(false)
   isconform            Boolean                @default(false)
-  role                 Role                   @default(SALESMEN)
+  role                 role                   @default(SALESMEN)
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   Party                party[]
@@ -233,7 +233,7 @@ model voucher {
   authUser         String?
   createdByUser    user               @relation("CreatedByUserVoucher", fields: [createdBy], references: [id])
   createdBy        String
-  apporvelUser     User?              @relation("apporvelUser", fields: [appovedBy], references: [id])
+  apporvelUser     user?              @relation("apporvelUser", fields: [appovedBy], references: [id])
   appovedBy        String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
@@ -374,11 +374,11 @@ model type {
 }
 
 model oemnumber {
-  product   Product @relation(fields: [productId], references: [id])
+  product   product @relation(fields: [productId], references: [id])
   productId String
   OEMnumber String
 
-  @@id([oemnumber, productId])
+  @@id([OEMnumber, productId])
 }
 
 model commissionLevel {

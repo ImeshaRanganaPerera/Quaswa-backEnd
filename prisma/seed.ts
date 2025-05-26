@@ -15,7 +15,7 @@ async function seed() {
     //         phoneNumber: "0000000000",  // Example phone number
     //         username: "admin",
     //         password: hashedPassword,
-    //         role: Role.ADMIN,  // Using the Role enum
+    //         role: role.ADMIN,  // Using the Role enum
     //         isconform: true
     //     }});
     // const userid = user.id;
@@ -174,25 +174,25 @@ async function seed() {
 
     // await db.voucherGroup.createMany({
     //     data: [
-    //         { voucherName: "INVOICE", shortname: "INV", inventoryMode: InventoryMode.MINUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Invoice" },
-    //         { voucherName: "SALES-RETURN", shortname: "SRET", inventoryMode: InventoryMode.PLUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Sales Return" },
-    //         { voucherName: "SALES-ORDER", shortname: "SO", inventoryMode: InventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Sales", label: "Sales Order" },
-    //         { voucherName: "GRN", shortname: "GRN", inventoryMode: InventoryMode.PLUS, isAccount: true, isSidemenu: true, category: "Inventory", label: "GRN" },
-    //         { voucherName: "PURCHASE-RETURN", shortname: "PRT", inventoryMode: InventoryMode.MINUS, isAccount: true, isSidemenu: true, category: "Inventory", label: "Purchase Return" },
-    //         { voucherName: "STOCK-TRANSFER", shortname: "ST", inventoryMode: InventoryMode.DOUBLE, isAccount: false, isSidemenu: true, category: "Inventory", label: "Stock Transfer" },
-    //         { voucherName: "PURCHASE-ORDER", shortname: "PO", inventoryMode: InventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Inventory", label: "Purchase Order" },
-    //         { voucherName: "PAYMENT", shortname: "PAYMENT", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Payment" },
-    //         { voucherName: "DIRECT PAYMENT", shortname: "PAYMENT-D", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Direct Payment" },
-    //         { voucherName: "RECEIPT", shortname: "RECEIPT", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Recipt" },
-    //         { voucherName: "UTILITY-BILL-CREATE", shortname: "UTILITY-BC", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Utility Bill Create" },
-    //         { voucherName: "UTILITY-BILL-PAYMENT", shortname: "UTILITY-BPAY", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Utility Bill Payment" },
-    //         { voucherName: "PETTY-CASH", shortname: "PC", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Petty Cash" },
-    //         { voucherName: "PETTY-CASH-IOU", shortname: "PC-IOU", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Petty Cash IOU" },
-    //         { voucherName: "SUPPLIER-BILL", shortname: "SUPPLIER-BC", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Supplier Bill" },
-    //         { voucherName: "JOURNAL-ENTRY", shortname: "JE", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Journal Entry" },
-    //         { voucherName: "MAKE-DEPOSIT", shortname: "MD", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Make Deposit" },
-    //         { voucherName: "ADVANCE-PAYMENT", shortname: "ADPAY", inventoryMode: InventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Make Deposit" },
-    //         { voucherName: "BANK-RECONCILIATION", shortname: "BR", inventoryMode: InventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Account", label: "Bank Reconciliation" },
+    //         { voucherName: "INVOICE", shortname: "INV", inventoryMode: inventoryMode.MINUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Invoice" },
+    //         { voucherName: "SALES-RETURN", shortname: "SRET", inventoryMode: inventoryMode.PLUS, isAccount: true, isSidemenu: true, category: "Sales", label: "Sales Return" },
+    //         { voucherName: "SALES-ORDER", shortname: "SO", inventoryMode: inventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Sales", label: "Sales Order" },
+    //         { voucherName: "GRN", shortname: "GRN", inventoryMode: inventoryMode.PLUS, isAccount: true, isSidemenu: true, category: "Inventory", label: "GRN" },
+    //         { voucherName: "PURCHASE-RETURN", shortname: "PRT", inventoryMode: inventoryMode.MINUS, isAccount: true, isSidemenu: true, category: "Inventory", label: "Purchase Return" },
+    //         { voucherName: "STOCK-TRANSFER", shortname: "ST", inventoryMode: inventoryMode.DOUBLE, isAccount: false, isSidemenu: true, category: "Inventory", label: "Stock Transfer" },
+    //         { voucherName: "PURCHASE-ORDER", shortname: "PO", inventoryMode: inventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Inventory", label: "Purchase Order" },
+    //         { voucherName: "PAYMENT", shortname: "PAYMENT", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Payment" },
+    //         { voucherName: "DIRECT PAYMENT", shortname: "PAYMENT-D", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Direct Payment" },
+    //         { voucherName: "RECEIPT", shortname: "RECEIPT", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Recipt" },
+    //         { voucherName: "UTILITY-BILL-CREATE", shortname: "UTILITY-BC", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Utility Bill Create" },
+    //         { voucherName: "UTILITY-BILL-PAYMENT", shortname: "UTILITY-BPAY", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Utility Bill Payment" },
+    //         { voucherName: "PETTY-CASH", shortname: "PC", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Petty Cash" },
+    //         { voucherName: "PETTY-CASH-IOU", shortname: "PC-IOU", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Petty Cash IOU" },
+    //         { voucherName: "SUPPLIER-BILL", shortname: "SUPPLIER-BC", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Supplier Bill" },
+    //         { voucherName: "JOURNAL-ENTRY", shortname: "JE", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Journal Entry" },
+    //         { voucherName: "MAKE-DEPOSIT", shortname: "MD", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Make Deposit" },
+    //         { voucherName: "ADVANCE-PAYMENT", shortname: "ADPAY", inventoryMode: inventoryMode.NONE, isAccount: true, isSidemenu: true, category: "Account", label: "Make Deposit" },
+    //         { voucherName: "BANK-RECONCILIATION", shortname: "BR", inventoryMode: inventoryMode.NONE, isAccount: false, isSidemenu: true, category: "Account", label: "Bank Reconciliation" },
     //     ]
     // });
 

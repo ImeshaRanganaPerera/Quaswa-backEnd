@@ -374,6 +374,7 @@ const addOrUpdateProduct = (
             centerId: centerId,
             productId: voucherProduct.product.id,
             batchNo: voucherProduct.batchNo || "",
+            expDate: voucherProduct?.expDate ? new Date(voucherProduct.expDate) : null,
         });
     }
 };

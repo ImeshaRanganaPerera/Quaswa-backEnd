@@ -128,6 +128,11 @@ export const getPendingVoucherCondition = async () => {
                         startsWith: 'SO',
                     },
                 },
+                 {
+                    voucherNumber: {
+                        startsWith: 'GRN',
+                    },
+                },
             ],
             AND: [
                 {
@@ -1093,6 +1098,12 @@ export const getRefVoucherbyVoucherGrpid = async (data: any, userId?: any) => {
                     sellingPrice: true,
                     updatedAt: true,
                     voucherId: true,
+                    expDate:true,
+                    batchNo:true,
+                    Packsize:true,
+                    Manufacture:true,
+                    country:true,
+
                     product: {
                         select: {
                             productName: true,

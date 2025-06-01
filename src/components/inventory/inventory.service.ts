@@ -154,6 +154,7 @@ export const upsert = async (data: any) => {
                 quantity: newQuantity,
                 expDate:data.expDate,
                 closingExpDate:data.closingExpDate,
+                mfdate:data.mfdate,
             },
         });
     } else {
@@ -189,6 +190,7 @@ export const upsert = async (data: any) => {
                 quantity: newQuantity,
                 expDate:data.expDate,
                 closingExpDate:data.closingExpDate,
+                mfdate:data.mfdate,
               
             },
         });

@@ -563,184 +563,8 @@ voucherRouter.get("/party/false/:partyId", async (request: Request, response: Re
 
 //POST
 voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRequest, response: Response) => {
-    try{
-    var data: any = request.body;
-    if (!request.user) {
-        return response.status(401).json({ message: "User not authorized" });
-    }
-
-    const userId = request.user.id;
-    const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
-    const newVoucherNumber = await voucherService.generateVoucherNumber(voucherGrpdetails?.id)
-
-    var totalCost = 0;
-    var partyAcc: any;
-
-    if (data?.partyId) {
-        partyAcc = await partyService.get(data?.partyId)
-    }
-    if (data.productList) {
-        totalCost = data.productList?.reduce((total: number, product: any) => {
-            return total + (product.cost * product.quantity);
-        }, 0);
-    }
-    console.log(data)
-    const newVoucher = await voucherService.create({
-        ...data,
-        authUser: data.authUser ? data.authUser : userId,
-        voucherNumber: newVoucherNumber,
-        voucherGroupId: voucherGrpdetails?.id,
-        createdBy: userId
-    })
-
-
-    if (data.refVoucherNumber) {
-        await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data?.returnValue, isRef: true, voucherId: newVoucher.voucherNumber, status: data?.status })
-    }
-    if (voucherGrpdetails?.inventoryMode === "PLUS") {
-        const newVoucherCenter = await voucherCenter.create({
-            centerId: data.centerId,
-            voucherId: newVoucher.id,
-            centerStatus: "IN"
-        })
-        if (!newVoucherCenter) {
-            throw new Error("Failed to update Voucher Center to list association");
-        }
-
-        // if (data.productList) {
-        //     const centerPromises = data.productList?.map(async (product: any) => {
-        //         const avastock = await inventoryService.getFinalQuantity(product.productId, data.centerId);
-        //         if (avastock){
-               
-        //             const voucherProduct = await productVoucherService.create({
-        //                 cost: product.cost,
-        //                 quantity: avastock- product.quantity,
-        //                 remainingQty: product.quantity,
-        //                 discount: product.discount,
-        //                 stockStatus: data?.stockStatus,
-        //                 MRP: product.MRP,
-        //                 minPrice: product.minPrice,
-        //                 sellingPrice: product.sellingPrice,
-        //                 amount: product.amount,
-        //                 voucherId: newVoucher.id,
-        //                 productId: product.productId,
-        //                 centerId: data.centerId
-        //             });
-        //         }
-             
-        //     });
-        //     try {
-        //         await Promise.all(centerPromises);
-        //     } catch (error: any) {
-        //         return response.status(500).json({ message: error.message });
-        //     }
-        // }
-        if (data.productList) {
-            const centerPromises = data.productList.map(async (product: any) => {
-                const avastock = await inventoryService.getFinalQuantity(product.productId, data.centerId);
-                
-                if (avastock !== undefined) {
-                    let quantity = 0;
-
-                    if (avastock > 0) {
-                        quantity = product.quantity;
-                    } else {
-                        const absStock = Math.abs(avastock);
-                        quantity = product.quantity > absStock ? product.quantity - absStock : 0;
-                    }
-                  
-        
-                    const voucherProduct = await productVoucherService.create({
-                        cost: product.cost,
-                        quantity: product.quantity,
-                        remainingQty: product.quantity,
-                        discount: product.discount,
-                        stockStatus: data?.stockStatus,
-                        MRP: product.MRP,
-                        minPrice: product.minPrice,
-                        sellingPrice: product.sellingPrice,
-                        amount: product.amount,
-                        voucherId: newVoucher.id,
-                        productId: product.productId,
-                        centerId: data.centerId
-                    });
-                }
-            });
-        
-            try {
-                await Promise.all(centerPromises);
-            } catch (error: any) {
-                return response.status(500).json({ message: error.message });
-            }
-        }
-        
-        if (voucherGrpdetails?.isAccount === false) {
-            const inventoryPromise = data.productList.map(async (product: any) => {
-                if (data.voucherGroupname === 'STOCK-VERIFICATION') {
-                    const avastock = await inventoryService.getFinalQuantity(product.productId, data.centerId);
-                
-                    if (avastock !== undefined) {
-                        let quantity = 0;
-
-                        if (avastock > 0) {
-                            quantity = avastock + product.quantity;
-                        } else {
-                            const absStock = Math.abs(avastock);
-                            quantity = product.quantity > absStock ? product.quantity - absStock : 0;
-                        }
-                      
-                                const inventory = await inventoryService.upsert({
-                                    productId: product.productId,
-                                    centerId: data.centerId,
-                                    quantity: avastock,
-                                    cost: product.cost,
-                                    minPrice: product.minPrice,
-                                    MRP: product.MRP,
-                                    sellingPrice: product.sellingPrice,
-                                });
-                                if (!inventory) {
-                                    throw new Error("Failed to update product to list association");
-                                }
-                            }
-                
-                } else {
-                    if (data.stockStatus === true) {
-                      
-                        const inventory = await inventoryService.upsert({
-                            productId: product.productId,
-                            centerId: data.centerId,
-                            quantity: product.quantity
-                        }); 
-                        if (!inventory) {
-                            throw new Error("Failed to update product to list association");
-                        }
-                     
-                      
-                    }
-                }
-
-            });
-
-            try {
-                await Promise.all(inventoryPromise);
-            } catch (error: any) {
-                return response.status(500).json({ message: error.message });
-            }
-        }
-    }
-    if (newVoucher) {
-        return response.status(201).json({ message: "Transaction Saved Successfully", data: newVoucher });
-    }
-} catch (error: any) {
-    console.error("Error creating voucher:", error);  // Add more detailed logging
-    return response.status(500).json({ message: error.message });
-}
-}),
-
-voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
-    var data: any = request.body;
     try {
-
+        var data: any = request.body;
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
@@ -773,425 +597,135 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         if (data.refVoucherNumber) {
             await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data?.returnValue, isRef: true, voucherId: newVoucher.voucherNumber, status: data?.status })
         }
+        if (voucherGrpdetails?.inventoryMode === "PLUS") {
+            const newVoucherCenter = await voucherCenter.create({
+                centerId: data.centerId,
+                voucherId: newVoucher.id,
+                centerStatus: "IN"
+            })
+            if (!newVoucherCenter) {
+                throw new Error("Failed to update Voucher Center to list association");
+            }
 
-        if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
-            const centerPromises = data.productList.map(async (product: any) => {
-                const voucherProduct = await productVoucherService.create({
-                    cost: product.cost,
-                    quantity: product.quantity,
-                    discount: product.discount,
-                    MRP: product.MRP,
-                    minPrice: product.minPrice,
-                    sellingPrice: product.sellingPrice,
-                    amount: product.amount,
-                    voucherId: newVoucher.id,
-                    productId: product.productId,
-                    centerId: data.fromCenterId,
-                    toCenterId: data.toCenterId
+            // if (data.productList) {
+            //     const centerPromises = data.productList?.map(async (product: any) => {
+            //         const avastock = await inventoryService.getFinalQuantity(product.productId, data.centerId);
+            //         if (avastock){
+
+            //             const voucherProduct = await productVoucherService.create({
+            //                 cost: product.cost,
+            //                 quantity: avastock- product.quantity,
+            //                 remainingQty: product.quantity,
+            //                 discount: product.discount,
+            //                 stockStatus: data?.stockStatus,
+            //                 MRP: product.MRP,
+            //                 minPrice: product.minPrice,
+            //                 sellingPrice: product.sellingPrice,
+            //                 amount: product.amount,
+            //                 voucherId: newVoucher.id,
+            //                 productId: product.productId,
+            //                 centerId: data.centerId
+            //             });
+            //         }
+
+            //     });
+            //     try {
+            //         await Promise.all(centerPromises);
+            //     } catch (error: any) {
+            //         return response.status(500).json({ message: error.message });
+            //     }
+            // }
+            if (data.productList) {
+                const centerPromises = data.productList.map(async (product: any) => {
+                    const avastock = await inventoryService.getFinalQuantity(product.productId, data.centerId);
+
+                    if (avastock !== undefined) {
+                        let quantity = 0;
+
+                        if (avastock > 0) {
+                            quantity = product.quantity;
+                        } else {
+                            const absStock = Math.abs(avastock);
+                            quantity = product.quantity > absStock ? product.quantity - absStock : 0;
+                        }
+
+
+                        const voucherProduct = await productVoucherService.create({
+                            cost: product.cost,
+                            quantity: product.quantity,
+                            remainingQty: product.quantity,
+                            discount: product.discount,
+                            stockStatus: data?.stockStatus,
+                            MRP: product.MRP,
+                            minPrice: product.minPrice,
+                            sellingPrice: product.sellingPrice,
+                            amount: product.amount,
+                            voucherId: newVoucher.id,
+                            productId: product.productId,
+                            centerId: data.centerId,
+                            expDate: product.expiryDate,
+                            batchNo: product.batchNo,
+                            mfdate:product.mfdate,
+                        });
+                    }
                 });
-                if (!voucherProduct) {
-                    throw new Error("Failed to update product to list association");
-                }
+
                 try {
                     await Promise.all(centerPromises);
                 } catch (error: any) {
                     return response.status(500).json({ message: error.message });
                 }
-            });
-            if (data.fromCenterId) {
-                const newVoucherCenter = await voucherCenter.create({
-                    centerId: data.fromCenterId,
-                    voucherId: newVoucher.id,
-                    centerStatus: "OUT"
-                })
-                if (!newVoucherCenter) {
-                    throw new Error("Failed to update Voucher Center to list association");
-                }
+            }
+
+            if (voucherGrpdetails?.isAccount === false) {
                 const inventoryPromise = data.productList.map(async (product: any) => {
-                    const inventory = await inventoryService.upsert({
-                        productId: product.productId,
-                        centerId: data.fromCenterId,
-                        quantity: -(product.quantity)
-                    });
-                    if (!inventory) {
-                        throw new Error("Failed to update product to list association");
-                    }
-                });
-                try {
-                    await Promise.all(inventoryPromise);
-                } catch (error: any) {
-                    return response.status(500).json({ message: error.message });
-                }
-            }
-            if (data.toCenterId) {
-                const newVoucherCenter = await voucherCenter.create({
-                    centerId: data.toCenterId,
-                    voucherId: newVoucher.id,
-                    centerStatus: "IN"
-                })
-                if (!newVoucherCenter) {
-                    throw new Error("Failed to update Voucher Center to list association");
-                }
-                const inventoryPromise = data.productList.map(async (product: any) => {
-                    const inventory = await inventoryService.upsert({
-                        productId: product.productId,
-                        centerId: data.toCenterId,
-                        quantity: product.quantity
-                    });
-                    if (!inventory) {
-                        throw new Error("Failed to update product to list association");
-                    }
-                });
-                try {
-                    await Promise.all(inventoryPromise);
-                } catch (error: any) {
-                    return response.status(500).json({ message: error.message });
-                }
-            }
-        }
-        else {
-            if (data.payment) {
-                const onlineTransfer = await paymentService.getbyname('Online Transfer');
-                const cash = await paymentService.getbyname('Cash');
-                const Cheque = await paymentService.getbyname('Cheque');
-                const Credit = await paymentService.getbyname('Credit');
-                const Advance = await paymentService.getbyname('Advance');
+                    if (data.voucherGroupname === 'STOCK-VERIFICATION') {
+                        const avastock = await inventoryService.getFinalQuantity(product.productId, data.centerId);
 
-                // Prepare payment vouchers
-                const paymentVouchers = [
-                    { voucherId: newVoucher.id, paymentId: onlineTransfer?.id, paymentType: onlineTransfer?.type, amount: data.payment.onlineTransfer, refNumber: data.payment.refNumber },
-                    { voucherId: newVoucher.id, paymentId: cash?.id, paymentType: cash?.type, amount: data.payment.cash },
-                    { voucherId: newVoucher.id, paymentId: Cheque?.id, paymentType: Cheque?.type, amount: data.payment.cheque },
-                    { voucherId: newVoucher.id, paymentId: Credit?.id, paymentType: Credit?.type, amount: data.payment.credit },
-                    { voucherId: newVoucher.id, paymentId: Advance?.id, paymentType: Advance?.type, amount: data.payment.advance },
-                ].filter(record => record.paymentId && record.amount > 0);
+                        if (avastock !== undefined) {
+                            let quantity = 0;
 
-                let chequePaymentVoucher = null;
-
-                // Loop to create each payment voucher and capture the cheque payment voucher
-                for (const voucher of paymentVouchers) {
-                    const createdVoucher = await paymentVoucherService.create(voucher);
-
-                    // Check if this is the cheque voucher
-                    if (voucher.paymentId === Cheque?.id) {
-                        chequePaymentVoucher = createdVoucher;
-                    }
-                }
-                // Now handle the cheque creation if applicable
-                if (data.payment.cheque > 0 && chequePaymentVoucher) {
-                    const cheque = await chequeService.create({
-                        chequeNumber: data.payment.chequenumber.toString(),
-                        chequeBankName: data.payment.chequeBankName,
-                        issueDate: data.date,
-                        releaseDate: data.payment.releaseDate,
-                        amount: data.payment.cheque,
-                        chequeBookId: data.payment?.chequeBookId,
-                        voucherId: newVoucher.id,
-                        paymentVoucherId: chequePaymentVoucher.id,
-                        creditDebit: data.payment.creditDebit,
-                        createdBy: userId
-                    });
-                    if (data.payment?.chequeBookId !== undefined) {
-                        await chequebookService.updatechequeRemaning(data.payment?.chequeBookId);
-                    }
-                }
-
-                if (data.voucherGroupname === "INVOICE" && data.paidValue > 0) {
-                    const invoiceDate = new Date(data.date);
-                    invoiceDate.setHours(0, 0, 0, 0);
-
-                    // Calculate the days difference (although in your current code, it's always zero)
-                    const invoicedays = 0; // Consider calculating the difference with a reference date if needed
-
-                    const rates = await commissionRateService.list();
-
-                    // Filter rates and find the appropriate rate based on invoicedays
-                    const rate = rates.find(rate => rate.days != null && invoicedays <= rate.days);
-
-                    const commissionRate = rate?.commissionRate || "0%";
-                    const commission = await commissionReportService.create({
-                        date: data.date,
-                        voucherId: newVoucher.id,
-                        comRate: commissionRate,
-                        amount: data.paidValue
-                    });
-                }
-
-            }
-
-            if (data.voucherGroupname !== "DIRECT PAYMENT") {
-                if (data.selectedVoucherIds && data.amount > 0) {
-                    let remainingAmount = data.amount; // Amount to be paid
-                    const selectedVouchers = await voucherService.findManyByIds(data.selectedVoucherIds.map((v: any) => v.voucherId));
-
-                    for (const voucher of selectedVouchers) {
-                        // Safely handle the voucher.amount and voucher.paidValue as Decimal or number
-                        const voucherAmount = voucher.amount instanceof Prisma.Decimal ? voucher.amount.toNumber() : (voucher.amount || 0);
-                        const paidValue = voucher.paidValue instanceof Prisma.Decimal ? voucher.paidValue.toNumber() : (voucher.paidValue || 0);
-
-                        const remainingVoucherAmount = voucherAmount - paidValue; // Remaining unpaid amount for this voucher
-
-                        if (remainingAmount <= 0) {
-                            break; // No remaining amount to distribute
-                        }
-
-                        // Calculate how much can be paid on this voucher
-                        const payableAmount = Math.min(remainingVoucherAmount, remainingAmount);
-
-                        if (payableAmount > 0) {
-                            // Update the paidValue of the voucher
-                            const updatedPaidValue = paidValue + payableAmount;
-
-                            await voucherService.updatepaidValue({
-                                id: voucher.id,
-                                paidValue: updatedPaidValue
-                            });
-                            var selectedVoucher = await voucherService.getbyid(voucher.id)
-                            await referVoucherService.create({
-                                refVoucherNumber: selectedVoucher?.voucherNumber,
-                                invoiceDate: selectedVoucher?.date,
-                                invoiceAmount: selectedVoucher?.amount,
-                                value: selectedVoucher?.value,
-                                settledAmount: updatedPaidValue,
-                                paidAmount: updatedPaidValue - paidValue,
-                                voucherId: newVoucher.id,
-                                createdBy: userId
-                            });
-                            if (selectedVoucher?.voucherNumber?.startsWith('INV')) {
-                                if (selectedVoucher.date) {
-                                    const invoiceDate = new Date(selectedVoucher.date);
-                                    const payDate = new Date(data.date);
-                                    invoiceDate.setHours(0, 0, 0, 0);
-                                    payDate.setHours(0, 0, 0, 0);
-
-                                    const timeDifference = payDate.getTime() - invoiceDate.getTime();
-                                    const dueDays = selectedVoucher.dueDays ?? 0;
-                                    const invoicedays = (timeDifference / (1000 * 60 * 60 * 24) - dueDays);
-
-                                    const rates = await commissionRateService.list();
-                                    const rate = rates.find(rate => rate.days != null && invoicedays <= rate.days);
-
-                                    console.log(dueDays, invoicedays, rate)
-
-                                    const commissionRate = rate?.commissionRate || "0%";
-                                    await commissionReportService.create({
-                                        date: data.date,
-                                        voucherId: selectedVoucher.id,
-                                        comRate: commissionRate,
-                                        amount: updatedPaidValue - paidValue
-                                    });
-                                }
+                            if (avastock > 0) {
+                                quantity = avastock + product.quantity;
+                            } else {
+                                const absStock = Math.abs(avastock);
+                                quantity = product.quantity > absStock ? product.quantity - absStock : 0;
                             }
 
-                            // Decrease the remaining amount by the amount just paid
-                            remainingAmount -= payableAmount;
-                        }
-                    }
-
-                    if (remainingAmount > 0) {
-                        // If there's still some remaining amount that couldn't be distributed
-                        return response.status(400).json({ message: "Payment exceeds total due for selected vouchers." });
-                    }
-                }
-            }
-
-            if (data.journalEntries && data.journalEntries.length > 0) {
-                const journalEntries = data.journalEntries;
-
-                // Loop through each journal entry and create corresponding journalLine
-                for (let entry of journalEntries) {
-                    var chartofAccId = entry.accountId
-                    if (entry.accountId === "CASH") {
-                        var cashchartofaccid = await chartofaccService.getbyname('CASH BOOK')
-                        chartofAccId = cashchartofaccid?.id
-                    }
-                    if (entry.accountId === "Check") {
-                        var pendingCheque = await chartofaccService.getbyname('PENDING CHEQUE')
-                        chartofAccId = pendingCheque?.id
-                    }
-                    if (entry.accountId === "Expencess") {
-                        var expencessacc = await chartofaccService.getbyname('EXPENCESS ACCOUNT')
-                        chartofAccId = expencessacc?.id
-                    }
-                    if (entry.accountId === "PettyCash") {
-                        var expencessacc = await chartofaccService.getbyname('PETTY CASH')
-                        chartofAccId = expencessacc?.id
-                    }
-                    if (entry.accountId === "UserExp") {
-                        var expencessacc = await chartofaccService.getbyname('USER EXPENCESS ACCOUNT')
-                        chartofAccId = expencessacc?.id
-                    }
-                    if (entry.accountId === "Sales") {
-                        var expencessacc = await chartofaccService.getbyname('SALES ACCOUNT')
-                        chartofAccId = expencessacc?.id
-                    }
-                    if (entry.accountId === "INVENTORY") {
-                        var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
-                        chartofAccId = inventoryAcc?.id
-                    }
-                    if (entry.accountId === "IMPORT") {
-                        var inventoryAcc = await chartofaccService.getbyname('IMPORT CONTROL ACCOUNT')
-                        chartofAccId = inventoryAcc?.id
-                    }
-                    if (entry.accountId === "COST") {
-                        var inventoryAcc = await chartofaccService.getbyname('COST OF SALES')
-                        chartofAccId = inventoryAcc?.id
-                    }
-                    const journalLineData = {
-                        voucherId: newVoucher.id, // Link to the created voucher
-                        date: newVoucher.date, // Date of the voucher
-                        chartofAccountId: chartofAccId, // Account ID from the journal entry
-                        debitAmount: entry.debit || 0, // Debit amount if present
-                        creditAmount: entry.credit || 0, // Credit amount if present
-                        ref: entry.ref, // Reference number from the voucher
-                        createdBy: userId, // Assuming `req.user.id` contains the user ID
-                    };
-
-                    await journalLineService.create(journalLineData);
-                }
-            }
-
-            if (data.iou && data.iou.length > 0) {
-                const iou = data.iou;
-                for (let entry of iou) {
-                    const ioudata = {
-                        voucherId: newVoucher.id,
-                        userid: entry.userid,
-                        amount: entry.amount,
-                        createdBy: userId,
-                    }
-                    await pettyCashIOUService.create(ioudata);
-                }
-            }
-
-            if (data.productList) {
-                const centerPromises = data.productList?.map(async (product: any) => {
-                    const voucherProduct = await productVoucherService.create({
-                        cost: product.cost,
-                        quantity: product.quantity,
-                        remainingQty: product.quantity,
-                        discount: product.discount,
-                        stockStatus: data?.stockStatus,
-                        MRP: product.MRP,
-                        minPrice: product.minPrice,
-                        sellingPrice: product.sellingPrice,
-                        amount: product.amount,
-                        voucherId: newVoucher.id,
-                        productId: product.productId,
-                        centerId: data.centerId,
-                        expDate:product.expiryDate,
-                        closingExpDate:product.costingExpiryDate,
-                        batchNo:product.batchNo
-                    });
-                });
-                try {
-                    await Promise.all(centerPromises);
-                } catch (error: any) {
-                    return response.status(500).json({ message: error.message });
-                }
-            }
-
-            if (voucherGrpdetails?.inventoryMode === "PLUS") {
-                const newVoucherCenter = await voucherCenter.create({
-                    centerId: data.centerId,
-                    voucherId: newVoucher.id,
-                    centerStatus: "IN"
-                })
-                if (!newVoucherCenter) {
-                    throw new Error("Failed to update Voucher Center to list association");
-                }
-                if (voucherGrpdetails?.isAccount === true) {
-                    const inventoryPromise = data.productList.map(async (product: any) => {
-                        if (data.voucherGroupname === 'GRN') {
                             const inventory = await inventoryService.upsert({
                                 productId: product.productId,
                                 centerId: data.centerId,
-                                quantity: product.quantity,
+                                quantity: avastock,
                                 cost: product.cost,
                                 minPrice: product.minPrice,
                                 MRP: product.MRP,
                                 sellingPrice: product.sellingPrice,
-                                batchNo:product.batchNo,
-                                expDate:product.expiryDate,
-                                closingExpDate:product.costingExpiryDate,
                             });
                             if (!inventory) {
                                 throw new Error("Failed to update product to list association");
                             }
-                        } else {
-                            if (data.stockStatus === true) {
-                                const inventory = await inventoryService.upsert({
-                                    productId: product.productId,
-                                    centerId: data.centerId,
-                                    quantity: product.quantity,
-                                    batchNo:product.batchNo,
-                                    expDate:product.expiryDate,
-                                    closingExpDate:product.costingExpiryDate,
-                                });
-                                if (!inventory) {
-                                    throw new Error("Failed to update product to list association");
-                                }
+                        }
+
+                    } else {
+                        if (data.stockStatus === true) {
+
+                            const inventory = await inventoryService.upsert({
+                                productId: product.productId,
+                                centerId: data.centerId,
+                                quantity: product.quantity
+                            });
+                            if (!inventory) {
+                                throw new Error("Failed to update product to list association");
                             }
+
+
                         }
-
-                    });
-
-                    try {
-                        await Promise.all(inventoryPromise);
-                    } catch (error: any) {
-                        return response.status(500).json({ message: error.message });
                     }
-                }
-            }
 
-            if (voucherGrpdetails?.inventoryMode === "MINUS") {
-                const newVoucherCenter = await voucherCenter.create({
-                    centerId: data.centerId,
-                    voucherId: newVoucher.id,
-                    centerStatus: "OUT"
-                })
-                if (!newVoucherCenter) {
-                    throw new Error("Failed to update Voucher Center to list association");
-                }
-
-                if (data.stockStatus === true) {
-                    const inventoryPromise = data.productList.map(async (product: any) => {
-                        const inventory = await inventoryService.upsert({
-                            productId: product.productId,
-                            centerId: data.centerId,
-                            quantity: -(product.quantity),
-                            batchNo:product.batchNo,
-                            expDate:product.expiryDate,
-                            closingExpDate:product.costingExpiryDate,
-                        });
-                        if (!inventory) {
-                            throw new Error("Failed to update product to list association");
-                        }
-                    });
-                    try {
-                        await Promise.all(inventoryPromise);
-                    } catch (error: any) {
-                        return response.status(500).json({ message: error.message });
-                    }
-                }
-            }
-
-            if (data.bankRecJournal && data.bankRecJournal.length > 0) {
-                const journalPromise = data.bankRecJournal?.map(async (record: any) => {
-                    const bankRecJournal = await bankRecJournalService.create({
-                        date: record.date,
-                        voucherId: newVoucher.id,
-                        chartofAccountId: record.chartofAccountId,
-                        debitAmount: record.debitAmount,
-                        creditAmount: record.creditAmount,
-                        ref: record.ref,
-                        isStatus: record.isStatus,
-                        createdBy: userId
-                    });
-                    const updateJournalLine = await journalLineService.updateStatus({ isStatus: record.isStatus }, record.id);
                 });
+
                 try {
-                    await Promise.all(journalPromise);
+                    await Promise.all(inventoryPromise);
                 } catch (error: any) {
                     return response.status(500).json({ message: error.message });
                 }
@@ -1204,7 +738,501 @@ voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: 
         console.error("Error creating voucher:", error);  // Add more detailed logging
         return response.status(500).json({ message: error.message });
     }
-})
+}),
+
+    voucherRouter.post("/", authenticate, async (request: ExpressRequest, response: Response) => {
+        var data: any = request.body;
+        try {
+
+            if (!request.user) {
+                return response.status(401).json({ message: "User not authorized" });
+            }
+
+            const userId = request.user.id;
+            const voucherGrpdetails = await voucherGrpService.getbyname(data.voucherGroupname)
+            const newVoucherNumber = await voucherService.generateVoucherNumber(voucherGrpdetails?.id)
+
+            var totalCost = 0;
+            var partyAcc: any;
+
+            if (data?.partyId) {
+                partyAcc = await partyService.get(data?.partyId)
+            }
+            if (data.productList) {
+                totalCost = data.productList?.reduce((total: number, product: any) => {
+                    return total + (product.cost * product.quantity);
+                }, 0);
+            }
+            console.log(data)
+            const newVoucher = await voucherService.create({
+                ...data,
+                authUser: data.authUser ? data.authUser : userId,
+                voucherNumber: newVoucherNumber,
+                voucherGroupId: voucherGrpdetails?.id,
+                createdBy: userId
+            })
+
+
+            if (data.refVoucherNumber) {
+                await voucherService.updateVoucherNumber({ refVoucherNumber: data.refVoucherNumber, returnValue: data?.returnValue, isRef: true, voucherId: newVoucher.voucherNumber, status: data?.status })
+            }
+
+            if (voucherGrpdetails?.inventoryMode === "DOUBLE") {
+                const centerPromises = data.productList.map(async (product: any) => {
+                    const voucherProduct = await productVoucherService.create({
+                        cost: product.cost,
+                        quantity: product.quantity,
+                        discount: product.discount,
+                        MRP: product.MRP,
+                        minPrice: product.minPrice,
+                        sellingPrice: product.sellingPrice,
+                        amount: product.amount,
+                        voucherId: newVoucher.id,
+                        productId: product.productId,
+                        centerId: data.fromCenterId,
+                        toCenterId: data.toCenterId,
+                        expDate: product.expiryDate,
+                        batchNo: product.batchNo,
+                        Packsize: data.Packsize,
+                        Manufacture: data.Manufacture,
+                        country: data.country,
+                        usdRate:product.usdRate,
+                        mfdate:product.mfdate,
+                        
+                    });
+                    if (!voucherProduct) {
+                        throw new Error("Failed to update product to list association");
+                    }
+                    try {
+                        await Promise.all(centerPromises);
+                    } catch (error: any) {
+                        return response.status(500).json({ message: error.message });
+                    }
+                });
+                if (data.fromCenterId) {
+                    const newVoucherCenter = await voucherCenter.create({
+                        centerId: data.fromCenterId,
+                        voucherId: newVoucher.id,
+                        centerStatus: "OUT"
+                    })
+                    if (!newVoucherCenter) {
+                        throw new Error("Failed to update Voucher Center to list association");
+                    }
+                    const inventoryPromise = data.productList.map(async (product: any) => {
+                        const inventory = await inventoryService.upsert({
+                            productId: product.productId,
+                            centerId: data.fromCenterId,
+                            quantity: -(product.quantity),
+                            batchNo: product.batchNo,
+                            expDate: product.expiryDate,
+                            mfdate:product.mfdate,
+                        });
+                        if (!inventory) {
+                            throw new Error("Failed to update product to list association");
+                        }
+                    });
+                    try {
+                        await Promise.all(inventoryPromise);
+                    } catch (error: any) {
+                        return response.status(500).json({ message: error.message });
+                    }
+                }
+                if (data.toCenterId) {
+                    const newVoucherCenter = await voucherCenter.create({
+                        centerId: data.toCenterId,
+                        voucherId: newVoucher.id,
+                        centerStatus: "IN"
+                    })
+                    if (!newVoucherCenter) {
+                        throw new Error("Failed to update Voucher Center to list association");
+                    }
+                    const inventoryPromise = data.productList.map(async (product: any) => {
+                        const inventory = await inventoryService.upsert({
+                            productId: product.productId,
+                            centerId: data.toCenterId,
+                            quantity: product.quantity,
+                            batchNo: product.batchNo,
+                            expDate: product.expiryDate,
+                            mfdate:product.mfdate,
+                        });
+                        if (!inventory) {
+                            throw new Error("Failed to update product to list association");
+                        }
+                    });
+                    try {
+                        await Promise.all(inventoryPromise);
+                    } catch (error: any) {
+                        return response.status(500).json({ message: error.message });
+                    }
+                }
+            }
+            else {
+                if (data.payment) {
+                    const onlineTransfer = await paymentService.getbyname('Online Transfer');
+                    const cash = await paymentService.getbyname('Cash');
+                    const Cheque = await paymentService.getbyname('Cheque');
+                    const Credit = await paymentService.getbyname('Credit');
+                    const Advance = await paymentService.getbyname('Advance');
+
+                    // Prepare payment vouchers
+                    const paymentVouchers = [
+                        { voucherId: newVoucher.id, paymentId: onlineTransfer?.id, paymentType: onlineTransfer?.type, amount: data.payment.onlineTransfer, refNumber: data.payment.refNumber },
+                        { voucherId: newVoucher.id, paymentId: cash?.id, paymentType: cash?.type, amount: data.payment.cash },
+                        { voucherId: newVoucher.id, paymentId: Cheque?.id, paymentType: Cheque?.type, amount: data.payment.cheque },
+                        { voucherId: newVoucher.id, paymentId: Credit?.id, paymentType: Credit?.type, amount: data.payment.credit },
+                        { voucherId: newVoucher.id, paymentId: Advance?.id, paymentType: Advance?.type, amount: data.payment.advance },
+                    ].filter(record => record.paymentId && record.amount > 0);
+
+                    let chequePaymentVoucher = null;
+
+                    // Loop to create each payment voucher and capture the cheque payment voucher
+                    for (const voucher of paymentVouchers) {
+                        const createdVoucher = await paymentVoucherService.create(voucher);
+
+                        // Check if this is the cheque voucher
+                        if (voucher.paymentId === Cheque?.id) {
+                            chequePaymentVoucher = createdVoucher;
+                        }
+                    }
+                    // Now handle the cheque creation if applicable
+                    if (data.payment.cheque > 0 && chequePaymentVoucher) {
+                        const cheque = await chequeService.create({
+                            chequeNumber: data.payment.chequenumber.toString(),
+                            chequeBankName: data.payment.chequeBankName,
+                            issueDate: data.date,
+                            releaseDate: data.payment.releaseDate,
+                            amount: data.payment.cheque,
+                            chequeBookId: data.payment?.chequeBookId,
+                            voucherId: newVoucher.id,
+                            paymentVoucherId: chequePaymentVoucher.id,
+                            creditDebit: data.payment.creditDebit,
+                            createdBy: userId
+                        });
+                        if (data.payment?.chequeBookId !== undefined) {
+                            await chequebookService.updatechequeRemaning(data.payment?.chequeBookId);
+                        }
+                    }
+
+                    if (data.voucherGroupname === "INVOICE" && data.paidValue > 0) {
+                        const invoiceDate = new Date(data.date);
+                        invoiceDate.setHours(0, 0, 0, 0);
+
+                        // Calculate the days difference (although in your current code, it's always zero)
+                        const invoicedays = 0; // Consider calculating the difference with a reference date if needed
+
+                        const rates = await commissionRateService.list();
+
+                        // Filter rates and find the appropriate rate based on invoicedays
+                        const rate = rates.find(rate => rate.days != null && invoicedays <= rate.days);
+
+                        const commissionRate = rate?.commissionRate || "0%";
+                        const commission = await commissionReportService.create({
+                            date: data.date,
+                            voucherId: newVoucher.id,
+                            comRate: commissionRate,
+                            amount: data.paidValue
+                        });
+                    }
+
+                }
+
+                if (data.voucherGroupname !== "DIRECT PAYMENT") {
+                    if (data.selectedVoucherIds && data.amount > 0) {
+                        let remainingAmount = data.amount; // Amount to be paid
+                        const selectedVouchers = await voucherService.findManyByIds(data.selectedVoucherIds.map((v: any) => v.voucherId));
+
+                        for (const voucher of selectedVouchers) {
+                            // Safely handle the voucher.amount and voucher.paidValue as Decimal or number
+                            const voucherAmount = voucher.amount instanceof Prisma.Decimal ? voucher.amount.toNumber() : (voucher.amount || 0);
+                            const paidValue = voucher.paidValue instanceof Prisma.Decimal ? voucher.paidValue.toNumber() : (voucher.paidValue || 0);
+
+                            const remainingVoucherAmount = voucherAmount - paidValue; // Remaining unpaid amount for this voucher
+
+                            if (remainingAmount <= 0) {
+                                break; // No remaining amount to distribute
+                            }
+
+                            // Calculate how much can be paid on this voucher
+                            const payableAmount = Math.min(remainingVoucherAmount, remainingAmount);
+
+                            if (payableAmount > 0) {
+                                // Update the paidValue of the voucher
+                                const updatedPaidValue = paidValue + payableAmount;
+
+                                await voucherService.updatepaidValue({
+                                    id: voucher.id,
+                                    paidValue: updatedPaidValue
+                                });
+                                var selectedVoucher = await voucherService.getbyid(voucher.id)
+                                await referVoucherService.create({
+                                    refVoucherNumber: selectedVoucher?.voucherNumber,
+                                    invoiceDate: selectedVoucher?.date,
+                                    invoiceAmount: selectedVoucher?.amount,
+                                    value: selectedVoucher?.value,
+                                    settledAmount: updatedPaidValue,
+                                    paidAmount: updatedPaidValue - paidValue,
+                                    voucherId: newVoucher.id,
+                                    createdBy: userId
+                                });
+                                if (selectedVoucher?.voucherNumber?.startsWith('INV')) {
+                                    if (selectedVoucher.date) {
+                                        const invoiceDate = new Date(selectedVoucher.date);
+                                        const payDate = new Date(data.date);
+                                        invoiceDate.setHours(0, 0, 0, 0);
+                                        payDate.setHours(0, 0, 0, 0);
+
+                                        const timeDifference = payDate.getTime() - invoiceDate.getTime();
+                                        const dueDays = selectedVoucher.dueDays ?? 0;
+                                        const invoicedays = (timeDifference / (1000 * 60 * 60 * 24) - dueDays);
+
+                                        const rates = await commissionRateService.list();
+                                        const rate = rates.find(rate => rate.days != null && invoicedays <= rate.days);
+
+                                        console.log(dueDays, invoicedays, rate)
+
+                                        const commissionRate = rate?.commissionRate || "0%";
+                                        await commissionReportService.create({
+                                            date: data.date,
+                                            voucherId: selectedVoucher.id,
+                                            comRate: commissionRate,
+                                            amount: updatedPaidValue - paidValue
+                                        });
+                                    }
+                                }
+
+                                // Decrease the remaining amount by the amount just paid
+                                remainingAmount -= payableAmount;
+                            }
+                        }
+
+                        if (remainingAmount > 0) {
+                            // If there's still some remaining amount that couldn't be distributed
+                            return response.status(400).json({ message: "Payment exceeds total due for selected vouchers." });
+                        }
+                    }
+                }
+
+                if (data.journalEntries && data.journalEntries.length > 0) {
+                    const journalEntries = data.journalEntries;
+
+                    // Loop through each journal entry and create corresponding journalLine
+                    for (let entry of journalEntries) {
+                        var chartofAccId = entry.accountId
+                        if (entry.accountId === "CASH") {
+                            var cashchartofaccid = await chartofaccService.getbyname('CASH BOOK')
+                            chartofAccId = cashchartofaccid?.id
+                        }
+                        if (entry.accountId === "Check") {
+                            var pendingCheque = await chartofaccService.getbyname('PENDING CHEQUE')
+                            chartofAccId = pendingCheque?.id
+                        }
+                        if (entry.accountId === "Expencess") {
+                            var expencessacc = await chartofaccService.getbyname('EXPENCESS ACCOUNT')
+                            chartofAccId = expencessacc?.id
+                        }
+                        if (entry.accountId === "PettyCash") {
+                            var expencessacc = await chartofaccService.getbyname('PETTY CASH')
+                            chartofAccId = expencessacc?.id
+                        }
+                        if (entry.accountId === "UserExp") {
+                            var expencessacc = await chartofaccService.getbyname('USER EXPENCESS ACCOUNT')
+                            chartofAccId = expencessacc?.id
+                        }
+                        if (entry.accountId === "Sales") {
+                            var expencessacc = await chartofaccService.getbyname('SALES ACCOUNT')
+                            chartofAccId = expencessacc?.id
+                        }
+                        if (entry.accountId === "INVENTORY") {
+                            var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
+                            chartofAccId = inventoryAcc?.id
+                        }
+                        if (entry.accountId === "IMPORT") {
+                            var inventoryAcc = await chartofaccService.getbyname('IMPORT CONTROL ACCOUNT')
+                            chartofAccId = inventoryAcc?.id
+                        }
+                        if (entry.accountId === "COST") {
+                            var inventoryAcc = await chartofaccService.getbyname('COST OF SALES')
+                            chartofAccId = inventoryAcc?.id
+                        }
+                        const journalLineData = {
+                            voucherId: newVoucher.id, // Link to the created voucher
+                            date: newVoucher.date, // Date of the voucher
+                            chartofAccountId: chartofAccId, // Account ID from the journal entry
+                            debitAmount: entry.debit || 0, // Debit amount if present
+                            creditAmount: entry.credit || 0, // Credit amount if present
+                            ref: entry.ref, // Reference number from the voucher
+                            createdBy: userId, // Assuming `req.user.id` contains the user ID
+                        };
+
+                        await journalLineService.create(journalLineData);
+                    }
+                }
+
+                if (data.iou && data.iou.length > 0) {
+                    const iou = data.iou;
+                    for (let entry of iou) {
+                        const ioudata = {
+                            voucherId: newVoucher.id,
+                            userid: entry.userid,
+                            amount: entry.amount,
+                            createdBy: userId,
+                        }
+                        await pettyCashIOUService.create(ioudata);
+                    }
+                }
+
+                if (data.productList) {
+                    const centerPromises = data.productList?.map(async (product: any) => {
+                        const voucherProduct = await productVoucherService.create({
+                            cost: product.cost,
+                            quantity: product.quantity,
+                            remainingQty: product.quantity,
+                            discount: product.discount,
+                            stockStatus: data?.stockStatus,
+                            MRP: product.MRP,
+                            minPrice: product.minPrice,
+                            sellingPrice: product.sellingPrice,
+                            amount: product.amount,
+                            voucherId: newVoucher.id,
+                            productId: product.productId,
+                            centerId: data.centerId,
+                            expDate: product.expiryDate,
+                            closingExpDate: product.costingExpiryDate,
+                            batchNo: product.batchNo,
+                            Packsize: product.Packsize,
+                            Manufacture: product.Manufacture,
+                            country: product.country,
+                            usdRate:product.usdRate,
+                            mfdate:product.mfdate,
+                        });
+                    });
+                    try {
+                        await Promise.all(centerPromises);
+                    } catch (error: any) {
+                        return response.status(500).json({ message: error.message });
+                    }
+                }
+
+                if (voucherGrpdetails?.inventoryMode === "PLUS") {
+                    const newVoucherCenter = await voucherCenter.create({
+                        centerId: data.centerId,
+                        voucherId: newVoucher.id,
+                        centerStatus: "IN"
+                    })
+                    if (!newVoucherCenter) {
+                        throw new Error("Failed to update Voucher Center to list association");
+                    }
+                    if (voucherGrpdetails?.isAccount === true) {
+                        const inventoryPromise = data.productList.map(async (product: any) => {
+                            if (data.stockStatus === true) {
+                                if (data.voucherGroupname === 'GRN') {
+                                    const inventory = await inventoryService.upsert({
+                                        productId: product.productId,
+                                        centerId: data.centerId,
+                                        quantity: product.quantity,
+                                        cost: product.cost,
+                                        minPrice: product.minPrice,
+                                        MRP: product.MRP,
+                                        sellingPrice: product.sellingPrice,
+                                        batchNo: product.batchNo,
+                                        expDate: product.expiryDate,
+                                        closingExpDate: product.costingExpiryDate,
+                                        mfdate:product.mfdate,
+                                    });
+                                    if (!inventory) {
+                                        throw new Error("Failed to update product to list association");
+                                    }
+                                } else {
+                                    if (data.stockStatus === true) {
+                                        const inventory = await inventoryService.upsert({
+                                            productId: product.productId,
+                                            centerId: data.centerId,
+                                            quantity: product.quantity,
+                                            batchNo: product.batchNo,
+                                            expDate: product.expiryDate,
+                                            closingExpDate: product.costingExpiryDate,
+                                            mfdate:product.mfdate,
+                                        });
+                                        if (!inventory) {
+                                            throw new Error("Failed to update product to list association");
+                                        }
+                                    }
+                                }
+                            }
+
+
+                        });
+
+                        try {
+                            await Promise.all(inventoryPromise);
+                        } catch (error: any) {
+                            return response.status(500).json({ message: error.message });
+                        }
+                    }
+                }
+
+                if (voucherGrpdetails?.inventoryMode === "MINUS") {
+                    const newVoucherCenter = await voucherCenter.create({
+                        centerId: data.centerId,
+                        voucherId: newVoucher.id,
+                        centerStatus: "OUT"
+                    })
+                    if (!newVoucherCenter) {
+                        throw new Error("Failed to update Voucher Center to list association");
+                    }
+
+                    if (data.stockStatus === true) {
+                        const inventoryPromise = data.productList.map(async (product: any) => {
+                            const inventory = await inventoryService.upsert({
+                                productId: product.productId,
+                                centerId: data.centerId,
+                                quantity: -(product.quantity),
+                                batchNo: product.batchNo,
+                                expDate: product.expiryDate,
+                                closingExpDate: product.costingExpiryDate,
+                                mfdate:product.mfdate,
+                            });
+                            if (!inventory) {
+                                throw new Error("Failed to update product to list association");
+                            }
+                        });
+                        try {
+                            await Promise.all(inventoryPromise);
+                        } catch (error: any) {
+                            return response.status(500).json({ message: error.message });
+                        }
+                    }
+                }
+
+                if (data.bankRecJournal && data.bankRecJournal.length > 0) {
+                    const journalPromise = data.bankRecJournal?.map(async (record: any) => {
+                        const bankRecJournal = await bankRecJournalService.create({
+                            date: record.date,
+                            voucherId: newVoucher.id,
+                            chartofAccountId: record.chartofAccountId,
+                            debitAmount: record.debitAmount,
+                            creditAmount: record.creditAmount,
+                            ref: record.ref,
+                            isStatus: record.isStatus,
+                            createdBy: userId
+                        });
+                        const updateJournalLine = await journalLineService.updateStatus({ isStatus: record.isStatus }, record.id);
+                    });
+                    try {
+                        await Promise.all(journalPromise);
+                    } catch (error: any) {
+                        return response.status(500).json({ message: error.message });
+                    }
+                }
+            }
+            if (newVoucher) {
+                return response.status(201).json({ message: "Transaction Saved Successfully", data: newVoucher });
+            }
+        } catch (error: any) {
+            console.error("Error creating voucher:", error);  // Add more detailed logging
+            return response.status(500).json({ message: error.message });
+        }
+    })
 
 voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: ExpressRequest, response: Response) => {
     const id: any = request.params;
@@ -1224,7 +1252,10 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                     const inventory = await inventoryService.upsert({
                         productId: product.productId,
                         centerId: product.centerId,
-                        quantity: product.quantity
+                        quantity: product.quantity,
+                        batchNo: product.batchNo,
+                        expDate: product.expDate,
+                        mfdate:product.mfdate,
                     });
                     if (!inventory) {
                         throw new Error("Failed to update product to list association");
@@ -1239,7 +1270,7 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
 
             if (voucherGroup?.inventoryMode === "MINUS") {
                 const inventoryCheckPromises = data.voucherProduct.map(async (product: any) => {
-                    const inventoryStock = await inventoryService.getbycenterIdProductId(product.productId, product.centerId,product.batchNo);
+                    const inventoryStock = await inventoryService.getbycenterIdProductId(product.productId, product.centerId, product.batchNo);
 
                     if (Number(inventoryStock?.quantity ?? 0) < Number(product.quantity)) {
                         throw new Error(`Insufficient stock for product ${product.product.printName} Available Quantity is ${inventoryStock?.quantity ?? 0} `);
@@ -1257,7 +1288,9 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                         productId: product.productId,
                         centerId: product.centerId,
                         quantity: -(product.quantity),
-                        batchNo:product.batchNo,
+                        batchNo: product.batchNo,
+                        expDate: product.expDate,
+                        mfdate:product.mfdate,
                     });
                     if (!inventory) {
                         throw new Error("Failed to update product to list association");

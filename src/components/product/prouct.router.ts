@@ -99,12 +99,15 @@ productRouter.post("/", authenticate, async (request: ExpressRequest, response: 
             printName: data.printName,
             productName: data.productName,
             typeId: data.typeId,
-            ExpnotifDays:data.ExpnotifDays,
+            ExpnotifDays: data.ExpnotifDays,
             cost: 0,
             minPrice: 0,
             MRP: 0,
             sellingPrice: 0,
-            createdBy: userId
+            createdBy: userId,
+            Packsize: data.Packsize,
+            Manufacture: data.Manufacture,
+            country: data.country
         }
         const newProduct = await productService.create(productData)
 
@@ -207,6 +210,10 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
             printName: data.printName,
             productName: data.productName,
             typeId: data.typeId,
+            Packsize: data.Packsize,
+            Manufacture: data.Manufacture,
+            country: data.country,
+            ExpnotifDays: data.ExpnotifDays,
         };
 
         // Delete existing OEM numbers
@@ -216,28 +223,28 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
         const updateProduct = await productService.update(productData, id);
 
         // Handle new OEM numbers
-        const OEMnumberPromises = data.OEMnumberList.map(async (oem: any) => {
-            const oenum = await OENumberService.create({
-                productId: id,
-                OEMnumber: oem.OEMnumber
-            });
-            if (!oenum) {
-                throw new Error("Failed to update OEM Numbers");
-            }
-            return oenum;
-        });
+        // const OEMnumberPromises = data.OEMnumberList.map(async (oem: any) => {
+        //     const oenum = await OENumberService.create({
+        //         productId: id,
+        //         OEMnumber: oem.OEMnumber
+        //     });
+        //     if (!oenum) {
+        //         throw new Error("Failed to update OEM Numbers");
+        //     }
+        //     return oenum;
+        // });
 
-        const discountLevelsPromises = data.discountLevels.map(async (discount: any) => {
-            const dis = await productdiscountlevelService.upserts({
-                discountLevelId: discount.discountLevelId,
-                discountRate: discount.discountRate,
-                createdBy: userId
-            }, id);
-            if (!dis) {
-                throw new Error("Failed to update Discount Rates");
-            }
-            return dis; // Return the created OEM number
-        });
+        // const discountLevelsPromises = data.discountLevels.map(async (discount: any) => {
+        //     const dis = await productdiscountlevelService.upserts({
+        //         discountLevelId: discount.discountLevelId,
+        //         discountRate: discount.discountRate,
+        //         createdBy: userId
+        //     }, id);
+        //     if (!dis) {
+        //         throw new Error("Failed to update Discount Rates");
+        //     }
+        //     return dis; // Return the created OEM number
+        // });
 
         // const commissionLevelsPromises = data.commissionLevels.map(async (com: any) => {
         //     const comm = await productcommissionRateService.upserts({
@@ -253,17 +260,17 @@ productRouter.put("/:id", authenticate, async (request: ExpressRequest, response
 
         try {
             // Wait for all promises
-            const [oemNumbers, discountList] = await Promise.all([
-                Promise.all(OEMnumberPromises),
-                Promise.all(discountLevelsPromises),
-                // Promise.all(commissionLevelsPromises),
-            ]);
+            // const [oemNumbers, discountList] = await Promise.all([
+            //     Promise.all(OEMnumberPromises),
+            //     Promise.all(discountLevelsPromises),
+            //     // Promise.all(commissionLevelsPromises),
+            // ]);
 
             // Combine product and OEM numbers into a single data object
             const combinedData = {
                 ...updateProduct,
-                OEMNumber: oemNumbers,
-                productDiscountLevel: discountList,
+                // OEMNumber: oemNumbers,
+                // productDiscountLevel: discountList,
                 // productcommissionRate: commissionLevel
             };
 

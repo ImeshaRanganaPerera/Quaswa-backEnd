@@ -115,6 +115,7 @@ chartofAccRouter.post("/", authenticate, async (request: ExpressRequest, respons
         const newChartOfAcc = await chartofaccService.create(data)
 
         if (newChartOfAcc) {
+            
             return response.status(201).json({ message: "Chart of Account Created Successfully", data: newChartOfAcc });
         }
     } catch (error: any) {

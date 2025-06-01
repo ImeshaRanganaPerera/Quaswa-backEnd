@@ -273,7 +273,13 @@ model voucherProduct {
   updatedAt    DateTime @updatedAt
   expDate          DateTime?
   closingExpDate   DateTime?
+  mfdate          DateTime?
   batchNo          String?
+  Packsize         String?
+  Manufacture      String?
+  country          String?
+  usdRate          Decimal?
+  lkrAmount        Decimal?
 }
 
 model pettycashIOU {
@@ -424,6 +430,9 @@ model product {
   createdBy            String
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
+  Packsize             String?
+  Manufacture          String?
+  country              String?
   inventory            inventory[]
   voucherProduct       voucherProduct[]
   oemnumber            oemnumber[]
@@ -467,6 +476,7 @@ model inventory {
   quantity  Decimal?
   expDate          DateTime?
   closingExpDate   DateTime?
+  mfdate          DateTime?
   status    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

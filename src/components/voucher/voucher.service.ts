@@ -1103,6 +1103,7 @@ export const getRefVoucherbyVoucherGrpid = async (data: any, userId?: any) => {
                     Packsize:true,
                     Manufacture:true,
                     country:true,
+                    mfdate:true,
 
                     product: {
                         select: {

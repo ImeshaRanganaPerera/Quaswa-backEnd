@@ -80,6 +80,7 @@ export const costofsales = async (startDate: any, endDate: any) => {
                     MRP: true,
                     discount: true,
                     quantity: true,
+                    usdRate:true
                 },
             },
         },
@@ -110,7 +111,7 @@ export const costofsales = async (startDate: any, endDate: any) => {
 
             // Calculate the cost and MRP per quantity
             const cost = (Number(vp.cost) || 0) * (Number(vp.quantity) || 0);
-            const mrp = (Number(vp.MRP) || 0) * (Number(vp.quantity) || 0);
+            const mrp = ((Number(vp.MRP) || 0) * (Number(vp.quantity) || 0)) * (Number(vp.usdRate) || 0);
             const discountprice = vp.discount.includes('%') ? (Number(vp.MRP) - (Number(vp.MRP) * (parseFloat(vp.discount.replace('%', '')) / 100))) * Number(vp.quantity) : (Number(vp.MRP) - Number(vp.discount)) * Number(vp.quantity);
             console.log(vp.voucherNumber, printName, discountprice)
 

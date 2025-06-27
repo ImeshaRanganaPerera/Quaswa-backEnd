@@ -510,6 +510,23 @@ voucherRouter.post("/party/condition/:partyId", authenticate, async (request: Ex
         return response.status(500).json(error.message);
     }
 })
+voucherRouter.post("/party/conditionSupplierEnterbill/:partyId", authenticate, async (request: ExpressRequest, response: Response) => {
+    const partyId: any = request.params.partyId;
+    const data: any = request.body;
+    try {
+        if (!request.user) {
+            return response.status(401).json({ message: "User not authorized" });
+        }
+
+        const voucherbyParty = await voucherService.getVouchersupplierenterbill(partyId, data.condition)
+        if (voucherbyParty) {
+            return response.status(200).json({ data: voucherbyParty });
+        }
+        return response.status(404).json({ message: "Voucher Group could not be found" });
+    } catch (error: any) {
+        return response.status(500).json(error.message);
+    }
+})
 
 voucherRouter.get("/party/false/:partyId", async (request: Request, response: Response) => {
     const partyId: any = request.params.partyId;
@@ -665,7 +682,7 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
                             centerId: data.centerId,
                             expDate: product.expiryDate,
                             batchNo: product.batchNo,
-                            mfdate:product.mfdate,
+                            mfdate: product.mfdate,
                         });
                     }
                 });
@@ -796,9 +813,9 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
                         Packsize: data.Packsize,
                         Manufacture: data.Manufacture,
                         country: data.country,
-                        usdRate:product.usdRate,
-                        mfdate:product.mfdate,
-                        
+                        usdRate: product.usdRate,
+                        mfdate: product.mfdate,
+
                     });
                     if (!voucherProduct) {
                         throw new Error("Failed to update product to list association");
@@ -825,7 +842,7 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
                             quantity: -(product.quantity),
                             batchNo: product.batchNo,
                             expDate: product.expiryDate,
-                            mfdate:product.mfdate,
+                            mfdate: product.mfdate,
                         });
                         if (!inventory) {
                             throw new Error("Failed to update product to list association");
@@ -853,7 +870,7 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
                             quantity: product.quantity,
                             batchNo: product.batchNo,
                             expDate: product.expiryDate,
-                            mfdate:product.mfdate,
+                            mfdate: product.mfdate,
                         });
                         if (!inventory) {
                             throw new Error("Failed to update product to list association");
@@ -1019,39 +1036,39 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
                     for (let entry of journalEntries) {
                         var chartofAccId = entry.accountId
                         if (entry.accountId === "CASH") {
-                            var cashchartofaccid = await chartofaccService.getbyname('CASH BOOK')
+                            var cashchartofaccid = await chartofaccService.getbyname('MAIN CASH BOOK')
                             chartofAccId = cashchartofaccid?.id
                         }
                         if (entry.accountId === "Check") {
-                            var pendingCheque = await chartofaccService.getbyname('PENDING CHEQUE')
+                            var pendingCheque = await chartofaccService.getbyname('CHEQUES RECEIVED - PENDING CLEARANCE')
                             chartofAccId = pendingCheque?.id
                         }
                         if (entry.accountId === "Expencess") {
-                            var expencessacc = await chartofaccService.getbyname('EXPENCESS ACCOUNT')
+                            var expencessacc = await chartofaccService.getbyname('EXPENSES ACCOUNT')
                             chartofAccId = expencessacc?.id
                         }
                         if (entry.accountId === "PettyCash") {
-                            var expencessacc = await chartofaccService.getbyname('PETTY CASH')
+                            var expencessacc = await chartofaccService.getbyname('PETTY CASH BOOK')
                             chartofAccId = expencessacc?.id
                         }
                         if (entry.accountId === "UserExp") {
-                            var expencessacc = await chartofaccService.getbyname('USER EXPENCESS ACCOUNT')
+                            var expencessacc = await chartofaccService.getbyname('OPERATIONAL EXPENSES ACCOUNT')
                             chartofAccId = expencessacc?.id
                         }
                         if (entry.accountId === "Sales") {
-                            var expencessacc = await chartofaccService.getbyname('SALES ACCOUNT')
+                            var expencessacc = await chartofaccService.getbyname('SALES REVENUE')
                             chartofAccId = expencessacc?.id
                         }
                         if (entry.accountId === "INVENTORY") {
-                            var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
+                            var inventoryAcc = await chartofaccService.getbyname('INVENTORY')
                             chartofAccId = inventoryAcc?.id
                         }
                         if (entry.accountId === "IMPORT") {
-                            var inventoryAcc = await chartofaccService.getbyname('IMPORT CONTROL ACCOUNT')
+                            var inventoryAcc = await chartofaccService.getbyname('IMPORT CLEARING ACCOUNT')
                             chartofAccId = inventoryAcc?.id
                         }
                         if (entry.accountId === "COST") {
-                            var inventoryAcc = await chartofaccService.getbyname('COST OF SALES')
+                            var inventoryAcc = await chartofaccService.getbyname('COST OF GOODS SOLD')
                             chartofAccId = inventoryAcc?.id
                         }
                         const journalLineData = {
@@ -1102,8 +1119,8 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
                             Packsize: product.Packsize,
                             Manufacture: product.Manufacture,
                             country: product.country,
-                            usdRate:product.usdRate,
-                            mfdate:product.mfdate,
+                            usdRate: product.usdRate,
+                            mfdate: product.mfdate,
                         });
                     });
                     try {
@@ -1137,7 +1154,7 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
                                         batchNo: product.batchNo,
                                         expDate: product.expiryDate,
                                         closingExpDate: product.costingExpiryDate,
-                                        mfdate:product.mfdate,
+                                        mfdate: product.mfdate,
                                     });
                                     if (!inventory) {
                                         throw new Error("Failed to update product to list association");
@@ -1151,7 +1168,7 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
                                             batchNo: product.batchNo,
                                             expDate: product.expiryDate,
                                             closingExpDate: product.costingExpiryDate,
-                                            mfdate:product.mfdate,
+                                            mfdate: product.mfdate,
                                         });
                                         if (!inventory) {
                                             throw new Error("Failed to update product to list association");
@@ -1190,7 +1207,7 @@ voucherRouter.post("/StockVerification", authenticate, async (request: ExpressRe
                                 batchNo: product.batchNo,
                                 expDate: product.expiryDate,
                                 closingExpDate: product.costingExpiryDate,
-                                mfdate:product.mfdate,
+                                mfdate: product.mfdate,
                             });
                             if (!inventory) {
                                 throw new Error("Failed to update product to list association");
@@ -1255,7 +1272,7 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                         quantity: product.quantity,
                         batchNo: product.batchNo,
                         expDate: product.expDate,
-                        mfdate:product.mfdate,
+                        mfdate: product.mfdate,
                     });
                     if (!inventory) {
                         throw new Error("Failed to update product to list association");
@@ -1290,7 +1307,7 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
                         quantity: -(product.quantity),
                         batchNo: product.batchNo,
                         expDate: product.expDate,
-                        mfdate:product.mfdate,
+                        mfdate: product.mfdate,
                     });
                     if (!inventory) {
                         throw new Error("Failed to update product to list association");
@@ -1312,39 +1329,39 @@ voucherRouter.put("/pendingVoucherApproval/:id", authenticate, async (request: E
             for (let entry of journalEntries) {
                 var chartofAccId = entry.accountId
                 if (entry.accountId === "CASH") {
-                    var cashchartofaccid = await chartofaccService.getbyname('CASH BOOK')
+                    var cashchartofaccid = await chartofaccService.getbyname('MAIN CASH BOOK')
                     chartofAccId = cashchartofaccid?.id
                 }
                 if (entry.accountId === "Check") {
-                    var pendingCheque = await chartofaccService.getbyname('PENDING CHEQUE')
+                    var pendingCheque = await chartofaccService.getbyname('CHEQUES RECEIVED - PENDING CLEARANCE')
                     chartofAccId = pendingCheque?.id
                 }
                 if (entry.accountId === "Expencess") {
-                    var expencessacc = await chartofaccService.getbyname('EXPENCESS ACCOUNT')
+                    var expencessacc = await chartofaccService.getbyname('EXPENSES ACCOUNT')
                     chartofAccId = expencessacc?.id
                 }
                 if (entry.accountId === "PettyCash") {
-                    var expencessacc = await chartofaccService.getbyname('PETTY CASH')
+                    var expencessacc = await chartofaccService.getbyname('PETTY CASH BOOK')
                     chartofAccId = expencessacc?.id
                 }
                 if (entry.accountId === "UserExp") {
-                    var expencessacc = await chartofaccService.getbyname('USER EXPENCESS ACCOUNT')
+                    var expencessacc = await chartofaccService.getbyname('OPERATIONAL EXPENSES ACCOUNT')
                     chartofAccId = expencessacc?.id
                 }
                 if (entry.accountId === "Sales") {
-                    var expencessacc = await chartofaccService.getbyname('SALES ACCOUNT')
+                    var expencessacc = await chartofaccService.getbyname('SALES REVENUE')
                     chartofAccId = expencessacc?.id
                 }
                 if (entry.accountId === "INVENTORY") {
-                    var inventoryAcc = await chartofaccService.getbyname('INVENTORY ACCOUNT')
+                    var inventoryAcc = await chartofaccService.getbyname('INVENTORY')
                     chartofAccId = inventoryAcc?.id
                 }
                 if (entry.accountId === "IMPORT") {
-                    var inventoryAcc = await chartofaccService.getbyname('IMPORT CONTROL ACCOUNT')
+                    var inventoryAcc = await chartofaccService.getbyname('IMPORT CLEARING ACCOUNT')
                     chartofAccId = inventoryAcc?.id
                 }
                 if (entry.accountId === "COST") {
-                    var inventoryAcc = await chartofaccService.getbyname('COST OF SALES')
+                    var inventoryAcc = await chartofaccService.getbyname('COST OF GOODS SOLD')
                     chartofAccId = inventoryAcc?.id
                 }
 
@@ -1491,15 +1508,17 @@ voucherRouter.put("/conform/:id", authenticate, async (request: ExpressRequest, 
 
             // Loop through each journal entry and create corresponding journalLine
             for (let entry of journalEntries) {
-                var partyDetails = await partyService.get(entry.accountId)
-                var chartofAccId = partyDetails?.chartofAccountId
-
+                // var partyDetails = await partyService.get(entry.accountId)
+                var chartofAccId = entry.accountId
                 if (entry.accountId === "IMPORT") {
-                    var inventoryAcc = await chartofaccService.getbyname('IMPORT CONTROL ACCOUNT')
+                    var inventoryAcc = await chartofaccService.getbyname('IMPORT CLEARING ACCOUNT')
                     chartofAccId = inventoryAcc?.id
                 }
+                else{
+                  chartofAccId =  entry.accountId
+                }
                 const journalLineData = {
-                    voucherId: id.id,
+                    voucherId: data.vouchernumber,
                     date: data.date,
                     chartofAccountId: chartofAccId, // Account ID from the journal entry
                     debitAmount: entry.debit || 0, // Debit amount if present

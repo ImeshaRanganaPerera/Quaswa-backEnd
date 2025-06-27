@@ -194,7 +194,7 @@ export const getTrialBalance = async (
         let calculatedDebit = 0;
         let calculatedCredit = 0;
 
-        if (accountCategory === 'ASSETS' || accountCategory === 'EXPENCESS') {
+        if (accountCategory === 'ASSETS' || accountCategory === 'EXPENSES') {
             calculatedDebit = (openingBalance ? openingBalance.toNumber() : 0) + (accountDebit - accountCredit);
         } else if (accountCategory === 'EQUITY' || accountCategory === 'LIABILITIES' || accountCategory === 'INCOME') {
             calculatedCredit = (openingBalance ? openingBalance.toNumber() : 0) + (accountCredit - accountDebit);
@@ -347,9 +347,112 @@ export const getProfitAndLoss = async (
     return formatResult;
 };
 
-export const getBalanceSheet = async (
-    endDate: Date
-) => {
+// export const getBalanceSheet = async (
+//     endDate: Date
+// ) => {
+//     const accounts = await db.chartofAccount.findMany({
+//         where: {
+//             accountSubCategory: {
+//                 accountCategory: {
+//                     accCategory: {
+//                         in: ['ASSETS', 'EQUITY', 'LIABILITIES'],
+//                     },
+//                 },
+//             },
+//         },
+//         include: {
+//             accGroup: true,
+//             accountSubCategory: {
+//                 select: {
+//                     accountCategory: true,
+//                 },
+//             },
+//             journalLine: {
+//                 where: {
+//                     date: {
+//                         lte: endDate,
+//                     },
+//                 },
+//             },
+//         },
+//     });
+
+//     // Explicit type for the accumulator
+//     interface AccountGroup {
+//         accountName: string;
+//         totalCreditAmount: number;
+//         totalDebitAmount: number;
+//     }
+
+//     interface ResultType {
+//         assets: Record<string, AccountGroup[]>;
+//         equity: Record<string, AccountGroup[]>;
+//         liabilities: Record<string, AccountGroup[]>;
+//     }
+
+//     const result: ResultType = accounts.reduce((acc: ResultType, account) => {
+//         if (!account.accountSubCategory || !account.accountSubCategory.accountCategory) {
+//             return acc; // Skip invalid accounts
+//         }
+
+//         const category =
+//             account.accountSubCategory.accountCategory.accCategory === 'ASSETS'
+//                 ? 'assets'
+//                 : account.accountSubCategory.accountCategory.accCategory === 'EQUITY'
+//                     ? 'equity'
+//                     : 'liabilities';
+
+//         const groupName = account.accGroup?.accountGroupName || 'Unknown Group';
+
+//         const totalCreditAmount = account.journalLine.reduce(
+//             (sum: number, line: any) => sum + Number(line.creditAmount || 0),
+//             0
+//         );
+
+//         const totalDebitAmount = account.journalLine.reduce(
+//             (sum: number, line: any) => sum + Number(line.debitAmount || 0),
+//             0
+//         );
+
+//         if (!acc[category][groupName]) {
+//             acc[category][groupName] = [];
+//         }
+
+//         acc[category][groupName].push({
+//             accountName: account.accountName || 'Unknown Account',
+//             totalCreditAmount,
+//             totalDebitAmount,
+//         });
+
+//         return acc;
+//     }, { assets: {}, equity: {}, liabilities: {} });
+
+//     // Transform result into the desired format
+//     const formatResult = Object.entries(result).map(([key, groups]) => ({
+//         [key]: Object.entries(groups as Record<string, AccountGroup[]>).map(
+//             ([groupName, values]) => {
+//                 const sumCreditTotal = values.reduce(
+//                     (sum, value) => sum + value.totalCreditAmount,
+//                     0
+//                 );
+//                 const sumDebitTotal = values.reduce(
+//                     (sum, value) => sum + value.totalDebitAmount,
+//                     0
+//                 );
+
+//                 return {
+//                     accountGroupName: groupName,
+//                     values,
+//                     sumCreditTotal,
+//                     sumDebitTotal,
+//                 };
+//             }
+//         ),
+//     }));
+
+//     return formatResult;
+// };
+export const getBalanceSheet = async (endDate: Date) => {
     const accounts = await db.chartofAccount.findMany({
         where: {
             accountSubCategory: {
@@ -364,6 +467,7 @@ export const getBalanceSheet = async (
             accGroup: true,
             accountSubCategory: {
                 select: {
+                    accountSubName: true, // get sub category name
                     accountCategory: true,
                 },
             },
@@ -377,7 +481,6 @@ export const getBalanceSheet = async (
         },
     });
 
-    // Explicit type for the accumulator
     interface AccountGroup {
         accountName: string;
         totalCreditAmount: number;
@@ -385,23 +488,24 @@ export const getBalanceSheet = async (
     }
 
     interface ResultType {
-        assets: Record<string, AccountGroup[]>;
-        equity: Record<string, AccountGroup[]>;
-        liabilities: Record<string, AccountGroup[]>;
+        assets: Record<string, Record<string, AccountGroup[]>>;
+        equity: Record<string, Record<string, AccountGroup[]>>;
+        liabilities: Record<string, Record<string, AccountGroup[]>>;
     }
 
     const result: ResultType = accounts.reduce((acc: ResultType, account) => {
         if (!account.accountSubCategory || !account.accountSubCategory.accountCategory) {
-            return acc; // Skip invalid accounts
+            return acc;
         }
 
         const category =
             account.accountSubCategory.accountCategory.accCategory === 'ASSETS'
                 ? 'assets'
                 : account.accountSubCategory.accountCategory.accCategory === 'EQUITY'
-                    ? 'equity'
-                    : 'liabilities';
+                ? 'equity'
+                : 'liabilities';
 
+        const subCategoryName = account.accountSubCategory.accountSubName || 'Unknown SubCategory';
         const groupName = account.accGroup?.accountGroupName || 'Unknown Group';
 
         const totalCreditAmount = account.journalLine.reduce(
@@ -414,11 +518,17 @@ export const getBalanceSheet = async (
             0
         );
 
-        if (!acc[category][groupName]) {
-            acc[category][groupName] = [];
+        // Initialize subCategory if not exists
+        if (!acc[category][subCategoryName]) {
+            acc[category][subCategoryName] = {};
         }
 
-        acc[category][groupName].push({
+        // Initialize group if not exists
+        if (!acc[category][subCategoryName][groupName]) {
+            acc[category][subCategoryName][groupName] = [];
+        }
+
+        acc[category][subCategoryName][groupName].push({
             accountName: account.accountName || 'Unknown Account',
             totalCreditAmount,
             totalDebitAmount,
@@ -428,25 +538,29 @@ export const getBalanceSheet = async (
     }, { assets: {}, equity: {}, liabilities: {} });
 
     // Transform result into the desired format
-    const formatResult = Object.entries(result).map(([key, groups]) => ({
-        [key]: Object.entries(groups as Record<string, AccountGroup[]>).map(
-            ([groupName, values]) => {
-                const sumCreditTotal = values.reduce(
-                    (sum, value) => sum + value.totalCreditAmount,
-                    0
-                );
-                const sumDebitTotal = values.reduce(
-                    (sum, value) => sum + value.totalDebitAmount,
-                    0
-                );
+    const formatResult = Object.entries(result).map(([categoryKey, subCategories]) => ({
+        category: categoryKey,
+        subCategories: Object.entries(subCategories as Record<string, Record<string, AccountGroup[]>>).map(
+            ([subCategoryName, groups]) => ({
+                subCategoryName,
+                groups: Object.entries(groups).map(([groupName, values]) => {
+                    const sumCreditTotal = values.reduce(
+                        (sum, value) => sum + value.totalCreditAmount,
+                        0
+                    );
+                    const sumDebitTotal = values.reduce(
+                        (sum, value) => sum + value.totalDebitAmount,
+                        0
+                    );
 
-                return {
-                    accountGroupName: groupName,
-                    values,
-                    sumCreditTotal,
-                    sumDebitTotal,
-                };
-            }
+                    return {
+                        accountGroupName: groupName,
+                        values,
+                        sumCreditTotal,
+                        sumDebitTotal,
+                    };
+                }),
+            })
         ),
     }));
 

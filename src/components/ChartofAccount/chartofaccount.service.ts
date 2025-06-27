@@ -64,6 +64,19 @@ export const getdepositAcc = async () => {
     })
 }
 
+export const getdepositAccPayable = async () => {
+    return db.chartofAccount.findMany({
+        where: {
+            accGroup: {
+                accountGroupName: { in: ['Payable'] }
+            }
+        },
+        include: {
+            accGroup: true
+        }
+    })
+}
+
 export const create = async (data: any) => {
     return db.chartofAccount.create({
         data: data,

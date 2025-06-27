@@ -128,7 +128,7 @@ export const getPendingVoucherCondition = async () => {
                         startsWith: 'SO',
                     },
                 },
-                 {
+                {
                     voucherNumber: {
                         startsWith: 'GRN',
                     },
@@ -256,6 +256,7 @@ export const getVoucherbyPartytrue = async (id: any, condition: any) => {
         where: {
             partyId: id,
             isconform: condition,
+            status:'COMPLETED',
             OR: [
                 { voucherNumber: { startsWith: 'GRN' } },
                 { voucherNumber: { startsWith: 'INV' } },
@@ -269,10 +270,38 @@ export const getVoucherbyPartytrue = async (id: any, condition: any) => {
         const amount = new Decimal(voucher.amount || 0); // Ensure amount is treated as Decimal
         const totalPaid = paidValue.plus(returnValue); // Add using Decimal.js
 
-        return voucher.voucherNumber.startsWith('GRN') ? (voucher.isconform === false ? totalPaid.lessThan(amount) : totalPaid.lessThan(value)) : totalPaid.lessThan(amount); // Filter those with outstanding amounts
+        return voucher.voucherNumber.startsWith('GRN') ? (voucher.isconform === true ? totalPaid.lessThan(amount) : totalPaid.lessThan(value)) : totalPaid.lessThan(amount); // Filter those with outstanding amounts
     });
 
     return filteredVouchers;
+    //return vouchers;
+}
+
+
+export const getVouchersupplierenterbill = async (id: any, condition: any) => {
+    const vouchers = await db.voucher.findMany({
+        where: {
+            partyId: id,
+            isconform: condition,
+            status:'PENDING',
+            OR: [
+                { voucherNumber: { startsWith: 'GRN' } },
+                { voucherNumber: { startsWith: 'INV' } },
+            ],
+        }
+    });
+    const filteredVouchers = vouchers.filter(voucher => {
+        const paidValue = new Decimal(voucher.paidValue ?? 0); // Handle possible 'null' and convert to Decimal
+        const returnValue = new Decimal(voucher.returnValue ?? 0); // Handle possible 'null' and convert to Decimal
+        const value = new Decimal(voucher.value || 0); // Ensure value is treated as Decimal
+        const amount = new Decimal(voucher.amount || 0); // Ensure amount is treated as Decimal
+        const totalPaid = paidValue.plus(returnValue); // Add using Decimal.js
+
+        return voucher.voucherNumber.startsWith('GRN') ? (voucher.isconform === true ? totalPaid.lessThan(amount) : totalPaid.lessThan(value)) : totalPaid.lessThan(amount); // Filter those with outstanding amounts
+    });
+
+    return filteredVouchers;
+    //return vouchers;
 }
 
 export const getVoucherbyChartofacc = async (id: any, condition: any) => {
@@ -304,7 +333,7 @@ export const getVoucherbyPartyfalse = async (id: any) => {
 
 export const create = async (data?: any) => {
     return db.voucher.create({
-        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, firstPay: data?.firstPay, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, startDate: data?.startDate, endDate: data?.endDate, startingValue: data?.startingValue, endingValue: data?.endingValue, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy,discountId:data?.discountLevelIddesc},
+        data: { voucherNumber: data.voucherNumber, date: data.date, totalDebit: data?.totalDebit, totalCredit: data?.totalCredit, value: data?.value, amount: data.amount, paidValue: data.paidValue, returnValue: data?.returnValue, location: data.location, partyId: data?.partyId, chartofAccountId: data?.chartofAccountId, note: data.note, dueDays: data?.dueDays, isconform: data?.isconform, refVoucherNumber: data?.refVoucherNumber, firstPay: data?.firstPay, stockStatus: data?.stockStatus, isRef: data?.isRef, refNumber: data?.refNumber, status: data?.status, startDate: data?.startDate, endDate: data?.endDate, startingValue: data?.startingValue, endingValue: data?.endingValue, isPayment: data?.isPayment, voucherGroupId: data.voucherGroupId, authUser: data?.authUser, appovedBy: data?.appovedBy, createdBy: data.createdBy, discountId: data?.discountLevelIddesc },
         include: {
             party: true,
             voucherProduct: {
@@ -441,13 +470,16 @@ export const getstartValue = async (bankId: any) => {
     return endValue
 }
 
-export const updateConform = async (data: any, id: any) => {
+export const updateConform = async (data: any, id: string ) => {
     return db.voucher.update({
-        where: id,
-        data: { isconform: data.isconform, value: data.value }
+        where: { id: data.vouchernumber },
+        data: {
+            isconform: data.isconform,
+            value: data.value,
+            status: data.status,
+        },
     });
 }
-
 export const voucherCancel = async (data: any, id: any) => {
     return db.voucher.update({
         where: id,
@@ -696,7 +728,7 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
                     accountName: true,
                 }
             },
-     
+
             voucherProduct: {
                 select: {
                     MRP: true,
@@ -737,9 +769,9 @@ export const getVouchersByPartyByUserAndDateRange = async (voucherGroupId: strin
                 }
             },
 
-            discountLevel:{
-                select:{
-                   level:true
+            discountLevel: {
+                select: {
+                    level: true
                 }
             }
         },
@@ -760,19 +792,19 @@ export const getrejectInvoice = async (vouchergrpId: any, startDate?: Date, endD
         },
         include: {
             party: true,
-           
+
             chartofacc: {
                 select: {
                     accountName: true,
                 }
             },
 
-          discountLevel:{
-            select: {
-                level: true
-            }
+            discountLevel: {
+                select: {
+                    level: true
+                }
 
-          },
+            },
             voucherProduct: {
                 select: {
                     MRP: true,
@@ -1098,12 +1130,12 @@ export const getRefVoucherbyVoucherGrpid = async (data: any, userId?: any) => {
                     sellingPrice: true,
                     updatedAt: true,
                     voucherId: true,
-                    expDate:true,
-                    batchNo:true,
-                    Packsize:true,
-                    Manufacture:true,
-                    country:true,
-                    mfdate:true,
+                    expDate: true,
+                    batchNo: true,
+                    Packsize: true,
+                    Manufacture: true,
+                    country: true,
+                    mfdate: true,
 
                     product: {
                         select: {

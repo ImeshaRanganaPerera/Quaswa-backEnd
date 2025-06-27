@@ -79,6 +79,8 @@ app.use("/api/proofImage", proofImageRouter)
 app.use("/api/referVoucher", referVoucherRouter)
 app.use("/api/commissionReport", commissionReportRouter)
 app.use('/api/Currency', currencyRouter);
+app.use('/api/payable', chartofAccRouter);
+app.use('/api/party/conditionSupplierEnterbill', chartofAccRouter);
 
 
 // app.use('/api/public', express.static(path.join(__dirname, 'public')));

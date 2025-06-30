@@ -241,111 +241,208 @@ export const getTrialBalance = async (
     return trialBalance;
 };
 
-
 export const getProfitAndLoss = async (
-    startDate: Date,
-    endDate: Date
+  startDate: Date,
+  endDate: Date
 ) => {
-    const accounts = await db.chartofAccount.findMany({
+  const normalizedStart = new Date(startDate);
+  normalizedStart.setHours(0, 0, 0, 0);
+  const normalizedEnd = new Date(endDate);
+  normalizedEnd.setHours(23, 59, 59, 999);
+
+  const accounts = await db.chartofAccount.findMany({
+    where: {
+      accountSubCategory: {
+        accountCategory: {
+          accCategory: {
+            in: ['INCOME', 'EXPENSES'],
+          },
+        },
+      },
+    },
+    include: {
+      accGroup: true,
+      accountSubCategory: {
+        select: {
+          accountCategory: true,
+        },
+      },
+      journalLine: {
         where: {
-            accountSubCategory: {
-                accountCategory: {
-                    accCategory: {
-                        in: ['INCOME', 'EXPENCESS'],
-                    },
-                },
-            },
+          date: {
+            gte: normalizedStart,
+            lte: normalizedEnd,
+          },
         },
-        include: {
-            accGroup: true,
-            accountSubCategory: {
-                select: {
-                    accountCategory: true,
-                },
-            },
-            journalLine: {
-                where: {
-                    date: {
-                        gte: startDate,
-                        lte: endDate,
-                    },
-                },
-            },
-        },
+      },
+    },
+  });
+
+  const response: any = {
+    dateRange: {
+      startDate: normalizedStart,
+      endDate: normalizedEnd
+    },
+    income: [],
+    expenses: [],
+    totalIncome: 0,
+    totalExpenses: 0,
+    netProfit: 0
+  };
+
+  const grouped = {
+    INCOME: new Map<string, any[]>(),
+    EXPENSES: new Map<string, any[]>()
+  };
+
+accounts.forEach(account => {
+  const category = account.accountSubCategory?.accountCategory?.accCategory;
+
+  if (category === 'INCOME' || category === 'EXPENSES') {
+    const group = account.accGroup?.accountGroupName || 'Unknown Group';
+    const accountName = account.accountName || 'Unnamed Account';
+
+    const creditTotal = account.journalLine.reduce((sum, line) => sum + Number(line.creditAmount || 0), 0);
+    const debitTotal = account.journalLine.reduce((sum, line) => sum + Number(line.debitAmount || 0), 0);
+    const balance = category === 'INCOME' ? (creditTotal - debitTotal) : (debitTotal - creditTotal);
+
+    if (!grouped[category].has(group)) {
+      grouped[category].set(group, []);
+    }
+
+    grouped[category].get(group)?.push({
+      accountName,
+      debitTotal,
+      creditTotal,
+      balance
     });
+  }
+});
 
-    // Explicit type for the accumulator
-    interface AccountGroup {
-        accountName: string;
-        totalCreditAmount: number;
-        totalDebitAmount: number;
-    }
 
-    interface ResultType {
-        expencess: Record<string, AccountGroup[]>;
-        income: Record<string, AccountGroup[]>;
-    }
+  // Format groups
+  for (const [groupName, accounts] of grouped['INCOME']) {
+    const groupTotal = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+    response.income.push({ accountGroupName: groupName, accounts, groupTotal });
+    response.totalIncome += groupTotal;
+  }
 
-    const result: ResultType = accounts.reduce((acc: ResultType, account) => {
-        if (!account.accountSubCategory || !account.accountSubCategory.accountCategory) {
-            return acc; // Skip invalid accounts
-        }
+  for (const [groupName, accounts] of grouped['EXPENSES']) {
+    const groupTotal = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+    response.expenses.push({ accountGroupName: groupName, accounts, groupTotal });
+    response.totalExpenses += groupTotal;
+  }
 
-        const category =
-            account.accountSubCategory.accountCategory.accCategory === 'INCOME'
-                ? 'income'
-                : 'expencess';
+  response.netProfit = response.totalIncome - response.totalExpenses;
 
-        const groupName = account.accGroup?.accountGroupName || 'Unknown Group';
-
-        const totalCreditAmount = account.journalLine.reduce(
-            (sum: number, line: any) => sum + Number(line.creditAmount || 0),
-            0
-        );
-
-        const totalDebitAmount = account.journalLine.reduce(
-            (sum: number, line: any) => sum + Number(line.debitAmount || 0),
-            0
-        );
-
-        if (!acc[category][groupName]) {
-            acc[category][groupName] = [];
-        }
-
-        acc[category][groupName].push({
-            accountName: account.accountName || 'Unknown Account',
-            totalCreditAmount,
-            totalDebitAmount,
-        });
-
-        return acc;
-    }, { expencess: {}, income: {} });
-
-    // Transform result into the desired format
-    const formatResult = Object.entries(result).map(([key, groups]) => ({
-        [key]: Object.entries(groups as Record<string, AccountGroup[]>).map(
-            ([groupName, values]) => {
-                const sumCreditTotal = values.reduce(
-                    (sum, value) => sum + value.totalCreditAmount,
-                    0
-                );
-                const sumDebitTotal = values.reduce(
-                    (sum, value) => sum + value.totalDebitAmount,
-                    0
-                );
-
-                return {
-                    accountGroupName: groupName,
-                    values,
-                    sumCreditTotal,
-                    sumDebitTotal,
-                };
-            }
-        ),
-    }));
-
-    return formatResult;
+  return response;
 };
+
+
+// export const getProfitAndLoss = async (
+//     startDate: Date,
+//     endDate: Date
+// ) => {
+//     const accounts = await db.chartofAccount.findMany({
+//         where: {
+//             accountSubCategory: {
+//                 accountCategory: {
+//                     accCategory: {
+//                         in: ['INCOME', 'EXPENSES'],
+//                     },
+//                 },
+//             },
+//         },
+//         include: {
+//             accGroup: true,
+//             accountSubCategory: {
+//                 select: {
+//                     accountCategory: true,
+//                 },
+//             },
+//             journalLine: {
+//                 // where: {
+//                 //     date: {
+//                 //         gte: startDate,
+//                 //         lte: endDate,
+//                 //     },
+//                 // },
+//             },
+//         },
+//     });
+
+//     // Explicit type for the accumulator
+//     interface AccountGroup {
+//         accountName: string;
+//         totalCreditAmount: number;
+//         totalDebitAmount: number;
+//     }
+
+//     interface ResultType {
+//         expencess: Record<string, AccountGroup[]>;
+//         income: Record<string, AccountGroup[]>;
+//     }
+
+//     const result: ResultType = accounts.reduce((acc: ResultType, account) => {
+//         if (!account.accountSubCategory || !account.accountSubCategory.accountCategory) {
+//             return acc; // Skip invalid accounts
+//         }
+
+//         const category =
+//             account.accountSubCategory.accountCategory.accCategory === 'INCOME'
+//                 ? 'income'
+//                 : 'expencess';
+
+//         const groupName = account.accGroup?.accountGroupName || 'Unknown Group';
+
+//         const totalCreditAmount = account.journalLine.reduce(
+//             (sum: number, line: any) => sum + Number(line.creditAmount || 0),
+//             0
+//         );
+
+//         const totalDebitAmount = account.journalLine.reduce(
+//             (sum: number, line: any) => sum + Number(line.debitAmount || 0),
+//             0
+//         );
+
+//         if (!acc[category][groupName]) {
+//             acc[category][groupName] = [];
+//         }
+
+//         acc[category][groupName].push({
+//             accountName: account.accountName || 'Unknown Account',
+//             totalCreditAmount,
+//             totalDebitAmount,
+//         });
+
+//         return acc;
+//     }, { expencess: {}, income: {} });
+
+//     // Transform result into the desired format
+//     const formatResult = Object.entries(result).map(([key, groups]) => ({
+//         [key]: Object.entries(groups as Record<string, AccountGroup[]>).map(
+//             ([groupName, values]) => {
+//                 const sumCreditTotal = values.reduce(
+//                     (sum, value) => sum + value.totalCreditAmount,
+//                     0
+//                 );
+//                 const sumDebitTotal = values.reduce(
+//                     (sum, value) => sum + value.totalDebitAmount,
+//                     0
+//                 );
+
+//                 return {
+//                     accountGroupName: groupName,
+//                     values,
+//                     sumCreditTotal,
+//                     sumDebitTotal,
+//                 };
+//             }
+//         ),
+//     }));
+
+//     return formatResult;
+// };
 
 // export const getBalanceSheet = async (
 //     endDate: Date

@@ -15,7 +15,7 @@ export const get = async (id: any) => {
 export const getbyname = async (name: any) => {
     return db.accountGroup.findFirst({
         where: {
-            accountGroupName: name,
+            accountGroupName: name
         },
     });
 }

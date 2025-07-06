@@ -255,7 +255,7 @@ export const getProfitAndLoss = async (
       accountSubCategory: {
         accountCategory: {
           accCategory: {
-            in: ['INCOME', 'EXPENSES'],
+            in: ['INCOME', 'Expenses'],
           },
         },
       },
@@ -292,13 +292,13 @@ export const getProfitAndLoss = async (
 
   const grouped = {
     INCOME: new Map<string, any[]>(),
-    EXPENSES: new Map<string, any[]>()
+    Expenses: new Map<string, any[]>()
   };
 
 accounts.forEach(account => {
   const category = account.accountSubCategory?.accountCategory?.accCategory;
 
-  if (category === 'INCOME' || category === 'EXPENSES') {
+  if (category === 'INCOME' || category === 'Expenses') {
     const group = account.accGroup?.accountGroupName || 'Unknown Group';
     const accountName = account.accountName || 'Unnamed Account';
 
@@ -327,7 +327,7 @@ accounts.forEach(account => {
     response.totalIncome += groupTotal;
   }
 
-  for (const [groupName, accounts] of grouped['EXPENSES']) {
+  for (const [groupName, accounts] of grouped['Expenses']) {
     const groupTotal = accounts.reduce((sum, acc) => sum + acc.balance, 0);
     response.expenses.push({ accountGroupName: groupName, accounts, groupTotal });
     response.totalExpenses += groupTotal;

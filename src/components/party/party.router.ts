@@ -254,45 +254,70 @@ partyRouter.post("/imageUpload", authenticate, upload.fields([{ name: 'shopImage
 );
 
 partyRouter.put("/:id", authenticate, async (request: ExpressRequest, response: Response) => {
-    const id: any = request.params;
+    const id: any = request.params.id;
     const data: any = request.body;
 
     try {
+        // Ensure user is authenticated
         if (!request.user) {
             return response.status(401).json({ message: "User not authorized" });
         }
 
-        const oldphoneNumber = await partyService.get(id)
-        if (oldphoneNumber?.phoneNumber !== data.phoneNumber) {
-            const phoneNumber = await partyService.phoneNumberCheck(data.phoneNumber)
-            if (phoneNumber?.phoneNumber === data.phoneNumber) {
-                return response.status(401).json({ message: "Phone Number Already Exists" });
+        // Validate if party exists
+        const existingParty = await partyService.get(id);
+        if (!existingParty) {
+            return response.status(404).json({ message: "Party not found" });
+        }
+
+        // Phone number uniqueness check if it was changed
+        if (existingParty.phoneNumber !== data.phoneNumber) {
+            const duplicatePhone = await partyService.phoneNumberCheck(data.phoneNumber);
+            if (duplicatePhone?.phoneNumber === data.phoneNumber) {
+                return response.status(409).json({ message: "Phone Number Already Exists" }); // Use 409 Conflict
             }
         }
 
-
-        var partyCateId;
-        var partycategory;
+        // Determine correct party category ID
+        let partyCategoryId: string | undefined;
         if (data.partyGroup === "SUPPLIER") {
-            partycategory = await partyCategoryService.getbyname('COMMON SUPPLIER')
-            partyCateId = partycategory?.id;
-        }
-        else {
-            partyCateId = data.partyCategoryId
+            const category = await partyCategoryService.getbyname("COMMON SUPPLIER");
+            partyCategoryId = category?.id;
+        } else {
+            partyCategoryId = data.partyCategoryId;
         }
 
-        const updateparty = await partyService.update({ name: data.name, nic: data.nic, phoneNumber: data.phoneNumber, creditPeriod: data.creditPeriod, creditValue: data.creditValue, address1: data.address1, city: data?.city, address2: data.address2, isVerified: data?.isVerified, email: data.email, partyCategoryId: partyCateId }, id)
-        const partyGroup = await partyGroupService.getbyid(updateparty.partyGroupId)
+        // Update Party
+        const updatedParty = await partyService.update({
+            name: data.name,
+            nic: data.nic,
+            phoneNumber: data.phoneNumber,
+            creditPeriod: data.creditPeriod,
+            creditValue: data.creditValue,
+            address1: data.address1,
+            city: data.city,
+            address2: data.address2,
+            isVerified: data?.isVerified,
+            email: data.email,
+          //  partyCategoryId: partyCategoryId,
+        }, id);
 
-        const updatechartofAcc = await chartOfAccService.updates({ accountName: data.name }, updateparty.chartofAccountId)
+        // Update related chart of account name
+        await chartOfAccService.updates({
+            accountName: data.name
+        }, updatedParty.chartofAccountId);
 
-        if (updateparty && updatechartofAcc) {
-            return response.status(201).json({ message: partyGroup?.partyGroupName + " Updated Successfully", data: updateparty });
-        }
+        // Get party group name for response message
+        const partyGroup = await partyGroupService.getbyid(updatedParty.partyGroupId);
+
+        return response.status(200).json({
+            message: `${partyGroup?.partyGroupName} Updated Successfully`,
+            data: updatedParty
+        });
     } catch (error: any) {
         return response.status(500).json({ message: error.message });
     }
-})
+});
+
 
 partyRouter.put("/imageUpload/:id", authenticate, upload.fields([{ name: 'shopImage' }, { name: 'brImage' }, { name: 'nicImage' }, { name: 'nicBackImage' }]),
     async (request: ExpressRequest, response: Response) => {

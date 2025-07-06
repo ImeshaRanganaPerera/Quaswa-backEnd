@@ -21,12 +21,12 @@ export const list = async (id: any) => {
 }
 
 export const get = async (id: any) => {
-    return db.party.findUnique({
-        where: {
-            id,
-        },
+    if (!id) throw new Error("ID is required");
+    
+    return await db.party.findUnique({
+        where: { id },
     });
-}
+};
 
 export const phoneNumberCheck = async (phoneNumber: any) => {
     return db.party.findFirst({

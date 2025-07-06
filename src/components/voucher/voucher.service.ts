@@ -19,11 +19,13 @@ export const commission = async () => {
     })
 }
 
+
+
+
+
 export const get = async (id: any) => {
-    return db.voucher.findFirst({
-        where: {
-            id,
-        },
+    const voucher = await db.voucher.findFirst({
+        where: { id },
         include: {
             party: true,
             user: {
@@ -61,7 +63,30 @@ export const get = async (id: any) => {
             },
         }
     });
-}
+    
+    if (!voucher) return null;
+
+    // Clone to mutable object
+    const mutableVoucher = { ...voucher };
+
+    // Convert all Decimal fields to plain numbers with 2 decimal places
+    const decimalFields = [
+        "totalDebit", "totalCredit", "value", "firstPay", "amount",
+        "paidValue", "returnValue", "startingValue", "endingValue"
+    ];
+
+     for (const field of decimalFields) {
+        const val = voucher[field as keyof typeof voucher];
+        if (val instanceof Decimal) {
+            (mutableVoucher as any)[field] = parseFloat(val.toDecimalPlaces(2).toString());
+        } else {
+            (mutableVoucher as any)[field] = val;
+        }
+    }
+
+    return mutableVoucher;
+};
+
 
 export const getbyid = async (id: any) => {
     return db.voucher.findFirst({

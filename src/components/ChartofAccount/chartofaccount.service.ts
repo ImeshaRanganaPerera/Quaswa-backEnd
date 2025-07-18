@@ -32,6 +32,16 @@ export const getbyname = async (name: string) => {
     }
   })
 }
+export const getbyMultipleNames = async (names: string[]) => {
+    return db.accountGroup.findMany({
+        where: {
+            accountGroupName: {
+                in: names
+            }
+        }
+    });
+}
+
 
 export const getbygroup = async (id: string) => {
   return db.chartofAccount.findMany({

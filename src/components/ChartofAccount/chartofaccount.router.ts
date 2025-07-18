@@ -101,6 +101,31 @@ chartofAccRouter.get("/getbyGroup/:name", async (request: Request, response: Res
     }
 })
 
+//GET Accountfor pettycash
+chartofAccRouter.get("/getbyGroupforpettycash/:names", async (request: Request, response: Response) => {
+    const names: string[] = request.params.names.split(',');
+
+    try {
+        const accGroups = await chartofaccService.getbyMultipleNames(names);
+
+        if (!accGroups || accGroups.length === 0) {
+            return response.status(404).json({ message: "Account Groups not found" });
+        }
+
+        const allAccounts = [];
+        for (const group of accGroups) {
+            const accounts = await chartofaccService.getbygroup(group.id);
+            allAccounts.push(...accounts);
+        }
+
+        return response.status(200).json({ data: allAccounts });
+
+    } catch (error: any) {
+        return response.status(500).json({ message: error.message });
+    }
+});
+
+
 chartofAccRouter.get("/getbycategory/:name", async (request: Request, response: Response) => {
     const name: any = request.params.name;
     try {

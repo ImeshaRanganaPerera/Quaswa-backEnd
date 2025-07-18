@@ -194,7 +194,7 @@ export const getTrialBalance = async (
         let calculatedDebit = 0;
         let calculatedCredit = 0;
 
-        if (accountCategory === 'ASSETS' || accountCategory === 'EXPENSES') {
+        if (accountCategory === 'ASSETS' || accountCategory === 'Expenses') {
             calculatedDebit = (openingBalance ? openingBalance.toNumber() : 0) + (accountDebit - accountCredit);
         } else if (accountCategory === 'EQUITY' || accountCategory === 'LIABILITIES' || accountCategory === 'INCOME') {
             calculatedCredit = (openingBalance ? openingBalance.toNumber() : 0) + (accountCredit - accountDebit);
